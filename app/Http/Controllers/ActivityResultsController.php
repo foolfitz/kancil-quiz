@@ -37,9 +37,10 @@ class ActivityResultsController extends Controller
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind, 'language' => $set->language_code],
             'revisions' => $revisions,
             'revision' => $revisionId,
-            'summary' => $results->summary(),
-            'questions' => $results->questions(),
-            'attempts' => $results->attemptList(),
+            // 以 closure 傳入：展開作答明細的 partial reload 不必重算統計
+            'summary' => fn () => $results->summary(),
+            'questions' => fn () => $results->questions(),
+            'attempts' => fn () => $results->attemptList(),
             // 展開某一次作答時才以 partial reload 取得（?attempt=ID）
             'detail' => function () use ($request, $activity, $results) {
                 $id = $request->query('attempt');

@@ -238,6 +238,25 @@ class ActivityResultsTest extends TestCase
                 ->where('summary.attempts', 2));
     }
 
+    public function test_expanding_an_attempt_only_loads_its_detail(): void
+    {
+        $banana = $this->set->entries()->value('id');
+        $attempt = $this->play([[$banana, $banana]]);
+
+        $this->actingAs($this->teacher);
+        $version = $this->get("/activities/{$this->activity->id}/results")->viewData('page')['version'];
+        $this->get("/activities/{$this->activity->id}/results?attempt={$attempt}", [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => $version,
+            'X-Inertia-Partial-Component' => 'activities/Results',
+            'X-Inertia-Partial-Data' => 'detail',
+        ])
+            ->assertOk()
+            ->assertJsonPath('props.detail.id', $attempt)
+            ->assertJsonMissingPath('props.questions')
+            ->assertJsonMissingPath('props.attempts');
+    }
+
     public function test_attempts_from_other_activities_are_not_shown_in_detail(): void
     {
         $other = Activity::create([
