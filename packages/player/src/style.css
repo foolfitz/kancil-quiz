@@ -1,0 +1,174 @@
+/* 所有樣式都限定在 .kq-player 之下。 */
+.kq-player {
+    --kq-player-bg: #f6f4ee;
+    --kq-player-fg: #1f2933;
+    --kq-player-muted: #61707d;
+    --kq-player-card: #ffffff;
+    --kq-player-accent: #2563eb;
+    --kq-player-wrong: #b91c1c;
+
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100%;
+    background: var(--kq-player-bg);
+    color: var(--kq-player-fg);
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        'Noto Sans',
+        'Noto Sans TC',
+        sans-serif;
+    /* 越南文字母上方可能疊兩層符號，行高不可過緊（docs/SPEC.md 第 8 節） */
+    line-height: 1.6;
+}
+
+.kq-player *,
+.kq-player *::before,
+.kq-player *::after {
+    box-sizing: inherit;
+}
+
+.kq-player__screen {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.kq-player__game {
+    margin: 0;
+    color: var(--kq-player-muted);
+    font-size: 1.125rem;
+}
+
+.kq-player__title {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    line-height: 1.4;
+}
+
+.kq-player__subtitle {
+    margin: 1rem 0 0;
+    font-size: 1.5rem;
+}
+
+.kq-player__detail,
+.kq-player__note {
+    margin: 0;
+    color: var(--kq-player-muted);
+    font-size: 1.125rem;
+}
+
+.kq-player__note {
+    max-width: 32rem;
+    font-size: 1rem;
+}
+
+.kq-player__button {
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.kq-player__start {
+    padding: 0.75rem 3rem;
+    background: var(--kq-player-accent);
+    color: #fff;
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+    font-weight: 700;
+}
+
+/* 遊戲區要有明確的高度，迷宮的 canvas 依它決定大小 */
+.kq-player__stage {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+}
+
+.kq-player__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.25rem 0.5rem;
+}
+
+.kq-player__mute {
+    padding: 0.25rem 0.75rem;
+    background: transparent;
+    color: var(--kq-player-muted);
+    font-size: 0.95rem;
+}
+
+.kq-player__game-area {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.kq-player__review {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: min(100%, 36rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.kq-player__review-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-left: 6px solid var(--kq-player-wrong);
+    border-radius: 0.75rem;
+    background: var(--kq-player-card);
+    text-align: left;
+}
+
+.kq-player__review-image {
+    width: 4rem;
+    height: 4rem;
+    object-fit: contain;
+}
+
+.kq-player__review-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow-wrap: anywhere;
+}
+
+.kq-player__review-question {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.kq-player__review-answer {
+    font-size: 1.125rem;
+}
+
+.kq-player__review-skip {
+    color: var(--kq-player-muted);
+    font-size: 0.95rem;
+}
+
+.kq-player__play {
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    background: #e8edf3;
+    font-size: 1.5rem;
+}

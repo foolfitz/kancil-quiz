@@ -1,0 +1,28 @@
+<?php
+
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\SetController;
+use Illuminate\Support\Facades\Route;
+
+Route::inertia('/', 'Welcome')->name('home');
+
+// 學生端播放頁，不需登入
+Route::get('p/{activity}', [PlayerController::class, 'show'])->name('play');
+
+// 老師端（docs/SPEC.md 10.3）
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::resource('sets', SetController::class)->except('show');
+    Route::post('media', [MediaController::class, 'store'])->name('media.store');
+
+    Route::get('sets/{set}/activities/create', [ActivityController::class, 'create'])->name('activities.create');
+    Route::post('sets/{set}/activities', [ActivityController::class, 'store'])->name('activities.store');
+    Route::get('activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
+    Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
+});
+
+require __DIR__.'/settings.php';

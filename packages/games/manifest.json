@@ -1,0 +1,151 @@
+{
+    "games": [
+        {
+            "id": "maze-chase",
+            "version": "0.1.0",
+            "title": {
+                "zh-TW": "迷宮追逐"
+            },
+            "requires": {
+                "shape": "mcq",
+                "minRounds": 1,
+                "optionCount": {
+                    "min": 2,
+                    "max": 6
+                },
+                "renders": {
+                    "prompt": [
+                        "text",
+                        "image",
+                        "audio"
+                    ],
+                    "option": [
+                        "text",
+                        "image"
+                    ]
+                },
+                "scored": true
+            },
+            "optionsSchema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "title": "迷宮追逐的設定",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "timerMode",
+                    "countDownSeconds",
+                    "lives",
+                    "difficulty"
+                ],
+                "properties": {
+                    "timerMode": {
+                        "title": "計時方式",
+                        "type": "string",
+                        "oneOf": [
+                            {
+                                "const": "none",
+                                "title": "不計時"
+                            },
+                            {
+                                "const": "countUp",
+                                "title": "正計時"
+                            },
+                            {
+                                "const": "countDown",
+                                "title": "倒數"
+                            }
+                        ],
+                        "default": "countUp"
+                    },
+                    "countDownSeconds": {
+                        "title": "倒數秒數",
+                        "description": "計時方式選「倒數」時才有作用；時間到就結束遊戲。",
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 3600,
+                        "default": 300
+                    },
+                    "lives": {
+                        "title": "生命數",
+                        "description": "被敵人碰到就少一條命，命用完遊戲就結束。",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9,
+                        "default": 3
+                    },
+                    "difficulty": {
+                        "title": "難度",
+                        "description": "難度只影響敵人移動的速度。",
+                        "type": "integer",
+                        "oneOf": [
+                            {
+                                "const": 1,
+                                "title": "1（敵人最慢）"
+                            },
+                            {
+                                "const": 2,
+                                "title": "2"
+                            },
+                            {
+                                "const": 3,
+                                "title": "3（敵人最快）"
+                            }
+                        ],
+                        "default": 2
+                    }
+                }
+            },
+            "defaultOptions": {
+                "timerMode": "countUp",
+                "countDownSeconds": 300,
+                "lives": 3,
+                "difficulty": 2
+            }
+        },
+        {
+            "id": "quiz",
+            "version": "0.1.0",
+            "title": {
+                "zh-TW": "選擇題"
+            },
+            "requires": {
+                "shape": "mcq",
+                "minRounds": 1,
+                "optionCount": {
+                    "min": 2,
+                    "max": 6
+                },
+                "renders": {
+                    "prompt": [
+                        "text",
+                        "image",
+                        "audio"
+                    ],
+                    "option": [
+                        "text",
+                        "image"
+                    ]
+                },
+                "scored": true
+            },
+            "optionsSchema": {
+                "type": "object",
+                "properties": {
+                    "revealAnswer": {
+                        "type": "boolean",
+                        "title": "答錯時顯示正確答案"
+                    },
+                    "autoAdvance": {
+                        "type": "boolean",
+                        "title": "作答後自動進入下一題"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "defaultOptions": {
+                "revealAnswer": true,
+                "autoAdvance": true
+            }
+        }
+    ]
+}

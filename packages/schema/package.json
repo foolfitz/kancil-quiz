@@ -1,0 +1,23 @@
+{
+    "name": "@kancil-quiz/schema",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Kancil Quiz 的交換格式：JSON Schema、自動產生的 TS 型別與共用 fixture",
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./set.v1.schema.json": "./set.v1.schema.json",
+        "./activity.v1.schema.json": "./activity.v1.schema.json"
+    },
+    "scripts": {
+        "generate": "node scripts/generate-types.mjs",
+        "check": "node scripts/generate-types.mjs --check"
+    },
+    "dependencies": {
+        "@kancil-quiz/text": "*"
+    },
+    "devDependencies": {
+        "ajv": "^8.20.0",
+        "json-schema-to-typescript": "^16.0.0"
+    }
+}

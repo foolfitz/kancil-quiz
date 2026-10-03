@@ -1,0 +1,15 @@
+{
+    "Password updated.": "密碼已更新。",
+    "Profile updated.": "個人資料已更新。",
+    "The provided password was incorrect.": "密碼不正確。",
+    "The provided two factor authentication code was invalid.": "兩步驟驗證碼不正確。",
+    "The provided two factor recovery code was invalid.": "復原碼不正確。",
+    "The :attribute must be at least :length characters.": ":attribute 至少要 :length 個字元。",
+    "The :attribute must be at least :length characters and contain at least one number.": ":attribute 至少要 :length 個字元，並包含至少一個數字。",
+    "The :attribute must be at least :length characters and contain at least one special character.": ":attribute 至少要 :length 個字元，並包含至少一個符號。",
+    "The :attribute must be at least :length characters and contain at least one special character and one number.": ":attribute 至少要 :length 個字元，並包含至少一個符號與一個數字。",
+    "The :attribute must be at least :length characters and contain at least one uppercase character.": ":attribute 至少要 :length 個字元，並包含至少一個大寫字母。",
+    "The :attribute must be at least :length characters and contain at least one uppercase character and one number.": ":attribute 至少要 :length 個字元，並包含至少一個大寫字母與一個數字。",
+    "The :attribute must be at least :length characters and contain at least one uppercase character and one special character.": ":attribute 至少要 :length 個字元，並包含至少一個大寫字母與一個符號。",
+    "The :attribute must be at least :length characters and contain at least one uppercase character, one number, and one special character.": ":attribute 至少要 :length 個字元，並包含至少一個大寫字母、一個數字與一個符號。"
+}

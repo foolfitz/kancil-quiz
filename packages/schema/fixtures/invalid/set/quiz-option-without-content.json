@@ -1,0 +1,140 @@
+{
+    "format": "kancil-set",
+    "version": 1,
+    "id": "01M3ZYPQ8G5SC8R9GPTN1M0RC1",
+    "kind": "quiz",
+    "language": "id",
+    "title": "打招呼（印尼語）",
+    "license": "CC-BY-4.0",
+    "authors": [
+        {
+            "name": "Kancil Quiz 開發團隊"
+        }
+    ],
+    "entries": [
+        {
+            "id": "01M3ZYPR7R9Y800PH33AVYYKTM",
+            "question": {
+                "stem": {
+                    "text": "「早安」的印尼語是？"
+                },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "Selamat pagi",
+                        "correct": true
+                    },
+                    {
+                        "id": "b",
+                        "text": "Selamat malam",
+                        "correct": false
+                    },
+                    {
+                        "id": "c",
+                        "correct": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYPS70YBQADB9W014YAB3G",
+            "question": {
+                "stem": {
+                    "text": "「謝謝」的印尼語是？"
+                },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "Sama-sama",
+                        "correct": false
+                    },
+                    {
+                        "id": "b",
+                        "text": "Terima kasih",
+                        "correct": true
+                    },
+                    {
+                        "id": "c",
+                        "text": "Maaf",
+                        "correct": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYPT68Y4F0GMVKRXHT76FK",
+            "question": {
+                "stem": {
+                    "text": "「Sama-sama」是什麼意思？"
+                },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "謝謝",
+                        "correct": false
+                    },
+                    {
+                        "id": "b",
+                        "text": "再見",
+                        "correct": false
+                    },
+                    {
+                        "id": "c",
+                        "text": "不客氣",
+                        "correct": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYPV5GFYPZ544KB3Z6EWCQ",
+            "question": {
+                "stem": {
+                    "text": "「對不起」的印尼語是？"
+                },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "Maaf",
+                        "correct": true
+                    },
+                    {
+                        "id": "b",
+                        "text": "Halo",
+                        "correct": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYPW4RXDH1EHPCP3DZCZRW",
+            "question": {
+                "stem": {
+                    "text": "「再見」的印尼語是？"
+                },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "Selamat pagi",
+                        "correct": false
+                    },
+                    {
+                        "id": "b",
+                        "text": "Apa kabar?",
+                        "correct": false
+                    },
+                    {
+                        "id": "c",
+                        "text": "Terima kasih",
+                        "correct": false
+                    },
+                    {
+                        "id": "d",
+                        "text": "Sampai jumpa",
+                        "correct": true
+                    }
+                ]
+            }
+        }
+    ]
+}

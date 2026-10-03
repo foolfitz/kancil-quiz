@@ -1,0 +1,15 @@
+{
+    "name": "@kancil-quiz/player",
+    "version": "0.0.0",
+    "private": true,
+    "description": "遊戲宿主，也可建置成獨立播放器（docs/SPEC.md 7.2、10.2）",
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "dependencies": {
+        "@kancil-quiz/deck": "*",
+        "@kancil-quiz/games-sdk": "*",
+        "@kancil-quiz/schema": "*"
+    }
+}

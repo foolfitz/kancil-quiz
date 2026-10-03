@@ -1,0 +1,76 @@
+{
+    "format": "kancil-set",
+    "version": 1,
+    "id": "01M3ZYQ5X8SGDRSSR6NRG886PJ",
+    "kind": "quiz",
+    "language": "vi",
+    "title": "打招呼（越南語）",
+    "license": "CC-BY-4.0",
+    "authors": [{ "name": "Kancil Quiz 開發團隊" }],
+    "entries": [
+        {
+            "id": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+            "question": {
+                "stem": { "text": "「謝謝」的越南語是？" },
+                "options": [
+                    { "id": "a", "text": "Cảm ơn", "correct": true },
+                    { "id": "b", "text": "Xin chào", "correct": false },
+                    { "id": "c", "text": "Tạm biệt", "correct": false }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYQ7VR1MB2JNFJZHR8GM5J",
+            "question": {
+                "stem": { "text": "「對不起」的越南語是？" },
+                "options": [
+                    { "id": "a", "text": "Không có gì", "correct": false },
+                    { "id": "b", "text": "Xin lỗi", "correct": true },
+                    { "id": "c", "text": "Cảm ơn", "correct": false },
+                    { "id": "d", "text": "Tạm biệt", "correct": false }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYQ8V0V63JGT3VTPPQ2YK1",
+            "question": {
+                "stem": { "text": "「Không có gì」是什麼意思？" },
+                "options": [
+                    { "id": "a", "text": "謝謝", "correct": false },
+                    { "id": "b", "text": "再見", "correct": false },
+                    { "id": "c", "text": "不客氣", "correct": true }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYQ9T8ZMN8SH65B6B5PZPH",
+            "question": {
+                "stem": { "text": "「新年快樂」的越南語是？" },
+                "options": [
+                    {
+                        "id": "a",
+                        "text": "Chúc mừng năm mới",
+                        "correct": true
+                    },
+                    { "id": "b", "text": "Chúc ngủ ngon", "correct": false },
+                    { "id": "c", "text": "Xin chào", "correct": false }
+                ]
+            }
+        },
+        {
+            "id": "01M3ZYQASG3RQC350CDY5HS28T",
+            "question": {
+                "stem": { "text": "「你好嗎？」的越南語是？" },
+                "options": [
+                    { "id": "a", "text": "Bạn tên là gì?", "correct": false },
+                    { "id": "b", "text": "Tạm biệt", "correct": false },
+                    {
+                        "id": "c",
+                        "text": "Bạn có khỏe không?",
+                        "correct": true
+                    }
+                ]
+            }
+        }
+    ]
+}

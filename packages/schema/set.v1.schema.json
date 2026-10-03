@@ -1,0 +1,240 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://kancil-quiz.invalid/schema/set.v1.schema.json",
+    "title": "KancilSet",
+    "description": "Kancil Set Format v1：題組的交換格式，規格見 docs/SPEC.md 第 6 節。以下規則 JSON Schema 無法表達，由程式另外檢查：所有文字為 NFC；同一題組內 entry ID 不重複；同一題內選項 ID 不重複。",
+    "oneOf": [{ "$ref": "#/$defs/VocabSet" }, { "$ref": "#/$defs/QuizSet" }],
+    "$defs": {
+        "Ulid": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+        },
+        "LanguageCode": {
+            "description": "語言代碼，見 docs/SPEC.md 附錄 A",
+            "enum": ["id", "vi", "ms", "fil", "th", "km", "my"]
+        },
+        "License": {
+            "description": "SPDX 授權識別碼，建議使用 CC-BY-4.0、CC-BY-SA-4.0 或 CC0-1.0",
+            "type": "string",
+            "minLength": 1
+        },
+        "Author": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "url": { "type": "string", "minLength": 1 }
+            }
+        },
+        "Authors": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/Author" },
+            "minItems": 1
+        },
+        "Media": {
+            "description": "音檔或圖片。authors、license、source 省略時沿用外層（媒體沿用詞條，詞條沿用題組）",
+            "type": "object",
+            "required": ["src"],
+            "properties": {
+                "src": {
+                    "description": "zip 內的相對路徑（例：media/<媒體 ID>.m4a）；API 輸出時為絕對網址",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "authors": { "$ref": "#/$defs/Authors" },
+                "license": { "$ref": "#/$defs/License" },
+                "source": { "type": "string", "minLength": 1 }
+            }
+        },
+        "OptionalMedia": {
+            "anyOf": [{ "$ref": "#/$defs/Media" }, { "type": "null" }]
+        },
+        "CurriculumRef": {
+            "type": "object",
+            "required": ["volume", "lesson"],
+            "properties": {
+                "volume": { "type": "integer", "minimum": 1 },
+                "lesson": { "type": "integer", "minimum": 1 }
+            }
+        },
+        "SetBase": {
+            "type": "object",
+            "required": [
+                "format",
+                "version",
+                "id",
+                "kind",
+                "language",
+                "title",
+                "license",
+                "authors"
+            ],
+            "properties": {
+                "format": { "const": "kancil-set" },
+                "version": { "const": 1 },
+                "id": { "$ref": "#/$defs/Ulid" },
+                "kind": { "enum": ["vocab", "quiz"] },
+                "language": { "$ref": "#/$defs/LanguageCode" },
+                "title": { "type": "string", "minLength": 1 },
+                "description": { "type": ["string", "null"] },
+                "license": { "$ref": "#/$defs/License" },
+                "authors": { "$ref": "#/$defs/Authors" },
+                "curriculum": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/CurriculumRef" }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                }
+            }
+        },
+        "FaceField": {
+            "enum": ["text", "romanization", "translation_zh", "audio", "image"]
+        },
+        "FaceFields": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/FaceField" },
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "Faces": {
+            "description": "詞彙組哪一面當題目、哪一面當答案",
+            "type": "object",
+            "required": ["prompt", "answer"],
+            "properties": {
+                "prompt": { "$ref": "#/$defs/FaceFields" },
+                "answer": { "$ref": "#/$defs/FaceFields" }
+            }
+        },
+        "VocabItem": {
+            "type": "object",
+            "required": ["text", "translation_zh"],
+            "properties": {
+                "text": { "type": "string", "minLength": 1 },
+                "romanization": { "type": ["string", "null"] },
+                "translation_zh": { "type": "string", "minLength": 1 },
+                "audio": {
+                    "description": "可以有多個，例如不同發音者",
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/Media" }
+                },
+                "image": { "$ref": "#/$defs/OptionalMedia" },
+                "tags": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                },
+                "authors": { "$ref": "#/$defs/Authors" },
+                "license": { "$ref": "#/$defs/License" },
+                "source": { "type": "string", "minLength": 1 }
+            }
+        },
+        "VocabEntry": {
+            "type": "object",
+            "required": ["id", "item"],
+            "properties": {
+                "id": { "$ref": "#/$defs/Ulid" },
+                "item": { "$ref": "#/$defs/VocabItem" }
+            }
+        },
+        "VocabSet": {
+            "title": "VocabSet",
+            "allOf": [
+                { "$ref": "#/$defs/SetBase" },
+                {
+                    "type": "object",
+                    "required": ["kind", "faces", "entries"],
+                    "properties": {
+                        "kind": { "const": "vocab" },
+                        "faces": { "$ref": "#/$defs/Faces" },
+                        "entries": {
+                            "type": "array",
+                            "items": { "$ref": "#/$defs/VocabEntry" }
+                        }
+                    }
+                }
+            ]
+        },
+        "QuizStem": {
+            "description": "題幹，文字、音檔、圖片至少要有一項",
+            "type": "object",
+            "properties": {
+                "text": { "type": ["string", "null"], "minLength": 1 },
+                "audio": { "$ref": "#/$defs/OptionalMedia" },
+                "image": { "$ref": "#/$defs/OptionalMedia" }
+            },
+            "not": {
+                "type": "object",
+                "properties": {
+                    "text": { "type": "null" },
+                    "audio": { "type": "null" },
+                    "image": { "type": "null" }
+                }
+            }
+        },
+        "QuizOption": {
+            "description": "選項，文字與圖片至少要有一項",
+            "type": "object",
+            "required": ["id", "correct"],
+            "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "text": { "type": ["string", "null"], "minLength": 1 },
+                "image": { "$ref": "#/$defs/OptionalMedia" },
+                "correct": { "type": "boolean" }
+            },
+            "not": {
+                "type": "object",
+                "properties": {
+                    "text": { "type": "null" },
+                    "image": { "type": "null" }
+                }
+            }
+        },
+        "QuizQuestion": {
+            "type": "object",
+            "required": ["stem", "options"],
+            "properties": {
+                "stem": { "$ref": "#/$defs/QuizStem" },
+                "options": {
+                    "description": "2 到 6 個選項，v1 恰有一個正解（多個正解見 SPEC D-11）",
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/QuizOption" },
+                    "minItems": 2,
+                    "maxItems": 6,
+                    "contains": {
+                        "type": "object",
+                        "required": ["correct"],
+                        "properties": { "correct": { "const": true } }
+                    },
+                    "minContains": 1,
+                    "maxContains": 1
+                }
+            }
+        },
+        "QuizEntry": {
+            "type": "object",
+            "required": ["id", "question"],
+            "properties": {
+                "id": { "$ref": "#/$defs/Ulid" },
+                "question": { "$ref": "#/$defs/QuizQuestion" }
+            }
+        },
+        "QuizSet": {
+            "title": "QuizSet",
+            "allOf": [
+                { "$ref": "#/$defs/SetBase" },
+                {
+                    "type": "object",
+                    "required": ["kind", "entries"],
+                    "properties": {
+                        "kind": { "const": "quiz" },
+                        "entries": {
+                            "type": "array",
+                            "items": { "$ref": "#/$defs/QuizEntry" }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

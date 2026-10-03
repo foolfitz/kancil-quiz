@@ -1,0 +1,1621 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildRounds() > ../../schema/fixtures/sets/id-quiz-greetings/set.json 的轉換結果（快照） 1`] = `
+{
+  "mcq": [
+    {
+      "entryId": "01M3ZYPR7R9Y800PH33AVYYKTM",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Terima kasih",
+          },
+          "id": "c",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Selamat malam",
+          },
+          "id": "b",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Selamat pagi",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「早安」的印尼語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPW4RXDH1EHPCP3DZCZRW",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Selamat pagi",
+          },
+          "id": "a",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Terima kasih",
+          },
+          "id": "c",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Sampai jumpa",
+          },
+          "id": "d",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Apa kabar?",
+          },
+          "id": "b",
+        },
+      ],
+      "prompt": {
+        "text": "「再見」的印尼語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPT68Y4F0GMVKRXHT76FK",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "不客氣",
+          },
+          "id": "c",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "謝謝",
+          },
+          "id": "a",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "再見",
+          },
+          "id": "b",
+        },
+      ],
+      "prompt": {
+        "text": "「Sama-sama」是什麼意思？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPS70YBQADB9W014YAB3G",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Sama-sama",
+          },
+          "id": "a",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Terima kasih",
+          },
+          "id": "b",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Maaf",
+          },
+          "id": "c",
+        },
+      ],
+      "prompt": {
+        "text": "「謝謝」的印尼語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPV5GFYPZ544KB3Z6EWCQ",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Halo",
+          },
+          "id": "b",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Maaf",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「對不起」的印尼語是？",
+      },
+      "shape": "mcq",
+    },
+  ],
+  "pair": [
+    {
+      "entryId": "01M3ZYPR7R9Y800PH33AVYYKTM",
+      "left": {
+        "text": "「早安」的印尼語是？",
+      },
+      "right": {
+        "text": "Selamat pagi",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPW4RXDH1EHPCP3DZCZRW",
+      "left": {
+        "text": "「再見」的印尼語是？",
+      },
+      "right": {
+        "text": "Sampai jumpa",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPT68Y4F0GMVKRXHT76FK",
+      "left": {
+        "text": "「Sama-sama」是什麼意思？",
+      },
+      "right": {
+        "text": "不客氣",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPS70YBQADB9W014YAB3G",
+      "left": {
+        "text": "「謝謝」的印尼語是？",
+      },
+      "right": {
+        "text": "Terima kasih",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPV5GFYPZ544KB3Z6EWCQ",
+      "left": {
+        "text": "「對不起」的印尼語是？",
+      },
+      "right": {
+        "text": "Maaf",
+      },
+      "shape": "pair",
+    },
+  ],
+}
+`;
+
+exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的轉換結果（快照） 1`] = `
+{
+  "mcq": [
+    {
+      "entryId": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pisang",
+          },
+          "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "jeruk",
+          },
+          "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+        },
+      ],
+      "prompt": {
+        "text": "橘子",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPP98AJFF8G55H6Z83BV9",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "apel",
+          },
+          "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "mangga",
+          },
+          "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+      ],
+      "prompt": {
+        "text": "木瓜",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPGDRQERH58MH1RKP8NX6",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "jeruk",
+          },
+          "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "apel",
+          },
+          "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "semangka",
+          },
+          "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+        },
+      ],
+      "prompt": {
+        "text": "蘋果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "pisang",
+          },
+          "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "semangka",
+          },
+          "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+      ],
+      "prompt": {
+        "text": "香蕉",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "semangka",
+          },
+          "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "nanas",
+          },
+          "id": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "mangga",
+          },
+          "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+        },
+      ],
+      "prompt": {
+        "text": "鳳梨",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPMARP8KRGECBB02ETN7V",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "jeruk",
+          },
+          "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "apel",
+          },
+          "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+      ],
+      "prompt": {
+        "text": "葡萄",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "pepaya",
+          },
+          "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "semangka",
+          },
+          "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "jeruk",
+          },
+          "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "mangga",
+          },
+          "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+        },
+      ],
+      "prompt": {
+        "text": "芒果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "semangka",
+          },
+          "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "pisang",
+          },
+          "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "jeruk",
+          },
+          "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "anggur",
+          },
+          "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+        },
+      ],
+      "prompt": {
+        "text": "西瓜",
+      },
+      "shape": "mcq",
+    },
+  ],
+  "pair": [
+    {
+      "entryId": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+      "left": {
+        "text": "橘子",
+      },
+      "right": {
+        "text": "jeruk",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPP98AJFF8G55H6Z83BV9",
+      "left": {
+        "text": "木瓜",
+      },
+      "right": {
+        "text": "pepaya",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPGDRQERH58MH1RKP8NX6",
+      "left": {
+        "text": "蘋果",
+      },
+      "right": {
+        "text": "apel",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+      "left": {
+        "text": "香蕉",
+      },
+      "right": {
+        "text": "pisang",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
+      "left": {
+        "text": "鳳梨",
+      },
+      "right": {
+        "text": "nanas",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPMARP8KRGECBB02ETN7V",
+      "left": {
+        "text": "葡萄",
+      },
+      "right": {
+        "text": "anggur",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+      "left": {
+        "text": "芒果",
+      },
+      "right": {
+        "text": "mangga",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+      "left": {
+        "text": "西瓜",
+      },
+      "right": {
+        "text": "semangka",
+      },
+      "shape": "pair",
+    },
+  ],
+}
+`;
+
+exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的轉換結果（快照） 1`] = `
+{
+  "mcq": [
+    {
+      "entryId": "01M3ZYQEPGVW5GN483M2PVWX4M",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "kluai",
+            "text": "กล้วย",
+          },
+          "id": "01M3ZYQCR0360FQWGSDAQFESTK",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "som",
+            "text": "ส้ม",
+          },
+          "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+        },
+      ],
+      "prompt": {
+        "text": "橘子",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "aeppoen",
+            "text": "แอปเปิล",
+          },
+          "id": "01M3ZYQDQ823GW2FPHB3YAK909",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "mamuang",
+            "text": "มะม่วง",
+          },
+          "id": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+      ],
+      "prompt": {
+        "text": "木瓜",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQDQ823GW2FPHB3YAK909",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "som",
+            "text": "ส้ม",
+          },
+          "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "aeppoen",
+            "text": "แอปเปิล",
+          },
+          "id": "01M3ZYQDQ823GW2FPHB3YAK909",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "taengmo",
+            "text": "แตงโม",
+          },
+          "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+        },
+      ],
+      "prompt": {
+        "text": "蘋果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQCR0360FQWGSDAQFESTK",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "romanization": "kluai",
+            "text": "กล้วย",
+          },
+          "id": "01M3ZYQCR0360FQWGSDAQFESTK",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "taengmo",
+            "text": "แตงโม",
+          },
+          "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+      ],
+      "prompt": {
+        "text": "香蕉",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQJKG5A68B6MJB65JP8CW",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "taengmo",
+            "text": "แตงโม",
+          },
+          "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "sapparot",
+            "text": "สับปะรด",
+          },
+          "id": "01M3ZYQJKG5A68B6MJB65JP8CW",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "mamuang",
+            "text": "มะม่วง",
+          },
+          "id": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+        },
+      ],
+      "prompt": {
+        "text": "鳳梨",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQHM8TE6A919NWKTCJPND",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "som",
+            "text": "ส้ม",
+          },
+          "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "aeppoen",
+            "text": "แอปเปิล",
+          },
+          "id": "01M3ZYQDQ823GW2FPHB3YAK909",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+      ],
+      "prompt": {
+        "text": "葡萄",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "romanization": "malako",
+            "text": "มะละกอ",
+          },
+          "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "taengmo",
+            "text": "แตงโม",
+          },
+          "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "som",
+            "text": "ส้ม",
+          },
+          "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+        },
+        {
+          "correct": true,
+          "face": {
+            "romanization": "mamuang",
+            "text": "มะม่วง",
+          },
+          "id": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+        },
+      ],
+      "prompt": {
+        "text": "芒果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "romanization": "taengmo",
+            "text": "แตงโม",
+          },
+          "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "kluai",
+            "text": "กล้วย",
+          },
+          "id": "01M3ZYQCR0360FQWGSDAQFESTK",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "som",
+            "text": "ส้ม",
+          },
+          "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+        },
+        {
+          "correct": false,
+          "face": {
+            "romanization": "a-ngun",
+            "text": "องุ่น",
+          },
+          "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+        },
+      ],
+      "prompt": {
+        "text": "西瓜",
+      },
+      "shape": "mcq",
+    },
+  ],
+  "pair": [
+    {
+      "entryId": "01M3ZYQEPGVW5GN483M2PVWX4M",
+      "left": {
+        "text": "橘子",
+      },
+      "right": {
+        "romanization": "som",
+        "text": "ส้ม",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+      "left": {
+        "text": "木瓜",
+      },
+      "right": {
+        "romanization": "malako",
+        "text": "มะละกอ",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQDQ823GW2FPHB3YAK909",
+      "left": {
+        "text": "蘋果",
+      },
+      "right": {
+        "romanization": "aeppoen",
+        "text": "แอปเปิล",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQCR0360FQWGSDAQFESTK",
+      "left": {
+        "text": "香蕉",
+      },
+      "right": {
+        "romanization": "kluai",
+        "text": "กล้วย",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQJKG5A68B6MJB65JP8CW",
+      "left": {
+        "text": "鳳梨",
+      },
+      "right": {
+        "romanization": "sapparot",
+        "text": "สับปะรด",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQHM8TE6A919NWKTCJPND",
+      "left": {
+        "text": "葡萄",
+      },
+      "right": {
+        "romanization": "a-ngun",
+        "text": "องุ่น",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+      "left": {
+        "text": "芒果",
+      },
+      "right": {
+        "romanization": "mamuang",
+        "text": "มะม่วง",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+      "left": {
+        "text": "西瓜",
+      },
+      "right": {
+        "romanization": "taengmo",
+        "text": "แตงโม",
+      },
+      "shape": "pair",
+    },
+  ],
+}
+`;
+
+exports[`buildRounds() > ../../schema/fixtures/sets/vi-quiz-greetings/set.json 的轉換結果（快照） 1`] = `
+{
+  "mcq": [
+    {
+      "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Tạm biệt",
+          },
+          "id": "c",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Xin chào",
+          },
+          "id": "b",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Cảm ơn",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「謝謝」的越南語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQASG3RQC350CDY5HS28T",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "Bạn có khỏe không?",
+          },
+          "id": "c",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Tạm biệt",
+          },
+          "id": "b",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Bạn tên là gì?",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「你好嗎？」的越南語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ8V0V63JGT3VTPPQ2YK1",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "再見",
+          },
+          "id": "b",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "謝謝",
+          },
+          "id": "a",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "不客氣",
+          },
+          "id": "c",
+        },
+      ],
+      "prompt": {
+        "text": "「Không có gì」是什麼意思？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ7VR1MB2JNFJZHR8GM5J",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Tạm biệt",
+          },
+          "id": "d",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Xin lỗi",
+          },
+          "id": "b",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Cảm ơn",
+          },
+          "id": "c",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Không có gì",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「對不起」的越南語是？",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ9T8ZMN8SH65B6B5PZPH",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "Chúc ngủ ngon",
+          },
+          "id": "b",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "Xin chào",
+          },
+          "id": "c",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "Chúc mừng năm mới",
+          },
+          "id": "a",
+        },
+      ],
+      "prompt": {
+        "text": "「新年快樂」的越南語是？",
+      },
+      "shape": "mcq",
+    },
+  ],
+  "pair": [
+    {
+      "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+      "left": {
+        "text": "「謝謝」的越南語是？",
+      },
+      "right": {
+        "text": "Cảm ơn",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQASG3RQC350CDY5HS28T",
+      "left": {
+        "text": "「你好嗎？」的越南語是？",
+      },
+      "right": {
+        "text": "Bạn có khỏe không?",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ8V0V63JGT3VTPPQ2YK1",
+      "left": {
+        "text": "「Không có gì」是什麼意思？",
+      },
+      "right": {
+        "text": "不客氣",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ7VR1MB2JNFJZHR8GM5J",
+      "left": {
+        "text": "「對不起」的越南語是？",
+      },
+      "right": {
+        "text": "Xin lỗi",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ9T8ZMN8SH65B6B5PZPH",
+      "left": {
+        "text": "「新年快樂」的越南語是？",
+      },
+      "right": {
+        "text": "Chúc mừng năm mới",
+      },
+      "shape": "pair",
+    },
+  ],
+}
+`;
+
+exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的轉換結果（快照） 1`] = `
+{
+  "mcq": [
+    {
+      "entryId": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả chuối",
+          },
+          "id": "01M3ZYPY38WC6089XH59VBSYYS",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả cam",
+          },
+          "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+        },
+      ],
+      "prompt": {
+        "text": "柳橙",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả táo",
+          },
+          "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả xoài",
+          },
+          "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+      ],
+      "prompt": {
+        "text": "木瓜",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả cam",
+          },
+          "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả táo",
+          },
+          "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả dưa hấu",
+          },
+          "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+        },
+      ],
+      "prompt": {
+        "text": "蘋果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "quả chuối",
+          },
+          "id": "01M3ZYPY38WC6089XH59VBSYYS",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả dưa hấu",
+          },
+          "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+      ],
+      "prompt": {
+        "text": "香蕉",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ3YRQHVYPGP21WXK83SB",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả dưa hấu",
+          },
+          "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả dứa",
+          },
+          "id": "01M3ZYQ3YRQHVYPGP21WXK83SB",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả xoài",
+          },
+          "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+        },
+      ],
+      "prompt": {
+        "text": "鳳梨",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả cam",
+          },
+          "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả táo",
+          },
+          "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+      ],
+      "prompt": {
+        "text": "葡萄",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+      "options": [
+        {
+          "correct": false,
+          "face": {
+            "text": "quả đu đủ",
+          },
+          "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả dưa hấu",
+          },
+          "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả cam",
+          },
+          "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+        },
+        {
+          "correct": true,
+          "face": {
+            "text": "quả xoài",
+          },
+          "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+        },
+      ],
+      "prompt": {
+        "text": "芒果",
+      },
+      "shape": "mcq",
+    },
+    {
+      "entryId": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+      "options": [
+        {
+          "correct": true,
+          "face": {
+            "text": "quả dưa hấu",
+          },
+          "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả chuối",
+          },
+          "id": "01M3ZYPY38WC6089XH59VBSYYS",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả cam",
+          },
+          "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+        },
+        {
+          "correct": false,
+          "face": {
+            "text": "quả nho",
+          },
+          "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+        },
+      ],
+      "prompt": {
+        "text": "西瓜",
+      },
+      "shape": "mcq",
+    },
+  ],
+  "pair": [
+    {
+      "entryId": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+      "left": {
+        "text": "柳橙",
+      },
+      "right": {
+        "text": "quả cam",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+      "left": {
+        "text": "木瓜",
+      },
+      "right": {
+        "text": "quả đu đủ",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+      "left": {
+        "text": "蘋果",
+      },
+      "right": {
+        "text": "quả táo",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+      "left": {
+        "text": "香蕉",
+      },
+      "right": {
+        "text": "quả chuối",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ3YRQHVYPGP21WXK83SB",
+      "left": {
+        "text": "鳳梨",
+      },
+      "right": {
+        "text": "quả dứa",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+      "left": {
+        "text": "葡萄",
+      },
+      "right": {
+        "text": "quả nho",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+      "left": {
+        "text": "芒果",
+      },
+      "right": {
+        "text": "quả xoài",
+      },
+      "shape": "pair",
+    },
+    {
+      "entryId": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+      "left": {
+        "text": "西瓜",
+      },
+      "right": {
+        "text": "quả dưa hấu",
+      },
+      "shape": "pair",
+    },
+  ],
+}
+`;

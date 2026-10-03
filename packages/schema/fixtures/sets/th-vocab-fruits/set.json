@@ -1,0 +1,81 @@
+{
+    "format": "kancil-set",
+    "version": 1,
+    "id": "01M3ZYQBRR8TF21FZXJGE1WGND",
+    "kind": "vocab",
+    "language": "th",
+    "title": "水果（泰語，預警用）",
+    "description": "非必過的預警 fixture，用來提早發現違反切字規則的程式（docs/SPEC.md 7.6）。羅馬拼寫採 RTGS。",
+    "license": "CC-BY-4.0",
+    "authors": [{ "name": "Kancil Quiz 開發團隊" }],
+    "faces": {
+        "prompt": ["translation_zh"],
+        "answer": ["text", "romanization"]
+    },
+    "entries": [
+        {
+            "id": "01M3ZYQCR0360FQWGSDAQFESTK",
+            "item": {
+                "text": "กล้วย",
+                "romanization": "kluai",
+                "translation_zh": "香蕉"
+            }
+        },
+        {
+            "id": "01M3ZYQDQ823GW2FPHB3YAK909",
+            "item": {
+                "text": "แอปเปิล",
+                "romanization": "aeppoen",
+                "translation_zh": "蘋果"
+            }
+        },
+        {
+            "id": "01M3ZYQEPGVW5GN483M2PVWX4M",
+            "item": {
+                "text": "ส้ม",
+                "romanization": "som",
+                "translation_zh": "橘子"
+            }
+        },
+        {
+            "id": "01M3ZYQFNR3MNNFN71A7SFPR8G",
+            "item": {
+                "text": "มะม่วง",
+                "romanization": "mamuang",
+                "translation_zh": "芒果"
+            }
+        },
+        {
+            "id": "01M3ZYQGN0AV3FECA1M3J7G6D0",
+            "item": {
+                "text": "แตงโม",
+                "romanization": "taengmo",
+                "translation_zh": "西瓜"
+            }
+        },
+        {
+            "id": "01M3ZYQHM8TE6A919NWKTCJPND",
+            "item": {
+                "text": "องุ่น",
+                "romanization": "a-ngun",
+                "translation_zh": "葡萄"
+            }
+        },
+        {
+            "id": "01M3ZYQJKG5A68B6MJB65JP8CW",
+            "item": {
+                "text": "สับปะรด",
+                "romanization": "sapparot",
+                "translation_zh": "鳳梨"
+            }
+        },
+        {
+            "id": "01M3ZYQKJRVPW5RCF858Y9FXDF",
+            "item": {
+                "text": "มะละกอ",
+                "romanization": "malako",
+                "translation_zh": "木瓜"
+            }
+        }
+    ]
+}

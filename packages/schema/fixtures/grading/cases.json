@@ -1,0 +1,182 @@
+{
+    "judge": [
+        {
+            "name": "問答組選擇題：選對",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                "presented": ["a", "b", "c"],
+                "selected": ["a"]
+            },
+            "expected": true
+        },
+        {
+            "name": "問答組選擇題：選錯",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                "presented": ["a", "b", "c"],
+                "selected": ["b"]
+            },
+            "expected": false
+        },
+        {
+            "name": "問答組選擇題：選了沒有出現的選項",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                "presented": ["b", "c"],
+                "selected": ["a"]
+            },
+            "expected": false
+        },
+        {
+            "name": "問答組選擇題：一次選了兩個（v1 只有單一正解）",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                "presented": ["a", "b", "c"],
+                "selected": ["a", "b"]
+            },
+            "expected": false
+        },
+        {
+            "name": "問答組選擇題：沒有選",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                "presented": ["a", "b", "c"],
+                "selected": []
+            },
+            "expected": false
+        },
+        {
+            "name": "題組中沒有這一題",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+                "presented": ["a", "b"],
+                "selected": ["a"]
+            },
+            "expected": false
+        },
+        {
+            "name": "詞彙組選擇題：選對（選項 id 就是詞條的 entry id）",
+            "set": "sets/vi-vocab-fruits/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+                "presented": [
+                    "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+                    "01M3ZYPY38WC6089XH59VBSYYS",
+                    "01M3ZYPZ2G7JRB1C17YFZGM74K"
+                ],
+                "selected": ["01M3ZYPY38WC6089XH59VBSYYS"]
+            },
+            "expected": true
+        },
+        {
+            "name": "詞彙組選擇題：選到干擾選項",
+            "set": "sets/vi-vocab-fruits/set.json",
+            "shape": "mcq",
+            "response": {
+                "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+                "presented": [
+                    "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+                    "01M3ZYPY38WC6089XH59VBSYYS",
+                    "01M3ZYPZ2G7JRB1C17YFZGM74K"
+                ],
+                "selected": ["01M3ZYQ01R4AYPJHDJ3RYZYBZG"]
+            },
+            "expected": false
+        },
+        {
+            "name": "詞彙組配對：配對正確",
+            "set": "sets/vi-vocab-fruits/set.json",
+            "shape": "pair",
+            "response": {
+                "entryId": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+                "presented": [
+                    "01M3ZYPY38WC6089XH59VBSYYS",
+                    "01M3ZYPZ2G7JRB1C17YFZGM74K"
+                ],
+                "selected": ["01M3ZYPZ2G7JRB1C17YFZGM74K"]
+            },
+            "expected": true
+        },
+        {
+            "name": "問答組配對：右側是正解選項，以 entry id 識別",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "pair",
+            "response": {
+                "entryId": "01M3ZYQ7VR1MB2JNFJZHR8GM5J",
+                "presented": [
+                    "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                    "01M3ZYQ7VR1MB2JNFJZHR8GM5J"
+                ],
+                "selected": ["01M3ZYQ6WGT6CYY66DFAY06R1D"]
+            },
+            "expected": false
+        },
+        {
+            "name": "字卡不計分",
+            "set": "sets/vi-vocab-fruits/set.json",
+            "shape": "card",
+            "response": {
+                "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+                "presented": [],
+                "selected": []
+            },
+            "expected": null
+        }
+    ],
+    "countCorrect": [
+        {
+            "name": "每題以第一筆作答計算：答錯後重試答對仍算錯",
+            "set": "sets/vi-quiz-greetings/set.json",
+            "shape": "mcq",
+            "responses": [
+                {
+                    "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                    "presented": ["a", "b", "c"],
+                    "selected": ["b"]
+                },
+                {
+                    "entryId": "01M3ZYQ6WGT6CYY66DFAY06R1D",
+                    "presented": ["a", "b", "c"],
+                    "selected": ["a"]
+                },
+                {
+                    "entryId": "01M3ZYQ7VR1MB2JNFJZHR8GM5J",
+                    "presented": ["a", "b", "c", "d"],
+                    "selected": ["b"]
+                },
+                {
+                    "entryId": "01M3ZYQ8V0V63JGT3VTPPQ2YK1",
+                    "presented": ["a", "b", "c"],
+                    "selected": ["c"]
+                }
+            ],
+            "expected": 2
+        },
+        {
+            "name": "字卡不計分",
+            "set": "sets/vi-vocab-fruits/set.json",
+            "shape": "card",
+            "responses": [
+                {
+                    "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
+                    "presented": [],
+                    "selected": []
+                }
+            ],
+            "expected": null
+        }
+    ]
+}

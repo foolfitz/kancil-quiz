@@ -1,0 +1,76 @@
+{
+    "format": "kancil-set",
+    "version": 1,
+    "id": "01M3ZYPX40WSFAQG7B763E118K",
+    "kind": "vocab",
+    "language": "en",
+    "title": "水果（越南語）",
+    "license": "CC-BY-4.0",
+    "authors": [
+        {
+            "name": "Kancil Quiz 開發團隊"
+        }
+    ],
+    "faces": {
+        "prompt": ["translation_zh"],
+        "answer": ["text"]
+    },
+    "entries": [
+        {
+            "id": "01M3ZYPY38WC6089XH59VBSYYS",
+            "item": {
+                "text": "quả chuối",
+                "translation_zh": "香蕉"
+            }
+        },
+        {
+            "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
+            "item": {
+                "text": "quả táo",
+                "translation_zh": "蘋果"
+            }
+        },
+        {
+            "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
+            "item": {
+                "text": "quả cam",
+                "translation_zh": "柳橙"
+            }
+        },
+        {
+            "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
+            "item": {
+                "text": "quả xoài",
+                "translation_zh": "芒果"
+            }
+        },
+        {
+            "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
+            "item": {
+                "text": "quả dưa hấu",
+                "translation_zh": "西瓜"
+            }
+        },
+        {
+            "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
+            "item": {
+                "text": "quả nho",
+                "translation_zh": "葡萄"
+            }
+        },
+        {
+            "id": "01M3ZYQ3YRQHVYPGP21WXK83SB",
+            "item": {
+                "text": "quả dứa",
+                "translation_zh": "鳳梨"
+            }
+        },
+        {
+            "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
+            "item": {
+                "text": "quả đu đủ",
+                "translation_zh": "木瓜"
+            }
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "format": "kancil-activity",
+    "version": 1,
+    "id": "01M3ZYQMJ0J2HK1TZMXX3KK30E",
+    "game": {
+        "id": "quiz",
+        "version": "0.1.0",
+        "options": {}
+    },
+    "mode": "assignment",
+    "opens_at": "2026-10-05T08:00:00+08:00",
+    "closes_at": "2026-10-12T17:00:00+08:00",
+    "set_revision_id": "01M3ZYQNH8HV9K175395B8DZWP",
+    "set": {
+        "format": "kancil-set",
+        "version": 1,
+        "id": "01M3ZYQ5X8SGDRSSR6NRG886PJ",
+        "kind": "quiz",
+        "language": "vi",
+        "title": "打招呼（越南語）",
+        "license": "CC-BY-4.0",
+        "authors": [
+            {
+                "name": "Kancil Quiz 開發團隊"
+            }
+        ]
+    }
+}

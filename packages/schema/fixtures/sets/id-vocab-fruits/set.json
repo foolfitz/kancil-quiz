@@ -1,0 +1,48 @@
+{
+    "format": "kancil-set",
+    "version": 1,
+    "id": "01M3ZYPEF8AW2ZE6E3WKCKW0S7",
+    "kind": "vocab",
+    "language": "id",
+    "title": "水果（印尼語）",
+    "license": "CC-BY-4.0",
+    "authors": [{ "name": "Kancil Quiz 開發團隊" }],
+    "faces": {
+        "prompt": ["translation_zh"],
+        "answer": ["text"]
+    },
+    "entries": [
+        {
+            "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
+            "item": { "text": "pisang", "translation_zh": "香蕉" }
+        },
+        {
+            "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
+            "item": { "text": "apel", "translation_zh": "蘋果" }
+        },
+        {
+            "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
+            "item": { "text": "jeruk", "translation_zh": "橘子" }
+        },
+        {
+            "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
+            "item": { "text": "mangga", "translation_zh": "芒果" }
+        },
+        {
+            "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
+            "item": { "text": "semangka", "translation_zh": "西瓜" }
+        },
+        {
+            "id": "01M3ZYPMARP8KRGECBB02ETN7V",
+            "item": { "text": "anggur", "translation_zh": "葡萄" }
+        },
+        {
+            "id": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
+            "item": { "text": "nanas", "translation_zh": "鳳梨" }
+        },
+        {
+            "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
+            "item": { "text": "pepaya", "translation_zh": "木瓜" }
+        }
+    ]
+}

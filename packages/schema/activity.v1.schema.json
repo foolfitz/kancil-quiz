@@ -1,0 +1,59 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://kancil-quiz.invalid/schema/activity.v1.schema.json",
+    "title": "KancilActivity",
+    "description": "活動播放格式 v1：GET /api/v1/activities/{activity} 的回應，規格見 docs/SPEC.md 6.6。set 為題組最新版本的交換格式，媒體路徑為絕對網址。",
+    "type": "object",
+    "required": [
+        "format",
+        "version",
+        "id",
+        "game",
+        "mode",
+        "set_revision_id",
+        "set"
+    ],
+    "properties": {
+        "format": { "const": "kancil-activity" },
+        "version": { "const": 1 },
+        "id": { "$ref": "set.v1.schema.json#/$defs/Ulid" },
+        "game": { "$ref": "#/$defs/GameRef" },
+        "mode": { "enum": ["practice", "assignment"] },
+        "opens_at": {
+            "description": "ISO 8601 時間；作業模式的開放時間",
+            "type": ["string", "null"]
+        },
+        "closes_at": {
+            "description": "ISO 8601 時間；作業模式的截止時間",
+            "type": ["string", "null"]
+        },
+        "set_revision_id": {
+            "description": "set 對應的題組版本，開始作答時要送回伺服器",
+            "$ref": "set.v1.schema.json#/$defs/Ulid"
+        },
+        "set": { "$ref": "set.v1.schema.json" }
+    },
+    "$defs": {
+        "GameRef": {
+            "type": "object",
+            "required": ["id", "version", "options"],
+            "properties": {
+                "id": {
+                    "description": "遊戲 ID，例：maze-chase",
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "version": {
+                    "description": "遊戲版本（semver）",
+                    "type": "string",
+                    "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+                },
+                "options": {
+                    "description": "遊戲設定，內容由各遊戲的 optionsSchema 定義",
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        }
+    }
+}

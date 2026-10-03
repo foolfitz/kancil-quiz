@@ -1,0 +1,360 @@
+<script setup lang="ts">
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Gamepad2 } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
+import SetController from '@/actions/App/Http/Controllers/SetController';
+import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
+import QuizEditor from '@/components/kancil/QuizEditor.vue';
+import VocabEditor from '@/components/kancil/VocabEditor.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { KIND_NAMES } from '@/types/kancil';
+import type {
+    FaceField,
+    Language,
+    QuizEntryInput,
+    SetKind,
+    VocabEntryInput,
+} from '@/types/kancil';
+
+const props = defineProps<{
+    set: {
+        id: string;
+        kind: SetKind;
+        title: string;
+        description: string | null;
+        language_code: string;
+        license: string;
+        faces: { prompt: FaceField[]; answer: FaceField[] } | null;
+        revision: number | null;
+    };
+    entries: (VocabEntryInput | QuizEntryInput)[];
+    activities: { id: string; game_id: string; created_at: string }[];
+    languages: Language[];
+    licenses: string[];
+}>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [{ title: '我的題組', href: SetController.index() }],
+    },
+});
+
+// 詞彙組「哪一面當題目、哪一面當答案」的常用組合（docs/SPEC.md 3.2）
+const FACE_PRESETS: {
+    label: string;
+    prompt: FaceField[];
+    answer: FaceField[];
+}[] = [
+    { label: '看中文，選目標語', prompt: ['translation_zh'], answer: ['text'] },
+    { label: '看目標語，選中文', prompt: ['text'], answer: ['translation_zh'] },
+    { label: '聽發音，選目標語', prompt: ['audio'], answer: ['text'] },
+    { label: '聽發音，選中文', prompt: ['audio'], answer: ['translation_zh'] },
+    { label: '看圖片，選目標語', prompt: ['image'], answer: ['text'] },
+    { label: '看中文，選圖片', prompt: ['translation_zh'], answer: ['image'] },
+    { label: '聽發音，選圖片', prompt: ['audio'], answer: ['image'] },
+];
+
+function initial() {
+    return {
+        title: props.set.title,
+        description: props.set.description ?? '',
+        language_code: props.set.language_code,
+        license: props.set.license,
+        faces: props.set.faces ?? {
+            prompt: ['translation_zh'],
+            answer: ['text'],
+        },
+        // props 是 reactive Proxy，structuredClone 無法複製；內容本來就是 JSON
+        entries: JSON.parse(JSON.stringify(props.entries)) as (
+            | VocabEntryInput
+            | QuizEntryInput
+        )[],
+    };
+}
+
+const form = useForm(initial());
+const rightsConfirmed = ref(false);
+const showRomanization = ref(
+    props.set.kind === 'vocab' &&
+        (props.entries as VocabEntryInput[]).some((e) => e.item.romanization),
+);
+const uploadError = ref('');
+
+const vocabEntries = computed({
+    get: () => form.entries as VocabEntryInput[],
+    set: (value) => (form.entries = value),
+});
+const quizEntries = computed({
+    get: () => form.entries as QuizEntryInput[],
+    set: (value) => (form.entries = value),
+});
+
+const facePreset = computed({
+    get: () =>
+        FACE_PRESETS.findIndex(
+            (p) =>
+                p.prompt.join() === form.faces.prompt.join() &&
+                p.answer.join() === form.faces.answer.join(),
+        ),
+    set: (index: number) => {
+        const preset = FACE_PRESETS[index];
+        if (preset) {
+            form.faces = {
+                prompt: [...preset.prompt],
+                answer: [...preset.answer],
+            };
+        }
+    },
+});
+
+const errorCount = computed(() => Object.keys(form.errors).length);
+
+function toServer(entry: VocabEntryInput | QuizEntryInput) {
+    if ('item' in entry) {
+        return {
+            id: entry.id,
+            item: {
+                text: entry.item.text,
+                romanization: entry.item.romanization,
+                translation_zh: entry.item.translation_zh,
+                audio_ids: entry.item.audio.map((m) => m.id),
+                image_id: entry.item.image?.id ?? null,
+            },
+        };
+    }
+    return {
+        id: entry.id,
+        question: {
+            stem: {
+                text: entry.question.stem.text,
+                audio_id: entry.question.stem.audio?.id ?? null,
+                image_id: entry.question.stem.image?.id ?? null,
+            },
+            options: entry.question.options.map((o) => ({
+                id: o.id,
+                text: o.text,
+                image_id: o.image?.id ?? null,
+                correct: o.correct,
+            })),
+        },
+    };
+}
+
+function save(): void {
+    form.transform((data) => ({
+        ...data,
+        faces: props.set.kind === 'vocab' ? data.faces : undefined,
+        entries: data.entries.map(toServer),
+    })).submit(SetController.update(props.set.id), {
+        preserveScroll: true,
+        // 儲存後以伺服器回傳的內容（新詞條有了 ID）重設表單
+        onSuccess: () => {
+            form.defaults(initial());
+            form.reset();
+        },
+    });
+}
+
+function destroy(): void {
+    if (
+        window.confirm(
+            `確定要刪除「${props.set.title}」？這個題組的活動也會一併刪除。`,
+        )
+    ) {
+        router.delete(SetController.destroy(props.set.id));
+    }
+}
+</script>
+
+<template>
+    <Head :title="set.title" />
+
+    <form class="flex flex-col gap-6 p-4 pb-28" @submit.prevent="save">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <Badge variant="secondary">{{
+                        KIND_NAMES[set.kind]
+                    }}</Badge>
+                    <span
+                        v-if="set.revision"
+                        class="text-sm text-muted-foreground"
+                    >
+                        第 {{ set.revision }} 版
+                    </span>
+                </div>
+                <Heading :title="set.title" class="mt-2" />
+            </div>
+            <Button v-if="!form.isDirty" as-child variant="default">
+                <Link :href="ActivityController.create(set.id)">
+                    <Gamepad2 class="size-4" /> 選遊戲、建立活動
+                </Link>
+            </Button>
+            <span v-else class="text-sm text-muted-foreground">
+                有尚未儲存的修改，儲存後才能建立活動。
+            </span>
+        </div>
+
+        <section v-if="activities.length > 0" class="rounded-lg border p-3">
+            <h2 class="text-sm font-medium">這個題組的活動</h2>
+            <ul class="mt-2 flex flex-wrap gap-2">
+                <li v-for="activity in activities" :key="activity.id">
+                    <Link
+                        :href="ActivityController.show(activity.id)"
+                        class="inline-flex items-center rounded-full border px-3 py-1 text-sm hover:border-primary"
+                    >
+                        {{
+                            activity.game_id === 'maze-chase'
+                                ? '迷宮追逐'
+                                : activity.game_id === 'quiz'
+                                  ? '選擇題'
+                                  : activity.game_id
+                        }}
+                    </Link>
+                </li>
+            </ul>
+            <p class="mt-2 text-xs text-muted-foreground">
+                活動一律使用題組的最新版本，修改並儲存後，已經發出去的連結會立即更新。
+            </p>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-2">
+                <Label for="title">標題</Label>
+                <Input id="title" v-model="form.title" />
+                <InputError :message="form.errors.title" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="language">語言</Label>
+                <select
+                    id="language"
+                    v-model="form.language_code"
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                >
+                    <option
+                        v-for="language in languages"
+                        :key="language.code"
+                        :value="language.code"
+                    >
+                        {{ language.name_zh }}（{{ language.name_native }}）
+                    </option>
+                </select>
+            </div>
+            <div class="grid gap-2 md:col-span-2">
+                <Label for="description">說明（選填）</Label>
+                <Input id="description" v-model="form.description" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="license">授權</Label>
+                <select
+                    id="license"
+                    v-model="form.license"
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                >
+                    <option
+                        v-for="license in licenses"
+                        :key="license"
+                        :value="license"
+                    >
+                        {{ license }}
+                    </option>
+                </select>
+            </div>
+            <div v-if="set.kind === 'vocab'" class="grid gap-2">
+                <Label for="faces">出題方式</Label>
+                <select
+                    id="faces"
+                    v-model="facePreset"
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                >
+                    <option :value="-1" disabled>自訂</option>
+                    <option
+                        v-for="(preset, i) in FACE_PRESETS"
+                        :key="preset.label"
+                        :value="i"
+                    >
+                        {{ preset.label }}
+                    </option>
+                </select>
+                <InputError
+                    :message="
+                        form.errors['faces.prompt'] ??
+                        form.errors['faces.answer']
+                    "
+                />
+            </div>
+        </section>
+
+        <section class="space-y-3">
+            <label
+                class="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm"
+            >
+                <input v-model="rightsConfirmed" type="checkbox" class="mt-1" />
+                <span>
+                    我有權分享這次上傳的音檔與圖片，並同意以題組的授權（{{
+                        form.license
+                    }}）釋出。
+                </span>
+            </label>
+            <label
+                v-if="set.kind === 'vocab'"
+                class="flex items-center gap-2 text-sm"
+            >
+                <input v-model="showRomanization" type="checkbox" />
+                顯示「羅馬拼寫」欄位
+            </label>
+            <p v-if="uploadError" class="text-sm text-destructive" role="alert">
+                {{ uploadError }}
+            </p>
+        </section>
+
+        <VocabEditor
+            v-if="set.kind === 'vocab'"
+            v-model="vocabEntries"
+            :errors="form.errors"
+            :rights-confirmed="rightsConfirmed"
+            :show-romanization="showRomanization"
+            @error="uploadError = $event"
+        />
+        <QuizEditor
+            v-else
+            v-model="quizEntries"
+            :errors="form.errors"
+            :rights-confirmed="rightsConfirmed"
+            @error="uploadError = $event"
+        />
+
+        <div>
+            <Button
+                type="button"
+                variant="ghost"
+                class="text-destructive"
+                @click="destroy"
+            >
+                刪除題組
+            </Button>
+        </div>
+
+        <div
+            class="fixed inset-x-0 bottom-0 z-10 flex items-center justify-end gap-4 border-t bg-background/95 px-6 py-3 backdrop-blur md:left-(--sidebar-width)"
+        >
+            <span v-if="errorCount > 0" class="text-sm text-destructive">
+                有 {{ errorCount }} 個欄位需要修正
+            </span>
+            <span
+                v-else-if="form.recentlySuccessful"
+                class="text-sm text-muted-foreground"
+            >
+                已儲存
+            </span>
+            <Button type="submit" :disabled="form.processing || !form.isDirty">
+                {{ form.processing ? '儲存中…' : '儲存' }}
+            </Button>
+        </div>
+    </form>
+</template>

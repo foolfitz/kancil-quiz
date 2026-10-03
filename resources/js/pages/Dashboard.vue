@@ -1,0 +1,104 @@
+<script setup lang="ts">
+import { Head, Link } from '@inertiajs/vue3';
+import { Plus } from '@lucide/vue';
+import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
+import SetController from '@/actions/App/Http/Controllers/SetController';
+import Heading from '@/components/Heading.vue';
+import { Button } from '@/components/ui/button';
+import { dashboard } from '@/routes';
+import { KIND_NAMES } from '@/types/kancil';
+import type { SetKind } from '@/types/kancil';
+
+defineProps<{
+    sets: { id: string; kind: SetKind; title: string; entries_count: number }[];
+    activities: {
+        id: string;
+        game_id: string;
+        set_title: string | null;
+        attempts_count: number;
+    }[];
+}>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [{ title: '首頁', href: dashboard() }],
+    },
+});
+
+const GAME_TITLES: Record<string, string> = {
+    'maze-chase': '迷宮追逐',
+    quiz: '選擇題',
+};
+</script>
+
+<template>
+    <Head title="首頁" />
+
+    <div class="flex flex-col gap-8 p-4">
+        <div class="flex items-start justify-between gap-4">
+            <Heading title="首頁" description="出題、選遊戲、分享給學生。" />
+            <Button as-child>
+                <Link :href="SetController.create()"
+                    ><Plus class="size-4" /> 建立題組</Link
+                >
+            </Button>
+        </div>
+
+        <section class="space-y-3">
+            <div class="flex items-baseline justify-between">
+                <h2 class="text-lg font-semibold">最近的題組</h2>
+                <Link
+                    :href="SetController.index()"
+                    class="text-sm text-muted-foreground hover:underline"
+                    >全部題組</Link
+                >
+            </div>
+            <p v-if="sets.length === 0" class="text-muted-foreground">
+                還沒有題組。
+            </p>
+            <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <li v-for="set in sets" :key="set.id">
+                    <Link
+                        :href="SetController.edit(set.id)"
+                        class="block rounded-xl border p-4 hover:border-primary"
+                    >
+                        <span class="text-xs text-muted-foreground"
+                            >{{ KIND_NAMES[set.kind] }}・{{
+                                set.entries_count
+                            }}
+                            題</span
+                        >
+                        <span class="mt-1 block font-semibold">{{
+                            set.title
+                        }}</span>
+                    </Link>
+                </li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h2 class="text-lg font-semibold">最近的活動</h2>
+            <p v-if="activities.length === 0" class="text-muted-foreground">
+                還沒有活動。在題組頁面選一個遊戲就能建立。
+            </p>
+            <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <li v-for="activity in activities" :key="activity.id">
+                    <Link
+                        :href="ActivityController.show(activity.id)"
+                        class="block rounded-xl border p-4 hover:border-primary"
+                    >
+                        <span class="text-xs text-muted-foreground"
+                            >{{
+                                GAME_TITLES[activity.game_id] ??
+                                activity.game_id
+                            }}・{{ activity.attempts_count }} 次作答</span
+                        >
+                        <span class="mt-1 block font-semibold">{{
+                            activity.set_title
+                        }}</span>
+                    </Link>
+                </li>
+            </ul>
+        </section>
+    </div>
+</template>
