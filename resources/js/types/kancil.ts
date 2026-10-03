@@ -78,3 +78,60 @@ export const KIND_NAMES: Record<SetKind, string> = {
     vocab: '詞彙組',
     quiz: '問答組',
 };
+
+// 成績頁（app/Grading/ActivityResults.php）
+export interface ResultFace {
+    text: string | null;
+    note: string | null;
+    image: string | null;
+    audio: string | null;
+}
+
+export interface QuestionResult {
+    entry_id: string;
+    question: ResultFace;
+    answer: ResultFace | null;
+    responses: number;
+    answered: number;
+    wrong: number;
+    revisions: number[];
+    changed: boolean;
+    common_mistake: { face: ResultFace; count: number } | null;
+}
+
+export interface AttemptRow {
+    id: string;
+    player_label: string | null;
+    started_at: string;
+    completed_at: string | null;
+    correct_count: number | null;
+    round_count: number;
+    game_score: number | null;
+    duration_ms: number | null;
+    revision_number: number;
+}
+
+export interface AttemptDetail {
+    id: string;
+    revision_number: number;
+    rounds: {
+        entry_id: string;
+        question: ResultFace;
+        answer: ResultFace | null;
+        selected: ResultFace | null;
+        correct: boolean | null;
+        answered: boolean;
+        tries: number;
+    }[];
+}
+
+export interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+}

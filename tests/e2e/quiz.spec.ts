@@ -36,6 +36,7 @@ async function expectNothingClipped(
 
 test.describe.serial('選擇題', () => {
     let playPath = '';
+    let correct = -1;
 
     test('老師登入、為題組選遊戲並建立活動', async ({ page }) => {
         const errors = collectErrors(page);
@@ -102,11 +103,39 @@ test.describe.serial('選擇題', () => {
             );
         }
 
-        await expect(
-            page.getByRole('heading', { name: /^答對 \d \/ 5 題$/ }),
-        ).toBeVisible();
+        const heading = page.getByRole('heading', {
+            name: /^答對 \d \/ 5 題$/,
+        });
+        await expect(heading).toBeVisible();
+        correct = Number((await heading.textContent())?.match(/\d/)?.[0]);
         await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
         await page.screenshot({ path: testInfo.outputPath('results.png') });
+
+        expect(errors).toEqual([]);
+    });
+
+    test('老師在成績頁看到這次作答（T-11）', async ({ page }, testInfo) => {
+        const errors = collectErrors(page);
+
+        await page.goto(playPath.replace(/^\/p\//, '/activities/'));
+        await page.getByRole('link', { name: '作答結果' }).click();
+        await page.waitForURL('**/results');
+
+        await expect(page.locator('[data-test="question-result"]')).toHaveCount(
+            5,
+        );
+        const row = page.locator('[data-test="attempt-row"]');
+        await expect(row).toHaveCount(1);
+        await expect(row).toContainText(`${correct} / 5`);
+
+        await row.click();
+        const detail = page.locator('[data-test="attempt-detail"] > li');
+        await expect(detail).toHaveCount(5);
+        await expect(detail.filter({ hasText: '答對' })).toHaveCount(correct);
+        await page.screenshot({
+            path: testInfo.outputPath('teacher-results.png'),
+            fullPage: true,
+        });
 
         expect(errors).toEqual([]);
     });

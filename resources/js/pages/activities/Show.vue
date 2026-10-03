@@ -2,9 +2,17 @@
 import { check } from '@kancil-quiz/deck';
 import type { KancilSet } from '@kancil-quiz/schema';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Copy, ExternalLink, Eye, Presentation, X } from '@lucide/vue';
+import {
+    ChartColumn,
+    Copy,
+    ExternalLink,
+    Eye,
+    Presentation,
+    X,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
+import ActivityResultsController from '@/actions/App/Http/Controllers/ActivityResultsController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -103,11 +111,17 @@ onBeforeUnmount(() =>
             >
                 ← {{ set.title }}
             </Link>
-            <Heading
-                :title="`${game?.title['zh-TW'] ?? activity.game_id}`"
-                :description="`已有 ${activity.attempts_count} 次作答`"
-                class="mt-2"
-            />
+            <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+                <Heading
+                    :title="`${game?.title['zh-TW'] ?? activity.game_id}`"
+                    :description="`已有 ${activity.attempts_count} 次作答`"
+                />
+                <Button as-child variant="outline">
+                    <Link :href="ActivityResultsController(activity.id)"
+                        ><ChartColumn class="size-4" /> 作答結果</Link
+                    >
+                </Button>
+            </div>
         </div>
 
         <section
