@@ -2,6 +2,7 @@
 
 namespace App\Grading;
 
+use App\Corpus\EntryFaces;
 use App\Corpus\MediaUrls;
 use App\Models\Activity;
 use App\Models\Attempt;
@@ -16,9 +17,8 @@ use stdClass;
  * 活動的作答結果（docs/SPEC.md T-11）：全班的逐題答錯率，以及每次作答依當時的題組版本
  * 顯示題目與對錯（3.3）。對錯一律用伺服器的判定，每題以第一筆作答計算（7.4）。
  *
- * 題目在畫面上以 Face 表示：
+ * @phpstan-import-type Face from EntryFaces
  *
- * @phpstan-type Face array{text: string|null, note: string|null, image: string|null, audio: string|null}
  * @phpstan-type AttemptRow array{id: string, player_label: string|null, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, game_score: int|null, duration_ms: int|null, revision_number: int}
  */
 class ActivityResults
@@ -151,8 +151,8 @@ class ActivityResults
 
             $questions[] = [
                 'entry_id' => $entryId,
-                'question' => self::question($newest['set'], $newest['entry']),
-                'answer' => self::answer($newest['set'], $newest['entry']),
+                'question' => EntryFaces::question($newest['set'], $newest['entry']),
+                'answer' => EntryFaces::answer($newest['set'], $newest['entry']),
                 'responses' => $stat['responses'],
                 'answered' => $stat['answered'],
                 'wrong' => $stat['wrong'],
@@ -210,9 +210,9 @@ class ActivityResults
 
             $rounds[] = [
                 'entry_id' => $entry->id,
-                'question' => self::question($set, $entry),
-                'answer' => self::answer($set, $entry),
-                'selected' => $choice === null ? null : self::choice($set, $choice),
+                'question' => EntryFaces::question($set, $entry),
+                'answer' => EntryFaces::answer($set, $entry),
+                'selected' => $choice === null ? null : EntryFaces::choice($set, $choice),
                 'correct' => $first?->correct,
                 'answered' => $first !== null,
                 'tries' => $mine?->count() ?? 0,
@@ -254,7 +254,7 @@ class ActivityResults
         $merged = [];
         foreach ($mistakes as $key => $count) {
             [$revisionId, $choice] = explode("\n", $key, 2);
-            $face = self::choice($this->content($revisionId), $choice)
+            $face = EntryFaces::choice($this->content($revisionId), $choice)
                 ?? ['text' => null, 'note' => null, 'image' => null, 'audio' => null];
             $label = json_encode($face, JSON_THROW_ON_ERROR);
             $merged[$label] = ['face' => $face, 'count' => ($merged[$label]['count'] ?? 0) + $count];
@@ -263,98 +263,5 @@ class ActivityResults
         usort($merged, fn (array $a, array $b) => $b['count'] <=> $a['count']);
 
         return $merged[0] ?? null;
-    }
-
-    /**
-     * 題目：詞彙組顯示詞條本身（目標語與中文），問答組顯示題幹。
-     *
-     * @return Face
-     */
-    public static function question(stdClass $set, stdClass $entry): array
-    {
-        if ($set->kind === 'vocab') {
-            return self::itemFace($entry->item);
-        }
-
-        $stem = $entry->question->stem;
-
-        return [
-            'text' => $stem->text ?? null,
-            'note' => null,
-            'image' => $stem->image->src ?? null,
-            'audio' => $stem->audio->src ?? null,
-        ];
-    }
-
-    /**
-     * 正解：問答組是標示為正解的選項；詞彙組的正解就是題目本身，回傳 null。
-     *
-     * @return Face|null
-     */
-    public static function answer(stdClass $set, stdClass $entry): ?array
-    {
-        if ($set->kind === 'vocab') {
-            return null;
-        }
-
-        foreach ($entry->question->options as $option) {
-            if ($option->correct === true) {
-                return self::optionFace($option);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * 學生選的答案。問答組的選項 ID 在整個版本中唯一；詞彙組的選項 ID 就是詞條的 entry ID（7.4）。
-     *
-     * @return Face|null 找不到這個選項時為 null
-     */
-    public static function choice(stdClass $set, string $choice): ?array
-    {
-        foreach ($set->entries as $entry) {
-            if ($set->kind === 'vocab') {
-                if ($entry->id === $choice) {
-                    return self::itemFace($entry->item);
-                }
-
-                continue;
-            }
-
-            foreach ($entry->question->options as $option) {
-                if ($option->id === $choice) {
-                    return self::optionFace($option);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return Face
-     */
-    private static function itemFace(stdClass $item): array
-    {
-        return [
-            'text' => trim($item->text.' '.($item->romanization ?? '')),
-            'note' => $item->translation_zh ?? null,
-            'image' => $item->image->src ?? null,
-            'audio' => $item->audio[0]->src ?? null,
-        ];
-    }
-
-    /**
-     * @return Face
-     */
-    private static function optionFace(stdClass $option): array
-    {
-        return [
-            'text' => $option->text ?? null,
-            'note' => null,
-            'image' => $option->image->src ?? null,
-            'audio' => null,
-        ];
     }
 }

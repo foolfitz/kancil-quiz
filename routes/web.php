@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\SetController;
+use App\Http\Controllers\SetCopyController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -17,7 +18,8 @@ Route::get('p/{activity}', [PlayerController::class, 'show'])->name('play');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-    Route::resource('sets', SetController::class)->except('show');
+    Route::resource('sets', SetController::class);
+    Route::post('sets/{set}/copy', SetCopyController::class)->name('sets.copy');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
 
     Route::get('sets/{set}/activities/create', [ActivityController::class, 'create'])->name('activities.create');

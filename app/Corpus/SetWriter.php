@@ -31,11 +31,11 @@ class SetWriter
     {
         $this->authorizeMedia($set, $content['entries'] ?? [], $by);
 
-        $changedItems = DB::transaction(function () use ($set, $content) {
+        $changedItems = DB::transaction(function () use ($set, $content, $by) {
             if ($set->kind === 'vocab') {
                 $set->update(['faces' => $content['faces']]);
 
-                return $this->writeVocab($set, $content['entries'] ?? []);
+                return $this->writeVocab($set, $content['entries'] ?? [], $by);
             }
 
             $this->writeQuiz($set, $content['entries'] ?? []);
@@ -55,7 +55,7 @@ class SetWriter
      * @param  array<int, array<string, mixed>>  $entries
      * @return list<Item> 內容有變動的既有詞條
      */
-    private function writeVocab(Set $set, array $entries): array
+    private function writeVocab(Set $set, array $entries, User $by): array
     {
         $existing = $set->entries()->with('item')->get()->keyBy('id');
         $kept = [];
@@ -76,6 +76,7 @@ class SetWriter
             } else {
                 $item->fill($attributes);
                 if ($item->isDirty()) {
+                    $this->creditEditor($item, $set, $by);
                     $item->save();
                     $changed[$item->id] = $item;
                 }
@@ -104,6 +105,22 @@ class SetWriter
         $this->deleteEntriesExcept($set, $kept);
 
         return array_values(array_filter($changed, fn (Item $item) => $item->entries()->where('set_id', '!=', $set->id)->exists()));
+    }
+
+    /**
+     * 老師修改複製來的詞條時，把自己加進該詞條的作者（docs/SPEC.md 第 5 節）。
+     * 審核者修正別人的題組（C-03）不算作者，由題組版本記錄是誰修改的。
+     */
+    private function creditEditor(Item $item, Set $set, User $by): void
+    {
+        if ($item->forked_from_id === null || $by->id !== $set->owner_id) {
+            return;
+        }
+
+        $authors = $item->authors ?? [];
+        if (! in_array($by->name, array_column($authors, 'name'), true)) {
+            $item->authors = [...$authors, ['name' => $by->name]];
+        }
     }
 
     /**
@@ -171,8 +188,8 @@ class SetWriter
             return;
         }
 
-        $current = json_decode($set->currentRevision?->getAttribute('content') ?? '{}', true);
-        preg_match_all('#media/([0-9A-HJKMNP-TV-Z]{26})\.#', json_encode($current) ?: '', $matches);
+        // 版本內容以 SetContent::JSON_FLAGS 儲存，斜線沒有跳脫，可以直接比對媒體路徑
+        preg_match_all('#media/([0-9A-HJKMNP-TV-Z]{26})\.#', (string) $set->currentRevision?->getAttribute('content'), $matches);
 
         $allowed = Media::whereIn('id', $requested)
             ->where(fn ($query) => $query->where('uploaded_by', $by->id)->orWhereIn('id', $matches[1]))

@@ -6,6 +6,7 @@ use App\Models\Media;
 use App\Models\Set;
 use App\Models\SetEntry;
 use Illuminate\Support\Collection;
+use stdClass;
 
 /**
  * 題組編輯畫面需要的資料：內容的形狀與 SetWriter 的輸入相同，另外附上媒體的網址供預覽。
@@ -76,7 +77,7 @@ class SetEditorData
     /**
      * 題組最新版本的內容（媒體為絕對網址），供老師端做相容檢查與預覽（docs/SPEC.md 7.3）。
      */
-    public static function currentContent(Set $set): ?object
+    public static function currentContent(Set $set): ?stdClass
     {
         $revision = $set->currentRevision;
 

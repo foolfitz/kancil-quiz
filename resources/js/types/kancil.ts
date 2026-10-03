@@ -153,3 +153,41 @@ export function curriculumLabel(ref: {
     const label = `第 ${ref.volume} 冊第 ${ref.lesson} 課`;
     return ref.title_zh ? `${label}：${ref.title_zh}` : label;
 }
+
+// 題組檢視頁（app/Corpus/SetViewData.php）
+export interface SetView {
+    id: string;
+    kind: SetKind;
+    title: string;
+    description: string | null;
+    language: { code: string; name_zh: string };
+    license: string;
+    tags: string[];
+    curriculum: { volume: number; lesson: number; title_zh: string | null }[];
+    authors: string[];
+    owner: string;
+    visibility: 'private' | 'unlisted' | 'public';
+    review_status: 'none' | 'pending' | 'approved' | 'rejected';
+    revision: number | null;
+    updated_at: string | null;
+    forked_from: {
+        id: string;
+        title: string;
+        owner: string;
+        viewable: boolean;
+    } | null;
+}
+
+export interface SetViewEntry {
+    id: string;
+    question: ResultFace;
+    answer: ResultFace | null;
+    options: { face: ResultFace; correct: boolean }[];
+}
+
+export interface SetReviewEntry {
+    action: 'requested' | 'withdrawn' | 'approved' | 'rejected' | 'unpublished';
+    note: string | null;
+    user: string;
+    created_at: string;
+}

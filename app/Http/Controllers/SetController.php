@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Corpus\SetEditorData;
 use App\Corpus\SetRevisionRecorder;
+use App\Corpus\SetViewData;
 use App\Corpus\SetWriter;
 use App\Http\Requests\Sets\SetContentRequest;
 use App\Http\Requests\Sets\SetDetailsRequest;
@@ -59,6 +60,16 @@ class SetController extends Controller
         $recorder->record($set, $request->user());
 
         return to_route('sets.edit', $set);
+    }
+
+    /**
+     * 唯讀檢視：自己的題組、共備庫中的公開題組，或審核者負責語言的題組。
+     */
+    public function show(Request $request, Set $set): Response
+    {
+        Gate::authorize('view', $set);
+
+        return Inertia::render('sets/Show', SetViewData::props($set, $request->user()));
     }
 
     public function edit(Set $set): Response
