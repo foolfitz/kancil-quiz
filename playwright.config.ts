@@ -3,8 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 // 端對端測試（docs/SPEC.md 7.6、10.1）。使用獨立的 SQLite 檔與示範資料（DemoSeeder），
 // 執行前要先 npm run build。
 //
-// iPad 的 Safari 要用 WebKit；Linux 上需要先安裝系統套件（sudo npx playwright install-deps），
-// 安裝後設定 E2E_WEBKIT=1 就會一併執行。
+// iPad 的 Safari 要用 WebKit；Linux 上需要先安裝系統套件：npx playwright install-deps webkit
+// （不要加 sudo，它會自己切換成 root）。安裝後設定 E2E_WEBKIT=1 就會一併執行。
 const port = 8124;
 const database = `${process.cwd()}/database/e2e.sqlite`;
 

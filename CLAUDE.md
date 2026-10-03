@@ -74,5 +74,5 @@
 
 - PHP 8.4 以上，需要 `intl`、`pdo_sqlite`、`gd`（含 WebP）擴充，以及 `ffmpeg`；Node 22 以上。
 - 上傳的媒體放在 `public` disk，需要 `php artisan storage:link`（`composer setup` 會執行）。
-- 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`sudo npx playwright install-deps`，之後設定 `E2E_WEBKIT=1`。
+- 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
