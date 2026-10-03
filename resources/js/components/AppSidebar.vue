@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ClipboardCheck, LayoutGrid, Library } from '@lucide/vue';
+import { BookOpen, ClipboardCheck, LayoutGrid, Library } from '@lucide/vue';
 import { computed } from 'vue';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetReviewController from '@/actions/App/Http/Controllers/SetReviewController';
@@ -16,7 +16,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, library } from '@/routes';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -30,6 +30,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: '我的題組',
         href: SetController.index(),
         icon: Library,
+    },
+    {
+        title: '共備庫',
+        href: library(),
+        icon: BookOpen,
     },
     ...(page.props.auth.canReview
         ? [

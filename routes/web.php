@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityResultsController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\SetController;
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('shared/{token}', [SetShareController::class, 'show'])->name('sets.shared');
     Route::post('sets/{set}/publication', [SetPublicationController::class, 'store'])->name('sets.publication.store');
     Route::delete('sets/{set}/publication', [SetPublicationController::class, 'destroy'])->name('sets.publication.destroy');
+    Route::get('library', LibraryController::class)->name('library');
     Route::get('reviews', [SetReviewController::class, 'index'])->name('reviews.index');
     Route::post('sets/{set}/review', [SetReviewController::class, 'store'])->name('sets.review');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');

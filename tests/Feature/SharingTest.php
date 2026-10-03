@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Corpus\SetWriter;
 use App\Models\CurriculumRef;
 use App\Models\Item;
+use App\Models\Language;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\User;
@@ -296,5 +297,41 @@ class SharingTest extends TestCase
             ->has('pending', 1));
         $this->post("/sets/{$own->id}/review", ['decision' => 'approve'])->assertRedirect();
         $this->assertSame('public', $own->fresh()?->visibility);
+    }
+
+    public function test_the_library_lists_and_searches_public_sets(): void
+    {
+        $this->publish($this->set);
+        $indonesian = Set::factory()->for($this->colleague, 'owner')->create([
+            'title' => 'Salam', 'language_code' => 'id', 'tags' => ['問候', '水果'],
+        ]);
+        $this->write($indonesian, [['selamat pagi', '早安', null]], $this->colleague);
+        $this->publish($indonesian);
+        Set::factory()->for($this->colleague, 'owner')->create(['title' => '私人', 'visibility' => 'private']);
+        Set::factory()->for($this->colleague, 'owner')->create(['title' => '分享中', 'visibility' => 'unlisted', 'share_token' => 'x']);
+        Set::factory()->for($this->colleague, 'owner')->create(['title' => '待審', 'review_status' => 'pending']);
+
+        $list = function (string $query) {
+            $response = $this->actingAs($this->colleague)->get('/library'.($query === '' ? '' : "?{$query}"));
+            $response->assertOk();
+
+            return collect($response->viewData('page')['props']['sets']['data'])->pluck('title')->sort()->values()->all();
+        };
+
+        $this->assertSame(['Salam', '水果'], $list(''));
+        $this->assertSame(['Salam'], $list('language=id'));
+        $this->assertSame(['水果'], $list('volume=3&lesson=2'));
+        $this->assertSame([], $list('volume=3&lesson=1'));
+        $this->assertSame(['Salam'], $list('tag='.urlencode('問候')));
+        $this->assertSame(['Salam'], $list('q='.urlencode('早安')));
+        $this->assertSame(['水果'], $list('q=chu'));
+
+        $this->get('/library')->assertInertia(fn (Assert $page) => $page
+            ->where('tags.0', '水果')
+            ->has('languages', 2));
+
+        // 未開放的語言不列出（docs/SPEC.md 1.4）
+        Language::whereKey('id')->update(['enabled' => false]);
+        $this->assertSame(['水果'], $list(''));
     }
 }

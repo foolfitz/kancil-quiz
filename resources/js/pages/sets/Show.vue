@@ -11,6 +11,7 @@ import InputError from '@/components/InputError.vue';
 import ResultFace from '@/components/kancil/ResultFace.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { library } from '@/routes';
 import { KIND_NAMES, curriculumLabel } from '@/types/kancil';
 import type { SetReviewEntry, SetView, SetViewEntry } from '@/types/kancil';
 
@@ -25,7 +26,7 @@ const props = defineProps<{
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: '我的題組', href: SetController.index() }],
+        breadcrumbs: [{ title: '共備庫', href: library() }],
     },
 });
 

@@ -1,0 +1,267 @@
+<script setup lang="ts">
+import { Head, Link, router } from '@inertiajs/vue3';
+import { Search, X } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import SetController from '@/actions/App/Http/Controllers/SetController';
+import Heading from '@/components/Heading.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { library } from '@/routes';
+import { KIND_NAMES, curriculumLabel } from '@/types/kancil';
+import type {
+    CurriculumRef,
+    Language,
+    Paginated,
+    SetKind,
+} from '@/types/kancil';
+
+// 共備庫（docs/SPEC.md T-13）：依語言、冊、課、標籤瀏覽與搜尋公開的題組。
+type Filters = {
+    language?: string;
+    volume?: number;
+    lesson?: number;
+    tag?: string;
+    q?: string;
+};
+
+const props = defineProps<{
+    sets: Paginated<{
+        id: string;
+        kind: SetKind;
+        title: string;
+        description: string | null;
+        language: string;
+        owner: string;
+        entries_count: number;
+        curriculum: { volume: number; lesson: number }[];
+        tags: string[];
+        forked: boolean;
+        updated_at: string | null;
+    }>;
+    filters: Filters;
+    languages: Language[];
+    curriculumRefs: CurriculumRef[];
+    tags: string[];
+}>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [{ title: '共備庫', href: library() }],
+    },
+});
+
+function apply(changes: Partial<Filters>): void {
+    const next: Filters = { ...props.filters, ...changes };
+    const query = Object.fromEntries(
+        Object.entries(next).filter(
+            ([, value]) => value !== undefined && value !== '',
+        ),
+    );
+    router.get(library.url({ query }), {}, { preserveScroll: true });
+}
+
+const q = ref(props.filters.q ?? '');
+
+// 冊課只列出所選語言的對照表；沒選語言時不顯示
+const lessons = computed(() =>
+    props.curriculumRefs.filter(
+        (item) => item.language_code === props.filters.language,
+    ),
+);
+const lessonValue = computed(() =>
+    props.filters.volume && props.filters.lesson
+        ? `${props.filters.volume}-${props.filters.lesson}`
+        : '',
+);
+function chooseLesson(value: string): void {
+    const [volume, lesson] = value.split('-').map(Number);
+    apply({ volume: volume || undefined, lesson: lesson || undefined });
+}
+
+const filtered = computed(() =>
+    Object.values(props.filters).some((value) => value !== undefined),
+);
+</script>
+
+<template>
+    <Head title="共備庫" />
+
+    <div class="flex flex-col gap-6 p-4">
+        <Heading
+            title="共備庫"
+            description="其他老師公開的題組，都經過審核者確認。複製到自己的題組後就可以改編。"
+        />
+
+        <form
+            class="flex flex-wrap items-end gap-3"
+            role="search"
+            @submit.prevent="apply({ q: q.trim() || undefined })"
+        >
+            <label class="grid gap-1 text-sm">
+                <span class="font-medium">語言</span>
+                <select
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                    :value="filters.language ?? ''"
+                    @change="
+                        apply({
+                            language:
+                                ($event.target as HTMLSelectElement).value ||
+                                undefined,
+                            volume: undefined,
+                            lesson: undefined,
+                        })
+                    "
+                >
+                    <option value="">全部</option>
+                    <option
+                        v-for="language in languages"
+                        :key="language.code"
+                        :value="language.code"
+                    >
+                        {{ language.name_zh }}
+                    </option>
+                </select>
+            </label>
+            <label v-if="lessons.length > 0" class="grid gap-1 text-sm">
+                <span class="font-medium">教材冊課</span>
+                <select
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                    :value="lessonValue"
+                    @change="
+                        chooseLesson(($event.target as HTMLSelectElement).value)
+                    "
+                >
+                    <option value="">全部</option>
+                    <option
+                        v-for="item in lessons"
+                        :key="item.id"
+                        :value="`${item.volume}-${item.lesson}`"
+                    >
+                        {{ curriculumLabel(item) }}
+                    </option>
+                </select>
+            </label>
+            <label class="grid min-w-56 flex-1 gap-1 text-sm">
+                <span class="font-medium">關鍵字</span>
+                <Input
+                    v-model="q"
+                    type="search"
+                    placeholder="標題、說明，或詞彙組中的詞，例如：水果、chuối"
+                />
+            </label>
+            <Button type="submit"><Search class="size-4" /> 搜尋</Button>
+            <Button
+                v-if="filtered"
+                type="button"
+                variant="ghost"
+                @click="router.get(library.url())"
+                ><X class="size-4" /> 清除條件</Button
+            >
+        </form>
+
+        <div v-if="tags.length > 0" class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-muted-foreground">標籤：</span>
+            <button
+                v-for="tag in tags"
+                :key="tag"
+                type="button"
+                class="rounded-full border px-3 py-0.5 text-sm transition hover:border-primary"
+                :class="
+                    filters.tag === tag
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : ''
+                "
+                :aria-pressed="filters.tag === tag"
+                @click="apply({ tag: filters.tag === tag ? undefined : tag })"
+            >
+                {{ tag }}
+            </button>
+        </div>
+
+        <p v-if="sets.data.length === 0" class="text-muted-foreground">
+            {{
+                filtered
+                    ? '找不到符合條件的題組，試試別的關鍵字或清除條件。'
+                    : '共備庫還沒有題組。你可以在自己的題組頁「申請公開」，審核通過後就會出現在這裡。'
+            }}
+        </p>
+
+        <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <li v-for="set in sets.data" :key="set.id">
+                <Link
+                    :href="SetController.show(set.id)"
+                    class="flex h-full flex-col gap-2 rounded-xl border p-4 transition hover:border-primary"
+                    data-test="library-set"
+                >
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary">{{
+                            KIND_NAMES[set.kind]
+                        }}</Badge>
+                        <Badge variant="outline">{{ set.language }}</Badge>
+                        <span class="text-sm text-muted-foreground"
+                            >{{ set.entries_count }} 題</span
+                        >
+                    </div>
+                    <h3 class="text-lg font-semibold">{{ set.title }}</h3>
+                    <p
+                        v-if="set.description"
+                        class="line-clamp-2 text-sm text-muted-foreground"
+                    >
+                        {{ set.description }}
+                    </p>
+                    <p class="text-sm text-muted-foreground">
+                        {{ set.owner
+                        }}<template v-if="set.forked">（改編）</template>
+                    </p>
+                    <div
+                        v-if="set.curriculum.length > 0 || set.tags.length > 0"
+                        class="mt-auto flex flex-wrap gap-1"
+                    >
+                        <Badge
+                            v-for="item in set.curriculum"
+                            :key="`${item.volume}-${item.lesson}`"
+                            variant="outline"
+                            >{{ curriculumLabel(item) }}</Badge
+                        >
+                        <Badge
+                            v-for="tag in set.tags"
+                            :key="tag"
+                            variant="outline"
+                            >#{{ tag }}</Badge
+                        >
+                    </div>
+                </Link>
+            </li>
+        </ul>
+
+        <nav
+            v-if="sets.last_page > 1"
+            class="flex items-center justify-between gap-2 text-sm"
+            aria-label="共備庫分頁"
+        >
+            <span class="text-muted-foreground"
+                >第 {{ sets.from }}–{{ sets.to }} 個，共
+                {{ sets.total }} 個</span
+            >
+            <span class="flex gap-2">
+                <Button
+                    v-if="sets.prev_page_url"
+                    as-child
+                    variant="outline"
+                    size="sm"
+                >
+                    <Link :href="sets.prev_page_url">上一頁</Link>
+                </Button>
+                <Button
+                    v-if="sets.next_page_url"
+                    as-child
+                    variant="outline"
+                    size="sm"
+                >
+                    <Link :href="sets.next_page_url">下一頁</Link>
+                </Button>
+            </span>
+        </nav>
+    </div>
+</template>
