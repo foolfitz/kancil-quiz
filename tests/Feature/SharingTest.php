@@ -88,7 +88,7 @@ class SharingTest extends TestCase
 
         $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")
             ->assertInertia(fn (Assert $page) => $page
-                ->where('can', ['manage' => false, 'edit' => false, 'review' => false])
+                ->where('can', ['copy' => true, 'manage' => false, 'edit' => false, 'review' => false])
                 ->where('reviews', []));
 
         $this->post("/sets/{$this->set->id}/copy")->assertRedirect();
@@ -234,7 +234,10 @@ class SharingTest extends TestCase
         $this->get("/sets/{$this->set->id}")->assertInertia(fn (Assert $page) => $page
             ->where('can.review', true)
             ->where('can.edit', false)
+            ->where('can.copy', false)
             ->where('reviews.0.action', 'requested'));
+        // 審核者為了審核才看得到，不能把還沒公開的題組複製走
+        $this->post("/sets/{$this->set->id}/copy")->assertForbidden();
 
         // C-01：退回要附意見
         $this->post("/sets/{$this->set->id}/review", ['decision' => 'reject'])->assertSessionHasErrors('note');

@@ -62,6 +62,8 @@ class SetViewData
                 'options' => EntryFaces::options($content, $entry),
             ], $content->entries),
             'can' => [
+                // 透過分享連結檢視時，持有 token 就能複製
+                'copy' => $token !== null || $gate->allows('copy', $set),
                 'manage' => $manage,
                 'edit' => $gate->allows('edit', $set),
                 'review' => $review,

@@ -24,7 +24,7 @@ import type {
 const props = defineProps<{
     set: SetView;
     entries: SetViewEntry[];
-    can: { manage: boolean; edit: boolean; review: boolean };
+    can: { copy: boolean; manage: boolean; edit: boolean; review: boolean };
     token: string | null;
     reviews: SetReviewEntry[];
     revisions: RevisionEntry[];
@@ -86,6 +86,7 @@ const dateTime = (iso: string) =>
             </div>
             <div class="flex flex-wrap gap-2">
                 <Button
+                    v-if="can.copy"
                     type="button"
                     :disabled="copying"
                     data-test="copy-set"
