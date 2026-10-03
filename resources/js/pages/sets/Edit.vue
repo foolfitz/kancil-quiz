@@ -35,6 +35,7 @@ const props = defineProps<{
         language_code: string;
         license: string;
         faces: { prompt: FaceField[]; answer: FaceField[] } | null;
+        owner: string;
         tags: string[];
         curriculum_ref_ids: number[];
         revision: number | null;
@@ -207,12 +208,13 @@ function destroy(): void {
                     <Badge variant="secondary">{{
                         KIND_NAMES[set.kind]
                     }}</Badge>
-                    <span
+                    <Link
                         v-if="set.revision"
-                        class="text-sm text-muted-foreground"
+                        :href="`${SetController.show.url(set.id)}#revisions`"
+                        class="text-sm text-muted-foreground underline-offset-4 hover:underline"
                     >
-                        第 {{ set.revision }} 版
-                    </span>
+                        第 {{ set.revision }} 版・修訂紀錄
+                    </Link>
                 </div>
                 <Heading :title="set.title" class="mt-2" />
             </div>
@@ -229,6 +231,15 @@ function destroy(): void {
                 有尚未儲存的修改，儲存後才能建立活動。
             </span>
         </div>
+
+        <p
+            v-if="!can.manage"
+            class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950/40"
+            data-test="curator-notice"
+        >
+            你正在以審核者身分修正 {{ set.owner }}
+            的公開題組。儲存後立即生效，修改會記在修訂紀錄中，擁有者看得到。
+        </p>
 
         <SharingPanel v-if="sharing" :set-id="set.id" :sharing="sharing" />
 
@@ -267,6 +278,7 @@ function destroy(): void {
                     id="language"
                     v-model="form.language_code"
                     class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                    :disabled="!can.manage"
                 >
                     <option
                         v-for="language in languages"

@@ -203,3 +203,23 @@ export interface SetSharing {
         created_at: string;
     } | null;
 }
+
+// 修訂紀錄（app/Corpus/RevisionDiff.php，C-03）
+export interface RevisionEntry {
+    number: number;
+    created_by: string | null;
+    created_at: string | null;
+    changes: {
+        kind:
+            | 'created'
+            | 'field'
+            | 'added'
+            | 'removed'
+            | 'changed'
+            | 'reordered'
+            | 'unknown';
+        label: string;
+        before: string | null;
+        after: string | null;
+    }[];
+}

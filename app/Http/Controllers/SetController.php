@@ -14,6 +14,7 @@ use App\Models\Set;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -72,9 +73,12 @@ class SetController extends Controller
         return Inertia::render('sets/Show', SetViewData::props($set, $request->user()));
     }
 
+    /**
+     * 擁有者編輯題組；負責該語言的審核者也可以修正已公開的題組（C-03），修改記在題組版本中。
+     */
     public function edit(Set $set): Response
     {
-        Gate::authorize('manage', $set);
+        Gate::authorize('edit', $set);
 
         return Inertia::render('sets/Edit', [
             'set' => [
@@ -85,6 +89,7 @@ class SetController extends Controller
                 'language_code' => $set->language_code,
                 'license' => $set->license,
                 'faces' => $set->faces,
+                'owner' => $set->owner->name,
                 'tags' => $set->tags ?? [],
                 'curriculum_ref_ids' => $set->curriculumRefs()->pluck('curriculum_refs.id'),
                 'revision' => $set->currentRevision?->number,
@@ -113,9 +118,12 @@ class SetController extends Controller
 
     public function update(SetContentRequest $request, Set $set, SetWriter $writer): RedirectResponse
     {
-        Gate::authorize('manage', $set);
+        Gate::authorize('edit', $set);
 
         $data = $request->validated();
+        if (Gate::denies('manage', $set) && $data['language_code'] !== $set->language_code) {
+            throw ValidationException::withMessages(['language_code' => '審核者不能更改題組的語言。']);
+        }
         $tags = array_values(array_unique(array_filter(array_map('trim', $data['tags'] ?? []))));
         $set->update([
             'title' => $data['title'],

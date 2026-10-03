@@ -334,4 +334,56 @@ class SharingTest extends TestCase
         Language::whereKey('id')->update(['enabled' => false]);
         $this->assertSame(['水果'], $list(''));
     }
+
+    public function test_curators_correct_public_sets_and_the_changes_are_kept(): void
+    {
+        $curator = $this->curator('vi');
+        $ids = $this->set->entries()->pluck('id')->all();
+        $payload = fn (string $language, string $apple) => [
+            'title' => '水果', 'language_code' => $language, 'license' => 'CC-BY-4.0',
+            'tags' => ['水果'],
+            'curriculum_ref_ids' => $language === 'vi' ? $this->set->curriculumRefs()->pluck('curriculum_refs.id')->all() : [],
+            'faces' => ['prompt' => ['translation_zh'], 'answer' => ['text']],
+            'entries' => [
+                ['id' => $ids[0], 'item' => ['text' => 'quả chuối', 'romanization' => null, 'translation_zh' => '香蕉', 'audio_ids' => [], 'image_id' => $this->image->id]],
+                ['id' => $ids[1], 'item' => ['text' => 'quả táo', 'romanization' => null, 'translation_zh' => $apple, 'audio_ids' => [], 'image_id' => null]],
+            ],
+        ];
+
+        // 未公開的題組不能修正；其他語言的審核者也不行
+        $this->actingAs($curator)->get("/sets/{$this->set->id}/edit")->assertForbidden();
+        $this->publish($this->set);
+        $this->actingAs($this->curator('id'))->get("/sets/{$this->set->id}/edit")->assertForbidden();
+
+        // C-03：負責該語言的審核者可以修正公開的題組，但看不到活動，也不能分享或刪除
+        $this->actingAs($curator)->get("/sets/{$this->set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->component('sets/Edit')
+            ->where('can.manage', false)
+            ->where('set.owner', '王老師')
+            ->where('sharing', null)
+            ->where('activities', []));
+        $this->put("/sets/{$this->set->id}", $payload('id', '青蘋果'))->assertSessionHasErrors('language_code');
+        $this->put("/sets/{$this->set->id}", $payload('vi', '青蘋果'))->assertSessionHasNoErrors();
+        $this->delete("/sets/{$this->set->id}")->assertForbidden();
+        $this->post("/sets/{$this->set->id}/share")->assertForbidden();
+
+        $this->set->refresh();
+        $this->assertSame('public', $this->set->visibility);
+        $this->assertSame($curator->id, $this->set->currentRevision?->created_by);
+        // 審核者的修正不算詞條作者
+        $this->assertSame('王老師', $this->set->currentRevision?->content()->authors[0]->name);
+
+        // 修訂紀錄：擁有者看得到是誰改了什麼
+        $this->actingAs($this->author)->get("/sets/{$this->set->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('revisions.0.number', 2)
+            ->where('revisions.0.created_by', '陳審核')
+            ->where('revisions.0.changes', [[
+                'kind' => 'changed', 'label' => '修改', 'before' => 'quả táo（蘋果）', 'after' => 'quả táo（青蘋果）',
+            ]])
+            ->where('revisions.1.changes.0.kind', 'created'));
+
+        // 一般老師看公開題組時看不到修訂紀錄
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('revisions', []));
+    }
 }

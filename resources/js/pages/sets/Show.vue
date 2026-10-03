@@ -13,7 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { library } from '@/routes';
 import { KIND_NAMES, curriculumLabel } from '@/types/kancil';
-import type { SetReviewEntry, SetView, SetViewEntry } from '@/types/kancil';
+import type {
+    RevisionEntry,
+    SetReviewEntry,
+    SetView,
+    SetViewEntry,
+} from '@/types/kancil';
 
 // 題組的唯讀檢視：共備庫、同事的分享連結、審核都用這一頁（docs/SPEC.md T-12、T-13、T-17、C-01）。
 const props = defineProps<{
@@ -22,6 +27,7 @@ const props = defineProps<{
     can: { manage: boolean; edit: boolean; review: boolean };
     token: string | null;
     reviews: SetReviewEntry[];
+    revisions: RevisionEntry[];
 }>();
 
 defineOptions({
@@ -236,6 +242,79 @@ const dateTime = (iso: string) =>
                             </li>
                         </ul>
                     </div>
+                </li>
+            </ol>
+        </section>
+
+        <section
+            v-if="revisions.length > 0"
+            id="revisions"
+            class="scroll-mt-4 space-y-2"
+            data-test="revisions"
+        >
+            <h2 class="font-semibold">修訂紀錄</h2>
+            <p class="text-sm text-muted-foreground">
+                每次儲存都會產生一個版本，舊的作答紀錄依當時的版本判定。
+            </p>
+            <ol class="space-y-2 text-sm">
+                <li
+                    v-for="revision in revisions"
+                    :key="revision.number"
+                    class="rounded-lg border p-3"
+                >
+                    <div>
+                        <span class="font-medium"
+                            >第 {{ revision.number }} 版</span
+                        >
+                        <span class="text-muted-foreground">
+                            ・{{ revision.created_by ?? '—'
+                            }}<template v-if="revision.created_at"
+                                >・{{ dateTime(revision.created_at) }}</template
+                            ></span
+                        >
+                    </div>
+                    <ul class="mt-1 space-y-1">
+                        <li
+                            v-for="(change, i) in revision.changes"
+                            :key="i"
+                            class="break-words"
+                        >
+                            <span
+                                class="mr-1 inline-block rounded px-1.5 text-xs"
+                                :class="{
+                                    'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300':
+                                        change.kind === 'added',
+                                    'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300':
+                                        change.kind === 'removed',
+                                    'bg-muted': !['added', 'removed'].includes(
+                                        change.kind,
+                                    ),
+                                }"
+                                >{{ change.label }}</span
+                            >
+                            <template
+                                v-if="
+                                    change.before !== null &&
+                                    change.after !== null
+                                "
+                            >
+                                <span
+                                    class="text-muted-foreground line-through"
+                                    >{{ change.before }}</span
+                                >
+                                → {{ change.after }}
+                            </template>
+                            <template v-else>{{
+                                change.after ?? change.before ?? ''
+                            }}</template>
+                        </li>
+                        <li
+                            v-if="revision.changes.length === 0"
+                            class="text-muted-foreground"
+                        >
+                            沒有內容上的差異
+                        </li>
+                    </ul>
                 </li>
             </ol>
         </section>
