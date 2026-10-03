@@ -7,6 +7,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\SetController;
 use App\Http\Controllers\SetCopyController;
+use App\Http\Controllers\SetShareController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -20,6 +21,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('sets', SetController::class);
     Route::post('sets/{set}/copy', SetCopyController::class)->name('sets.copy');
+    Route::post('sets/{set}/share', [SetShareController::class, 'store'])->name('sets.share.store');
+    Route::delete('sets/{set}/share', [SetShareController::class, 'destroy'])->name('sets.share.destroy');
+    Route::get('shared/{token}', [SetShareController::class, 'show'])->name('sets.shared');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
 
     Route::get('sets/{set}/activities/create', [ActivityController::class, 'create'])->name('activities.create');

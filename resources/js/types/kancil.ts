@@ -191,3 +191,15 @@ export interface SetReviewEntry {
     user: string;
     created_at: string;
 }
+
+// 題組編輯頁的分享與公開狀態（T-17、T-12）
+export interface SetSharing {
+    visibility: 'private' | 'unlisted' | 'public';
+    review_status: 'none' | 'pending' | 'approved' | 'rejected';
+    share_url: string | null;
+    last_review: {
+        action: SetReviewEntry['action'];
+        note: string | null;
+        created_at: string;
+    } | null;
+}

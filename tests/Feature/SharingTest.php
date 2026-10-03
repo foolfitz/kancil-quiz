@@ -144,4 +144,55 @@ class SharingTest extends TestCase
         $this->assertSame("media/{$this->image->id}.webp", $content?->entries[0]->question->stem->image->src);
         $this->assertEquals([(object) ['name' => '王老師']], $content?->authors);
     }
+
+    public function test_a_share_link_lets_colleagues_view_and_copy_until_it_is_revoked(): void
+    {
+        // T-17：產生分享連結後題組改為 unlisted
+        $this->actingAs($this->author)->post("/sets/{$this->set->id}/share")->assertRedirect();
+        $this->set->refresh();
+        $this->assertSame('unlisted', $this->set->visibility);
+        $token = (string) $this->set->share_token;
+        $this->assertSame(32, strlen($token));
+
+        $this->get("/sets/{$this->set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('sharing.visibility', 'unlisted')
+            ->where('sharing.share_url', route('sets.shared', $token)));
+
+        // 同事要登入；只知道題組 ID 不夠，要有連結
+        auth()->logout();
+        $this->get("/shared/{$token}")->assertRedirect('/login');
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")->assertForbidden();
+        $this->post("/sets/{$this->set->id}/copy")->assertForbidden();
+        $this->post("/sets/{$this->set->id}/copy", ['token' => 'wrong'])->assertForbidden();
+
+        $this->get("/shared/{$token}")->assertInertia(fn (Assert $page) => $page
+            ->component('sets/Show')
+            ->where('token', $token)
+            ->where('can.manage', false)
+            ->has('entries', 2));
+        $this->post("/sets/{$this->set->id}/copy", ['token' => $token])->assertRedirect();
+        $this->assertSame(1, Set::where('owner_id', $this->colleague->id)->count());
+
+        // 收回後舊連結失效，已複製的題組不受影響；再次產生是新的連結
+        $this->actingAs($this->author)->delete("/sets/{$this->set->id}/share")->assertRedirect();
+        $this->set->refresh();
+        $this->assertSame('private', $this->set->visibility);
+        $this->assertNull($this->set->share_token);
+
+        $this->actingAs($this->colleague)->get("/shared/{$token}")->assertNotFound();
+        $this->post("/sets/{$this->set->id}/copy", ['token' => $token])->assertForbidden();
+        $this->assertSame(1, Set::where('owner_id', $this->colleague->id)->count());
+
+        $this->actingAs($this->author)->post("/sets/{$this->set->id}/share");
+        $this->assertNotSame($token, $this->set->fresh()?->share_token);
+    }
+
+    public function test_only_the_owner_manages_the_share_link(): void
+    {
+        $this->actingAs($this->colleague)->post("/sets/{$this->set->id}/share")->assertForbidden();
+
+        $this->publish($this->set);
+        $this->actingAs($this->author)->post("/sets/{$this->set->id}/share")->assertStatus(409);
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}/edit")->assertForbidden();
+    }
 }

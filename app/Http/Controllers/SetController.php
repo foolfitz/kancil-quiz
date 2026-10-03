@@ -90,7 +90,17 @@ class SetController extends Controller
                 'revision' => $set->currentRevision?->number,
             ],
             'entries' => SetEditorData::entries($set),
-            'activities' => $set->activities()->latest()->get(['id', 'game_id', 'created_at']),
+            'can' => ['manage' => Gate::allows('manage', $set)],
+            // 分享與公開（T-17、T-12），只有擁有者看得到
+            'sharing' => Gate::allows('manage', $set) ? [
+                'visibility' => $set->visibility,
+                'review_status' => $set->review_status,
+                'share_url' => $set->share_token ? route('sets.shared', $set->share_token) : null,
+                'last_review' => $set->reviews()->with('user:id,name')->first()?->only(['action', 'note', 'created_at']),
+            ] : null,
+            'activities' => Gate::allows('manage', $set)
+                ? $set->activities()->latest()->get(['id', 'game_id', 'created_at'])
+                : [],
             'languages' => Language::enabled()->get(['code', 'name_zh', 'name_native']),
             'licenses' => SetDetailsRequest::LICENSES,
             'curriculumRefs' => CurriculumRef::query()

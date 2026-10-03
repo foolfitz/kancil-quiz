@@ -8,6 +8,7 @@ import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import CurriculumPicker from '@/components/kancil/CurriculumPicker.vue';
 import QuizEditor from '@/components/kancil/QuizEditor.vue';
+import SharingPanel from '@/components/kancil/SharingPanel.vue';
 import TagInput from '@/components/kancil/TagInput.vue';
 import VocabEditor from '@/components/kancil/VocabEditor.vue';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import type {
     FaceField,
     Language,
     QuizEntryInput,
+    SetSharing,
     SetKind,
     VocabEntryInput,
 } from '@/types/kancil';
@@ -38,6 +40,8 @@ const props = defineProps<{
         revision: number | null;
     };
     entries: (VocabEntryInput | QuizEntryInput)[];
+    can: { manage: boolean };
+    sharing: SetSharing | null;
     activities: { id: string; game_id: string; created_at: string }[];
     languages: Language[];
     licenses: string[];
@@ -212,15 +216,21 @@ function destroy(): void {
                 </div>
                 <Heading :title="set.title" class="mt-2" />
             </div>
-            <Button v-if="!form.isDirty" as-child variant="default">
+            <Button
+                v-if="can.manage && !form.isDirty"
+                as-child
+                variant="default"
+            >
                 <Link :href="ActivityController.create(set.id)">
                     <Gamepad2 class="size-4" /> 選遊戲、建立活動
                 </Link>
             </Button>
-            <span v-else class="text-sm text-muted-foreground">
+            <span v-else-if="can.manage" class="text-sm text-muted-foreground">
                 有尚未儲存的修改，儲存後才能建立活動。
             </span>
         </div>
+
+        <SharingPanel v-if="sharing" :set-id="set.id" :sharing="sharing" />
 
         <section v-if="activities.length > 0" class="rounded-lg border p-3">
             <h2 class="text-sm font-medium">這個題組的活動</h2>
@@ -366,7 +376,7 @@ function destroy(): void {
             @error="uploadError = $event"
         />
 
-        <div>
+        <div v-if="can.manage">
             <Button
                 type="button"
                 variant="ghost"
