@@ -24,7 +24,8 @@ class SetViewData
         $gate = Gate::forUser($viewer);
         $content = SetEditorData::currentContent($set);
         $manage = $gate->allows('manage', $set);
-        $review = $gate->allows('review', $set);
+        // 只有待審或已公開的題組需要審核者動作（通過、退回、下架）
+        $review = $gate->allows('review', $set) && ($set->review_status === 'pending' || $set->isPublic());
         $source = $set->forkedFrom;
 
         return [

@@ -12,6 +12,8 @@ export type User = {
 
 export type Auth = {
     user: User;
+    // 審核者與管理員（docs/SPEC.md C-01）
+    canReview: boolean;
 };
 
 export type Passkey = {

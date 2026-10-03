@@ -26,6 +26,12 @@ class UserForm
                     ->multiple()
                     ->preload()
                     ->helperText('teacher：老師；curator：審核者，可以發邀請；admin：管理員'),
+                Select::make('reviewLanguages')
+                    ->label('負責審核的語言')
+                    ->relationship('reviewLanguages', 'name_zh')
+                    ->multiple()
+                    ->preload()
+                    ->helperText('審核者只能審核與修正這些語言的公開題組；管理員不受限制'),
             ]);
     }
 }

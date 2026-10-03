@@ -28,6 +28,9 @@ class AdminPanelTest extends TestCase
         foreach (['/admin', '/admin/users', '/admin/languages', '/admin/curriculum-refs', '/admin/invitations', '/admin/invitations/create'] as $url) {
             $this->actingAs($admin)->get($url)->assertOk();
         }
+
+        // 使用者表單可以指定審核者負責的語言
+        $this->get("/admin/users/{$admin->id}/edit")->assertOk()->assertSee('負責審核的語言');
     }
 
     public function test_curators_can_only_invite(): void

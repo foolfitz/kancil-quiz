@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Check, Copy, Gamepad2, Pencil } from '@lucide/vue';
 import { ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetCopyController from '@/actions/App/Http/Controllers/SetCopyController';
+import SetReviewController from '@/actions/App/Http/Controllers/SetReviewController';
 import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
 import ResultFace from '@/components/kancil/ResultFace.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,16 @@ function copy(): void {
             onFinish: () => (copying.value = false),
         },
     );
+}
+
+// 審核（docs/SPEC.md C-01）：退回與下架要附上意見
+const review = useForm({ decision: '', note: '' });
+function decide(decision: 'approve' | 'reject' | 'unpublish'): void {
+    review.decision = decision;
+    review.submit(SetReviewController.store(props.set.id), {
+        preserveScroll: true,
+        onSuccess: () => review.reset(),
+    });
 }
 
 const dateTime = (iso: string) =>
@@ -131,6 +143,55 @@ const dateTime = (iso: string) =>
                 >
             </dd>
         </dl>
+
+        <section
+            v-if="can.review"
+            class="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/40"
+            data-test="review-panel"
+        >
+            <h2 class="font-semibold">審核</h2>
+            <p v-if="set.review_status === 'pending'" class="text-sm">
+                {{ set.owner }}
+                申請把這個題組公開到共備庫。請確認內容正確、適合學生，作者與授權也沒有問題。
+            </p>
+            <p v-else class="text-sm">
+                這個題組已經公開。內容有小錯誤時可以直接「修正內容」；不適合公開時，附上原因下架。
+            </p>
+            <textarea
+                v-model="review.note"
+                rows="3"
+                maxlength="2000"
+                class="w-full rounded-md border bg-background p-2 text-base md:text-sm"
+                placeholder="給擁有者的意見（退回、下架時必填）"
+            />
+            <InputError :message="review.errors.note" />
+            <div class="flex flex-wrap gap-2">
+                <template v-if="set.review_status === 'pending'">
+                    <Button
+                        type="button"
+                        :disabled="review.processing"
+                        @click="decide('approve')"
+                        >通過並公開</Button
+                    >
+                    <Button
+                        type="button"
+                        variant="outline"
+                        :disabled="review.processing"
+                        @click="decide('reject')"
+                        >退回</Button
+                    >
+                </template>
+                <Button
+                    v-else
+                    type="button"
+                    variant="outline"
+                    class="text-destructive"
+                    :disabled="review.processing"
+                    @click="decide('unpublish')"
+                    >下架</Button
+                >
+            </div>
+        </section>
 
         <section class="space-y-3">
             <h2 class="font-semibold">內容（{{ entries.length }} 題）</h2>

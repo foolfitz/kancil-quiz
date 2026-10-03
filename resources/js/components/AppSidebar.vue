@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Library } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { ClipboardCheck, LayoutGrid, Library } from '@lucide/vue';
+import { computed } from 'vue';
 import SetController from '@/actions/App/Http/Controllers/SetController';
+import SetReviewController from '@/actions/App/Http/Controllers/SetReviewController';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -17,7 +19,8 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+const mainNavItems = computed<NavItem[]>(() => [
     {
         title: '首頁',
         href: dashboard(),
@@ -28,7 +31,16 @@ const mainNavItems: NavItem[] = [
         href: SetController.index(),
         icon: Library,
     },
-];
+    ...(page.props.auth.canReview
+        ? [
+              {
+                  title: '待審題組',
+                  href: SetReviewController.index(),
+                  icon: ClipboardCheck,
+              },
+          ]
+        : []),
+]);
 </script>
 
 <template>

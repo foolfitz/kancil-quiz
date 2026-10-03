@@ -195,4 +195,106 @@ class SharingTest extends TestCase
         $this->actingAs($this->author)->post("/sets/{$this->set->id}/share")->assertStatus(409);
         $this->actingAs($this->colleague)->get("/sets/{$this->set->id}/edit")->assertForbidden();
     }
+
+    private function curator(string ...$languages): User
+    {
+        $curator = User::factory()->create(['name' => '陳審核']);
+        $curator->assignRole('curator');
+        $curator->reviewLanguages()->attach($languages);
+
+        return $curator;
+    }
+
+    public function test_a_set_is_published_only_after_a_curator_approves_it(): void
+    {
+        $curator = $this->curator('vi');
+        $otherLanguage = $this->curator('id');
+
+        // T-12：擁有者申請公開
+        $this->actingAs($this->author)->post("/sets/{$this->set->id}/publication", ['note' => '適合三年級'])->assertRedirect();
+        $this->set->refresh();
+        $this->assertSame('pending', $this->set->review_status);
+        $this->assertSame('private', $this->set->visibility);
+        $this->actingAs($this->author)->post("/sets/{$this->set->id}/publication")->assertStatus(409);
+
+        // 待審的題組只有負責該語言的審核者看得到
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")->assertForbidden();
+        $this->actingAs($this->colleague)->get('/reviews')->assertForbidden();
+        $this->actingAs($this->colleague)->post("/sets/{$this->set->id}/review", ['decision' => 'approve'])->assertForbidden();
+        $this->actingAs($otherLanguage)->get("/sets/{$this->set->id}")->assertForbidden();
+        $this->actingAs($otherLanguage)->get('/reviews')->assertInertia(fn (Assert $page) => $page->has('pending', 0));
+
+        $this->actingAs($curator)->get('/reviews')->assertInertia(fn (Assert $page) => $page
+            ->component('reviews/Index')
+            ->where('languages', ['越南語'])
+            ->has('pending', 1)
+            ->where('pending.0.id', $this->set->id)
+            ->where('pending.0.note', '適合三年級'));
+        $this->get("/sets/{$this->set->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('can.review', true)
+            ->where('can.edit', false)
+            ->where('reviews.0.action', 'requested'));
+
+        // C-01：退回要附意見
+        $this->post("/sets/{$this->set->id}/review", ['decision' => 'reject'])->assertSessionHasErrors('note');
+        $this->post("/sets/{$this->set->id}/review", ['decision' => 'reject', 'note' => '第 2 題的拼字有誤'])->assertRedirect();
+        $this->assertSame('rejected', $this->set->fresh()?->review_status);
+        $this->actingAs($this->author)->get("/sets/{$this->set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('sharing.review_status', 'rejected')
+            ->where('sharing.last_review.action', 'rejected')
+            ->where('sharing.last_review.note', '第 2 題的拼字有誤'));
+
+        // 修正後再申請，審核者通過後公開，分享連結也一併收回
+        $this->post("/sets/{$this->set->id}/share");
+        $this->post("/sets/{$this->set->id}/publication")->assertRedirect();
+        $this->actingAs($curator)->post("/sets/{$this->set->id}/review", ['decision' => 'approve'])->assertRedirect();
+        $this->set->refresh();
+        $this->assertSame('public', $this->set->visibility);
+        $this->assertSame('approved', $this->set->review_status);
+        $this->assertNull($this->set->share_token);
+        $this->assertSame($this->set->current_revision_id, $this->set->reviews()->first()?->set_revision_id);
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")->assertOk();
+        $this->actingAs($curator)->post("/sets/{$this->set->id}/review", ['decision' => 'approve'])->assertStatus(409);
+
+        // 已公開的題組，審核者可以附上原因下架
+        $this->post("/sets/{$this->set->id}/review", ['decision' => 'unpublish', 'note' => '圖片沒有授權'])->assertRedirect();
+        $this->assertSame('private', $this->set->fresh()?->visibility);
+        $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")->assertForbidden();
+
+        $this->assertSame(
+            ['unpublished', 'approved', 'requested', 'rejected', 'requested'],
+            $this->set->reviews()->pluck('action')->all(),
+        );
+    }
+
+    public function test_owners_can_withdraw_requests_and_unpublish_their_own_sets(): void
+    {
+        $this->actingAs($this->author)->delete("/sets/{$this->set->id}/publication")->assertStatus(409);
+
+        $this->post("/sets/{$this->set->id}/publication");
+        $this->delete("/sets/{$this->set->id}/publication")->assertRedirect();
+        $this->assertSame('none', $this->set->fresh()?->review_status);
+
+        $this->publish($this->set);
+        $this->delete("/sets/{$this->set->id}/publication")->assertRedirect();
+        $this->set->refresh();
+        $this->assertSame('private', $this->set->visibility);
+        $this->assertSame('none', $this->set->review_status);
+    }
+
+    public function test_curators_cannot_review_their_own_sets_but_admins_can(): void
+    {
+        $curator = $this->curator('vi');
+        $own = Set::factory()->for($curator, 'owner')->create(['review_status' => 'pending']);
+        $this->actingAs($curator)->post("/sets/{$own->id}/review", ['decision' => 'approve'])->assertForbidden();
+        $this->get('/reviews')->assertInertia(fn (Assert $page) => $page->has('pending', 0));
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $this->actingAs($admin)->get('/reviews')->assertInertia(fn (Assert $page) => $page
+            ->where('languages', null)
+            ->has('pending', 1));
+        $this->post("/sets/{$own->id}/review", ['decision' => 'approve'])->assertRedirect();
+        $this->assertSame('public', $own->fresh()?->visibility);
+    }
 }
