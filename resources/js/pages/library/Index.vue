@@ -147,7 +147,7 @@ const filtered = computed(() =>
                 <Input
                     v-model="q"
                     type="search"
-                    placeholder="標題、說明，或詞彙組中的詞，例如：水果、chuối"
+                    placeholder="標題或詞，例如：水果、chuối"
                 />
             </label>
             <Button type="submit"><Search class="size-4" /> 搜尋</Button>
