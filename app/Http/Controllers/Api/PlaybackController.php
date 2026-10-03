@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Corpus\MediaUrls;
+use App\Corpus\ActivityPlayback;
 use App\Corpus\SetContent;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
@@ -18,20 +18,9 @@ class PlaybackController extends Controller
         $revision = $activity->set->currentRevision;
         abort_if($revision === null, 404, '這個活動還沒有內容');
 
-        return response()->json([
-            'format' => 'kancil-activity',
-            'version' => 1,
-            'id' => $activity->id,
-            'game' => [
-                'id' => $activity->game_id,
-                'version' => $activity->game_version,
-                'options' => (object) $activity->options,
-            ],
-            'mode' => $activity->mode,
-            'opens_at' => $activity->opens_at?->toIso8601String(),
-            'closes_at' => $activity->closes_at?->toIso8601String(),
-            'set_revision_id' => $revision->id,
-            'set' => MediaUrls::absolutize($revision->content()),
-        ], options: SetContent::JSON_FLAGS)->header('Cache-Control', 'no-cache');
+        return response()->json(
+            ActivityPlayback::payload($activity, $revision),
+            options: SetContent::JSON_FLAGS,
+        )->header('Cache-Control', 'no-cache');
     }
 }

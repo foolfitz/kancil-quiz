@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Corpus\ActivityPlayback;
 use App\Corpus\SetEditorData;
 use App\Games\GameRegistry;
 use App\Models\Activity;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +35,39 @@ class ActivityController extends Controller
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind],
             'content' => SetEditorData::currentContent($set),
             'games' => array_values($this->games->all()),
+        ]);
+    }
+
+    /**
+     * 建立活動之前，以選好的遊戲與設定試玩（docs/SPEC.md T-08）。不建立活動，也不留作答紀錄。
+     */
+    public function preview(Request $request, Set $set): View
+    {
+        Gate::authorize('manage', $set);
+
+        $game = $this->games->find((string) $request->query('game'));
+        abort_if($game === null, 422, '找不到這個遊戲');
+
+        $options = json_decode((string) $request->query('options', '{}'), true);
+        abort_unless(is_array($options), 422, '遊戲設定的格式不正確');
+        $options = $this->games->withDefaults($game['id'], $options);
+        abort_if($this->games->optionErrors($game['id'], $options) !== [], 422, '遊戲設定不正確');
+
+        $revision = $set->currentRevision;
+        abort_if($revision === null, 404, '題組還沒有內容');
+
+        $activity = $set->activities()->make([
+            'game_id' => $game['id'],
+            'game_version' => $game['version'],
+            'options' => $options,
+            'mode' => 'practice',
+        ]);
+        $activity->id = $activity->newUniqueId();
+
+        return view('player', [
+            'activity' => $activity,
+            'preview' => true,
+            'playback' => ActivityPlayback::payload($activity, $revision),
         ]);
     }
 

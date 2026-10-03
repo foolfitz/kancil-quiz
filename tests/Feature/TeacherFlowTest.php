@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\User;
+use App\Support\KancilFormat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -196,6 +197,36 @@ class TeacherFlowTest extends TestCase
         $this->assertSame(2, $set->activities()->count());
 
         $this->get("/p/{$quiz->id}")->assertOk()->assertSee("data-activity=\"{$quiz->id}\"", false);
+    }
+
+    public function test_a_teacher_previews_a_game_before_creating_the_activity(): void
+    {
+        $set = $this->createSet();
+        $this->put("/sets/{$set->id}", $this->vocabPayload([['quả chuối', '香蕉'], ['quả táo', '蘋果'], ['quả cam', '柳橙']]));
+        $url = fn (array $query) => "/sets/{$set->id}/activities/preview?".http_build_query($query);
+
+        // T-08：選好遊戲與設定後先試玩，播放格式直接帶在頁面中
+        $html = $this->get($url(['game' => 'quiz', 'options' => json_encode(['autoAdvance' => false])]))
+            ->assertOk()
+            ->assertSee('data-preview="1"', false)
+            ->getContent();
+        $this->assertIsString($html);
+        $this->assertSame(1, preg_match('#<script type="application/json" id="kq-playback">(.+?)</script>#s', $html, $match));
+        $playback = json_decode($match[1], flags: JSON_THROW_ON_ERROR);
+        $this->assertSame([], app(KancilFormat::class)->activityErrors($playback));
+        $this->assertSame('quiz', $playback->game->id);
+        $this->assertFalse($playback->game->options->autoAdvance);
+        $this->assertTrue($playback->game->options->revealAnswer);
+        $this->assertSame($set->fresh()?->current_revision_id, $playback->set_revision_id);
+
+        // 預覽不建立活動
+        $this->assertSame(0, $set->activities()->count());
+
+        $this->get($url(['game' => 'nope']))->assertUnprocessable();
+        $this->get($url(['game' => 'quiz', 'options' => '{"autoAdvance":"yes"}']))->assertUnprocessable();
+        $this->get($url(['game' => 'quiz', 'options' => 'not json']))->assertUnprocessable();
+
+        $this->actingAs(User::factory()->create())->get($url(['game' => 'quiz']))->assertForbidden();
     }
 
     public function test_activities_reject_invalid_options_and_too_few_entries(): void

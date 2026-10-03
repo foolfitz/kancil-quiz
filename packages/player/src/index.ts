@@ -41,6 +41,8 @@ export interface PlayerConfig {
     games: Record<string, () => Promise<AnyGame>>;
     // 預覽模式：不建立作答紀錄
     preview?: boolean;
+    // 已經取得的播放格式，有的話就不向 API 取得（老師在建立活動之前預覽）
+    activity?: KancilActivity;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -89,7 +91,7 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
     let activity: KancilActivity;
     let game: AnyGame;
     try {
-        activity = await api.activity(config.activityId);
+        activity = config.activity ?? (await api.activity(config.activityId));
         const load = config.games[activity.game.id];
         if (!load) {
             throw new Error(`找不到遊戲：${activity.game.id}`);

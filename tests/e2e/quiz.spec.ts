@@ -49,6 +49,21 @@ test.describe.serial('選擇題', () => {
 
         await page.getByRole('link', { name: /選遊戲、建立活動/ }).click();
         await page.getByRole('button', { name: /選擇題/ }).click();
+
+        // T-08：建立之前先在新分頁試玩
+        const [preview] = await Promise.all([
+            page.waitForEvent('popup'),
+            page.getByRole('link', { name: /先試玩/ }).click(),
+        ]);
+        await expect(
+            preview.getByText('預覽模式：不會留下作答紀錄'),
+        ).toBeVisible();
+        await preview.getByRole('button', { name: '開始' }).click();
+        await expect(preview.locator('.kq-quiz__progress')).toHaveText(
+            '第 1 / 5 題',
+        );
+        await preview.close();
+
         await page.getByRole('button', { name: '建立活動' }).click();
         await page.waitForURL('**/activities/*');
 

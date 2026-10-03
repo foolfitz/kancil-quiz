@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
 
     Route::get('sets/{set}/activities/create', [ActivityController::class, 'create'])->name('activities.create');
+    Route::get('sets/{set}/activities/preview', [ActivityController::class, 'preview'])->name('activities.preview');
     Route::post('sets/{set}/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::get('activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');

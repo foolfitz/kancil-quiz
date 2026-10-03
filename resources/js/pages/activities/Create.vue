@@ -3,7 +3,7 @@ import { check } from '@kancil-quiz/deck';
 import type { CompatibilityReport } from '@kancil-quiz/deck';
 import type { KancilSet } from '@kancil-quiz/schema';
 import { Head, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, CircleAlert } from '@lucide/vue';
+import { CheckCircle2, CircleAlert, Eye } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
@@ -53,6 +53,18 @@ const form = useForm({
     game_id: selected.value?.id ?? '',
     options: { ...selected.value?.defaultOptions } as OptionValues,
 });
+
+// 建立之前，以目前的遊戲與設定在新分頁試玩，不留作答紀錄（docs/SPEC.md T-08）
+const previewUrl = computed(() =>
+    selected.value
+        ? ActivityController.preview.url(props.set.id, {
+              query: {
+                  game: selected.value.id,
+                  options: JSON.stringify(form.options),
+              },
+          })
+        : null,
+);
 
 function choose(game: GameInfo): void {
     if (!reports.value[game.id].ok) {
@@ -134,10 +146,15 @@ function choose(game: GameInfo): void {
             <InputError :message="form.errors.options" />
         </section>
 
-        <div>
+        <div class="flex flex-wrap gap-2">
             <Button type="submit" :disabled="!selected || form.processing"
                 >建立活動</Button
             >
+            <Button v-if="previewUrl" as-child variant="outline">
+                <a :href="previewUrl" target="_blank" rel="noopener"
+                    ><Eye class="size-4" /> 先試玩（不留紀錄）</a
+                >
+            </Button>
         </div>
     </form>
 </template>
