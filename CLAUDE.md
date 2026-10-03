@@ -18,7 +18,8 @@
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。
 - 後端的主要程式：
-  - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）。
+  - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）。
+  - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`review`；未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
   - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
@@ -65,7 +66,7 @@
 | `composer test` | Pint、PHPStan、PHPUnit |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
-| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：teacher@example.com、admin@example.com（密碼都是 password），以及印尼語、越南語的題組與活動 |
+| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：teacher@example.com、lin@example.com（共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，iPad 直向、橫向與投影尺寸） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |

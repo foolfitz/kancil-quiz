@@ -4,11 +4,11 @@
 
 | 項目 | 內容 |
 |---|---|
-| 版本 | v0.1.5（草案） |
-| 日期 | 2026-10-03 |
+| 版本 | v0.1.6（草案） |
+| 日期 | 2026-10-04 |
 | 維護者 | 許家雋 |
-| 狀態 | M1 完成，待教師試用；M2 的 T-11（成績頁）已先完成 |
-| 修訂 | v0.1.5：新增建立活動前的預覽路由（10.3）；T-11 成績頁先於 M2 其他項目完成；M3 範圍刪除重複的「逐題答錯率」（已含在 T-11）<br>v0.1.4：M1 實作中的調整。ULID 用大寫且每次重新取隨機值（第 5 節）；PHP 測試改用 PHPUnit；媒體在上傳請求中同步轉檔（第 9 節）；新增 D-13（介面字串 i18n）、D-14（迷宮字型大小）<br>v0.1.3：專案定名為 Kancil Quiz（D-1）；語料全部自製，不匯入國教署教材（D-4）；教師社群調查擱置，M0 不再等待調查結果<br>v0.1.2：整合審閱意見。新增題組版本（3.3）、題組可見性定義與分享連結（T-17）、遊戲相容規則（7.3）與伺服器判分（7.4）、活動播放格式（6.6）；複製題組改為複製詞條；授權改記在詞條與媒體上；M1 縮為兩個遊戲<br>v0.1.1：第一階段語言範圍限定為印尼語與越南語，其餘語言分兩階段擴充（見 1.4） |
+| 狀態 | M1 完成，待教師試用。M2 已完成 T-11（成績頁）與共備（T-12、T-13、T-17、C-01、C-03）；字卡、配對、匯出與獨立播放器尚未開始 |
+| 修訂 | v0.1.6：共備的實作決定。D-12 已決（維持 public disk）；題組層級加上冊課與標籤（3.6、第 5 節）；分享連結改用另外產生的 token（3.2）；公開後修改直接生效（3.2）；C-03 的修訂紀錄沿用題組版本，不另裝 activitylog（第 5 節、10.1）；審核者不能審核自己的題組（第 2 節）<br>v0.1.5：新增建立活動前的預覽路由（10.3）；T-11 成績頁先於 M2 其他項目完成；M3 範圍刪除重複的「逐題答錯率」（已含在 T-11）<br>v0.1.4：M1 實作中的調整。ULID 用大寫且每次重新取隨機值（第 5 節）；PHP 測試改用 PHPUnit；媒體在上傳請求中同步轉檔（第 9 節）；新增 D-13（介面字串 i18n）、D-14（迷宮字型大小）<br>v0.1.3：專案定名為 Kancil Quiz（D-1）；語料全部自製，不匯入國教署教材（D-4）；教師社群調查擱置，M0 不再等待調查結果<br>v0.1.2：整合審閱意見。新增題組版本（3.3）、題組可見性定義與分享連結（T-17）、遊戲相容規則（7.3）與伺服器判分（7.4）、活動播放格式（6.6）；複製題組改為複製詞條；授權改記在詞條與媒體上；M1 縮為兩個遊戲<br>v0.1.1：第一階段語言範圍限定為印尼語與越南語，其餘語言分兩階段擴充（見 1.4） |
 
 ---
 
@@ -67,7 +67,7 @@
 | 審核者 `curator` | 各語言的資深老師 | 審核題組公開申請、標記重複詞條、修正公開語料 |
 | 管理員 `admin` | 平台維護者 | 帳號、語言、教材對照表等設定 |
 
-角色以 `spatie/laravel-permission` 實作。審核者的權限可以限定在特定語言。
+角色以 `spatie/laravel-permission` 實作。審核者的權限限定在管理員指定的語言（`language_user`），只能審核與修正這些語言的題組；審核者不能審核自己的題組，管理員可以。
 
 ---
 
@@ -132,6 +132,10 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 
 老師端不提供三選一的可見性選單。題組預設為 `private`；題組頁有「產生分享連結給同事」按鈕（T-17），按下後改為 `unlisted`，收回時改回 `private`。收回只會擋住之後的存取，已經被複製出去的題組不受影響。公開則走申請與審核（T-12）。
 
+分享連結是 `/shared/{token}`，token 另外隨機產生，不使用題組 ID：題組 ID 會出現在學生端的活動播放格式中（6.6），而且收回後再產生的應該是新的連結。題組公開後就不需要分享連結，通過審核時一併收回。
+
+已公開的題組，擁有者修改後直接生效，不需重新審核。每次修改都會留下版本（3.3），審核者看得到是誰改了什麼，必要時可以修正內容或附上原因下架（C-03）。
+
 `unlisted` 與活動連結的差別在對象：活動連結給學生遊玩，題組的分享連結給老師複製改編。
 
 ### 3.3 題組版本（SetRevision）
@@ -160,7 +164,7 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 
 ### 3.6 教材對照（CurriculumRef）
 
-對應國教署新住民語文數位學習教材的「語言／冊／課」，方便老師依課次找題組。**只存對照資訊，不存教材內容**。平台的語料全部自製，不匯入國教署教材的文字、圖片或音檔（見 D-4）。
+對應國教署新住民語文數位學習教材的「語言／冊／課」，方便老師依課次找題組。**只存對照資訊，不存教材內容**。題組與詞條都可以對應冊課：共備庫依題組的冊課搜尋（T-13），問答組沒有詞條，也能標記；詞條的對應保留給日後合併重複詞條（C-02）使用。平台的語料全部自製，不匯入國教署教材的文字、圖片或音檔（見 D-4）。
 
 ---
 
@@ -238,13 +242,15 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 | `items` | `id`（ULID）、`language_code`、`text`、`romanization`、`translation_zh`、`tags`（json）、`owner_id`、`authors`（json）、`license`、`source`、`forked_from_id` | soft delete |
 | `item_media` | `item_id`、`media_id`、`role`（`audio`／`image`）、`position` | 詞條的音檔與圖片 |
 | `item_curriculum_ref` | `item_id`、`curriculum_ref_id` | 樞紐表 |
-| `sets` | `id`（ULID）、`kind`（`vocab`／`quiz`）、`title`、`description`、`language_code`、`owner_id`、`visibility`（`private`／`unlisted`／`public`）、`review_status`（`none`／`pending`／`approved`／`rejected`）、`faces`（json）、`forked_from_id`、`license`、`current_revision_id` | soft delete |
+| `sets` | `id`（ULID）、`kind`（`vocab`／`quiz`）、`title`、`description`、`language_code`、`owner_id`、`visibility`（`private`／`unlisted`／`public`）、`review_status`（`none`／`pending`／`approved`／`rejected`）、`faces`（json）、`forked_from_id`、`license`、`current_revision_id`、`tags`（json）、`authors`（json，複製來源的作者）、`share_token` | soft delete。交換格式的 `authors` 是複製來源的作者，最後加上目前的擁有者 |
+| `set_curriculum_ref` | `set_id`、`curriculum_ref_id` | 題組對應的冊課（3.6） |
+| `set_reviews` | `id`、`set_id`、`set_revision_id`、`user_id`、`action`（`requested`／`withdrawn`／`approved`／`rejected`／`unpublished`）、`note`、`created_at` | 公開申請與審核的紀錄，只新增不修改（T-12、C-01） |
+| `language_user` | `user_id`、`language_code` | 審核者負責的語言（第 2 節） |
 | `set_entries` | `id`（ULID）、`set_id`、`position`、`item_id`（vocab 用）、`payload`（json，quiz 用） | quiz 題幹與選項的媒體以 `media` 的 ID 寫在 `payload` 中 |
 | `set_revisions` | `id`（ULID）、`set_id`、`number`、`content`（json，交換格式）、`content_hash`、`created_by`、`created_at` | 不可變，見 3.3 |
 | `activities` | `id`（ULID）、`set_id`、`game_id`、`game_version`、`options`（json）、`mode`（`practice`／`assignment`）、`opens_at`、`closes_at`、`owner_id` | 播放時使用題組的 `current_revision_id` |
 | `attempts` | `id`（ULID）、`activity_id`、`set_revision_id`、`seed`、`player_label`、`token_hash`、`started_at`、`completed_at`、`correct_count`、`round_count`、`game_score`、`duration_ms` | `correct_count`、`round_count` 由伺服器計算，不計分的遊戲 `correct_count` 為 null；`game_score` 由遊戲回報，只供顯示（見 7.4）。不存 IP |
 | `attempt_responses` | `id`、`attempt_id`、`entry_id`、`presented`（json）、`selected`（json）、`correct`、`client_correct`、`duration_ms`、`created_at` | `entry_id` 對應版本內容中的 entry，不設外鍵；`correct` 由伺服器判定。不計分的遊戲只記錄看過哪些題，`selected`、`correct` 為 null |
-| `activity_log` | spatie/laravel-activitylog 預設欄位 | 語料的修訂紀錄 |
 
 規則：
 
@@ -253,6 +259,7 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 - 複製的詞條與原詞條引用同一批 `media`，不複製媒體檔（媒體檔不可變，共用是安全的）。
 - 老師修改複製來的詞條時，把自己加進該詞條的 `authors`。
 - 詞條沒有自己的可見性，由引用它的題組決定。
+- 語料的修訂紀錄（C-03）沿用題組版本：`set_revisions.created_by` 記錄是誰修改的，題組檢視頁比較相鄰的版本，列出修改了什麼。不另外使用 activitylog。
 - 媒體在沒有任何詞條、問答題或題組版本引用時，由排程任務清除。
 - 作答紀錄預設保存 12 個月，由排程任務清除（可設定）。沒有作答引用、也不是最新版本的題組版本一併清除。
 
@@ -571,7 +578,7 @@ v2 候選：分類（group sort）、重組句子（unjumble）、打地鼠（wh
 | 老師端介面 | Inertia v3、Vue 3、TypeScript、Tailwind CSS 4、shadcn-vue | starter kit 內建 |
 | 驗證 | Laravel Fortify（starter kit 內建）；Google 登入用 Socialite | 老師帳號可啟用 2FA |
 | 管理後台 | Filament | 只給管理員與審核者使用，不做客製 |
-| 權限／修訂 | spatie/laravel-permission、spatie/laravel-activitylog | |
+| 權限 | spatie/laravel-permission | 修訂紀錄沿用題組版本（第 5 節） |
 | 媒體 | 自建 `media` 資料表（見第 5、9 節）；音檔用 ffmpeg、圖片用 `intervention/image` 轉檔 | 不用 medialibrary：媒體需要不可變、可被多個詞條共用、各自記錄授權，這些都不是 medialibrary 的設計方向 |
 | JSON Schema 驗證 | opis/json-schema | |
 | 資料庫 | MVP 用 SQLite（WAL 模式）；使用量上升後遷移到 PostgreSQL | 見 D-9 |
@@ -621,7 +628,10 @@ kancil-quiz/
 | `/sets/{set}/activities/preview` | 建立活動之前，以選好的遊戲與設定試玩；不建立活動，也不留作答紀錄（T-08） |
 | `/activities/{activity}` | 活動設定、分享連結、QR code |
 | `/activities/{activity}/results` | 作答結果 |
+| `/sets/{set}` | 題組的唯讀檢視：共備庫、審核時使用，可以複製；列出修訂紀錄 |
+| `/shared/{token}` | 同事的分享連結（T-17） |
 | `/library` | 共備庫 |
+| `/reviews` | 審核者的待審題組（C-01） |
 | `/admin` | Filament 後台 |
 
 學生端與公開 API（不需登入，依 IP 限流但不儲存 IP）：
@@ -753,7 +763,7 @@ M5、M6 可以視需求提前，與 M3、M4 並行。
 | D-9 | 資料庫：SQLite 或 PostgreSQL | 維運複雜度 | MVP 用 SQLite（WAL）；依 M1 驗收的壓力測試結果決定是否改用 PostgreSQL |
 | D-10 | 語言擴充的順序 | M5、M6 的範圍與時程 | 先依 1.4 的順序；調查恢復或有老師提出需求時再調整 |
 | D-11 | 問答題多個正解的語意：任一個都算對，或須全選 | 遊戲相容性、判分規則、交換格式 | v1 只支援單一正解，事件介面已能表示多選；M1 試用時詢問試用老師 |
-| D-12 | 私人題組的媒體是否改為私人 disk 加限時網址 | 媒體存取控管、快取效率、檔案改由 PHP 提供的負擔 | M1 用 `public` disk 加隨機檔名；M2 共備庫上線前決定 |
+| D-12 | 私人題組的媒體是否改為私人 disk 加限時網址 | 媒體存取控管、快取效率、檔案改由 PHP 提供的負擔 | **已決**：維持 `public` disk 加隨機檔名。複製出去的題組共用同一批媒體，學生不登入也要能載入，改用限時網址能擋住的很少（2026-10-04） |
 | D-13 | 前端介面字串何時導入 vue-i18n | 日後加入第二種介面語言的成本 | v1 只有正體中文，先直接寫在程式中；需要第二種介面語言時再一次導入 |
 | D-14 | 迷宮追逐的 Andika 字型約 585 KB，未取子集 | 播放頁載入時間（第 11 節的 300 KB 預算不含字型，但教室網路慢時仍有感）；Andika 有保留字型名稱，取子集後必須改名 | 先維持原檔、以 `@font-face` 延遲載入；試用時觀察教室網路下的載入時間再決定是否取子集並改名 |
 
