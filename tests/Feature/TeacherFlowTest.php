@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Activity;
+use App\Models\CurriculumRef;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\User;
@@ -72,6 +73,37 @@ class TeacherFlowTest extends TestCase
             ->component('sets/Edit')
             ->has('entries', 2)
             ->where('entries.0.item.text', 'quả chuối'));
+    }
+
+    public function test_sets_have_curriculum_refs_and_tags(): void
+    {
+        $set = $this->createSet();
+        $lesson = CurriculumRef::create(['language_code' => 'vi', 'volume' => 3, 'lesson' => 2, 'title_zh' => '水果']);
+        $other = CurriculumRef::create(['language_code' => 'id', 'volume' => 1, 'lesson' => 1]);
+
+        $this->put("/sets/{$set->id}", [
+            ...$this->vocabPayload([['quả chuối', '香蕉']]),
+            'tags' => ['水果', ' 食物 ', '水果'],
+            'curriculum_ref_ids' => [$other->id],
+        ])->assertSessionHasErrors(['tags.2', 'curriculum_ref_ids.0']);
+
+        $this->put("/sets/{$set->id}", [
+            ...$this->vocabPayload([['quả chuối', '香蕉']]),
+            'tags' => ['水果', ' 食物 '],
+            'curriculum_ref_ids' => [$lesson->id],
+        ])->assertSessionHasNoErrors();
+
+        // 交換格式的題組層級欄位（docs/SPEC.md 6.3）
+        $content = $set->fresh()?->currentRevision?->content();
+        $this->assertNotNull($content);
+        $this->assertSame([], app(KancilFormat::class)->setErrors($content));
+        $this->assertEquals([(object) ['volume' => 3, 'lesson' => 2]], $content->curriculum);
+        $this->assertSame(['水果', '食物'], $content->tags);
+
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('set.tags', ['水果', '食物'])
+            ->where('set.curriculum_ref_ids', [$lesson->id])
+            ->has('curriculumRefs', 2));
     }
 
     public function test_quiz_questions_need_exactly_one_correct_option(): void

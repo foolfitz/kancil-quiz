@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -27,9 +28,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $forked_from_id
  * @property string $license
  * @property string|null $current_revision_id
+ * @property list<string>|null $tags
+ * @property list<array{name: string}>|null $authors 複製來源的作者，不含目前的擁有者
+ * @property string|null $share_token
+ * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['kind', 'title', 'description', 'language_code', 'owner_id', 'visibility', 'review_status', 'faces', 'forked_from_id', 'license', 'current_revision_id'])]
+#[Fillable(['kind', 'title', 'description', 'language_code', 'owner_id', 'visibility', 'review_status', 'faces', 'forked_from_id', 'license', 'current_revision_id', 'tags', 'authors', 'share_token'])]
 class Set extends Model
 {
     /** @use HasFactory<SetFactory> */
@@ -39,11 +44,35 @@ class Set extends Model
 
     public const VISIBILITIES = ['private', 'unlisted', 'public'];
 
+    public const REVIEW_STATUSES = ['none', 'pending', 'approved', 'rejected'];
+
     protected function casts(): array
     {
         return [
             'faces' => 'array',
+            'tags' => 'array',
+            'authors' => 'array',
         ];
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->visibility === 'public';
+    }
+
+    /**
+     * 交換格式的 authors：複製來源的作者在前，目前的擁有者加在最後（docs/SPEC.md 第 5 節）。
+     *
+     * @return list<array{name: string}>
+     */
+    public function effectiveAuthors(): array
+    {
+        $authors = $this->authors ?? [];
+        if (! in_array($this->owner->name, array_column($authors, 'name'), true)) {
+            $authors[] = ['name' => $this->owner->name];
+        }
+
+        return $authors;
     }
 
     /**
@@ -92,5 +121,35 @@ class Set extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * 對應的教材冊課（docs/SPEC.md 3.6）。
+     *
+     * @return BelongsToMany<CurriculumRef, $this>
+     */
+    public function curriculumRefs(): BelongsToMany
+    {
+        return $this->belongsToMany(CurriculumRef::class, 'set_curriculum_ref')
+            ->orderBy('volume')
+            ->orderBy('lesson');
+    }
+
+    /**
+     * @return HasMany<SetReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(SetReview::class)->orderByDesc('id');
+    }
+
+    /**
+     * 複製來源。來源刪除後仍保留紀錄，以顯示出處。
+     *
+     * @return BelongsTo<Set, $this>
+     */
+    public function forkedFrom(): BelongsTo
+    {
+        return $this->belongsTo(Set::class, 'forked_from_id')->withTrashed();
     }
 }

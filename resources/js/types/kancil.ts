@@ -135,3 +135,21 @@ export interface Paginated<T> {
     prev_page_url: string | null;
     next_page_url: string | null;
 }
+
+// 教材冊課對照（docs/SPEC.md 3.6）
+export interface CurriculumRef {
+    id: number;
+    language_code: string;
+    volume: number;
+    lesson: number;
+    title_zh: string | null;
+}
+
+export function curriculumLabel(ref: {
+    volume: number;
+    lesson: number;
+    title_zh?: string | null;
+}): string {
+    const label = `第 ${ref.volume} 冊第 ${ref.lesson} 課`;
+    return ref.title_zh ? `${label}：${ref.title_zh}` : label;
+}

@@ -2,6 +2,7 @@
 
 namespace App\Corpus;
 
+use App\Models\CurriculumRef;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\SetEntry;
@@ -20,7 +21,7 @@ class SetContent
      */
     public static function build(Set $set): array
     {
-        $set->load(['owner', 'entries.item.media']);
+        $set->load(['owner', 'curriculumRefs', 'entries.item.media']);
 
         $content = array_filter([
             'format' => 'kancil-set',
@@ -31,7 +32,11 @@ class SetContent
             'title' => $set->title,
             'description' => $set->description,
             'license' => $set->license,
-            'authors' => [['name' => $set->owner->name]],
+            'authors' => $set->effectiveAuthors(),
+            'curriculum' => $set->curriculumRefs->isEmpty() ? null : $set->curriculumRefs
+                ->map(fn (CurriculumRef $ref) => ['volume' => $ref->volume, 'lesson' => $ref->lesson])
+                ->all(),
+            'tags' => $set->tags ?: null,
         ], fn ($value) => $value !== null);
 
         if ($set->kind === 'vocab') {

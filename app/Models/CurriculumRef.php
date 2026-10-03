@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * 教材的冊與課對照，只存對照資訊，不存教材內容（docs/SPEC.md 3.6）。
+ *
+ * @property int $id
+ * @property string $language_code
+ * @property int $volume
+ * @property int $lesson
+ * @property string|null $title_zh
  */
 #[Fillable(['language_code', 'volume', 'lesson', 'title_zh'])]
 class CurriculumRef extends Model

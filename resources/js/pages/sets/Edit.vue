@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Gamepad2 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import CurriculumPicker from '@/components/kancil/CurriculumPicker.vue';
 import QuizEditor from '@/components/kancil/QuizEditor.vue';
+import TagInput from '@/components/kancil/TagInput.vue';
 import VocabEditor from '@/components/kancil/VocabEditor.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { KIND_NAMES } from '@/types/kancil';
 import type {
+    CurriculumRef,
     FaceField,
     Language,
     QuizEntryInput,
@@ -30,12 +33,15 @@ const props = defineProps<{
         language_code: string;
         license: string;
         faces: { prompt: FaceField[]; answer: FaceField[] } | null;
+        tags: string[];
+        curriculum_ref_ids: number[];
         revision: number | null;
     };
     entries: (VocabEntryInput | QuizEntryInput)[];
     activities: { id: string; game_id: string; created_at: string }[];
     languages: Language[];
     licenses: string[];
+    curriculumRefs: CurriculumRef[];
 }>();
 
 defineOptions({
@@ -65,6 +71,8 @@ function initial() {
         description: props.set.description ?? '',
         language_code: props.set.language_code,
         license: props.set.license,
+        tags: [...props.set.tags],
+        curriculum_ref_ids: [...props.set.curriculum_ref_ids],
         faces: props.set.faces ?? {
             prompt: ['translation_zh'],
             answer: ['text'],
@@ -112,7 +120,21 @@ const facePreset = computed({
     },
 });
 
+// 換語言時，拿掉其他語言的冊課
+watch(
+    () => form.language_code,
+    (language) => {
+        form.curriculum_ref_ids = form.curriculum_ref_ids.filter(
+            (id) =>
+                props.curriculumRefs.find((r) => r.id === id)?.language_code ===
+                language,
+        );
+    },
+);
+
 const errorCount = computed(() => Object.keys(form.errors).length);
+const firstError = (prefix: string) =>
+    Object.entries(form.errors).find(([key]) => key.startsWith(prefix))?.[1];
 
 function toServer(entry: VocabEntryInput | QuizEntryInput) {
     if ('item' in entry) {
@@ -264,6 +286,21 @@ function destroy(): void {
                         {{ license }}
                     </option>
                 </select>
+            </div>
+            <div class="grid gap-2">
+                <Label for="curriculum">對應教材（選填）</Label>
+                <CurriculumPicker
+                    id="curriculum"
+                    v-model="form.curriculum_ref_ids"
+                    :refs="curriculumRefs"
+                    :language="form.language_code"
+                />
+                <InputError :message="firstError('curriculum_ref_ids')" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="tags">標籤（選填）</Label>
+                <TagInput id="tags" v-model="form.tags" />
+                <InputError :message="firstError('tags')" />
             </div>
             <div v-if="set.kind === 'vocab'" class="grid gap-2">
                 <Label for="faces">出題方式</Label>

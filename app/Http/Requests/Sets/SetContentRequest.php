@@ -50,7 +50,18 @@ class SetContentRequest extends SetDetailsRequest
             'entries.*.question.options.*.correct' => ['required', 'boolean'],
         ];
 
-        return [...parent::rules(), ...$content];
+        // 題組層級的冊課與標籤（docs/SPEC.md 3.6、6.3），共備庫依此搜尋（T-13）
+        $meta = [
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['string', 'distinct', 'max:30'],
+            'curriculum_ref_ids' => ['nullable', 'array', 'max:20'],
+            'curriculum_ref_ids.*' => [
+                'integer', 'distinct',
+                Rule::exists('curriculum_refs', 'id')->where('language_code', (string) $this->input('language_code')),
+            ],
+        ];
+
+        return [...parent::rules(), ...$meta, ...$content];
     }
 
     /**

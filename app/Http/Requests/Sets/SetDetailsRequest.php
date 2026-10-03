@@ -40,6 +40,9 @@ class SetDetailsRequest extends FormRequest
             'description' => '說明',
             'language_code' => '語言',
             'license' => '授權',
+            'tags' => '標籤',
+            'tags.*' => '標籤',
+            'curriculum_ref_ids.*' => '教材冊課',
         ];
     }
 }

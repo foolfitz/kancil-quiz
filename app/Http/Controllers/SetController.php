@@ -7,6 +7,7 @@ use App\Corpus\SetRevisionRecorder;
 use App\Corpus\SetWriter;
 use App\Http\Requests\Sets\SetContentRequest;
 use App\Http\Requests\Sets\SetDetailsRequest;
+use App\Models\CurriculumRef;
 use App\Models\Language;
 use App\Models\Set;
 use Illuminate\Http\RedirectResponse;
@@ -73,12 +74,19 @@ class SetController extends Controller
                 'language_code' => $set->language_code,
                 'license' => $set->license,
                 'faces' => $set->faces,
+                'tags' => $set->tags ?? [],
+                'curriculum_ref_ids' => $set->curriculumRefs()->pluck('curriculum_refs.id'),
                 'revision' => $set->currentRevision?->number,
             ],
             'entries' => SetEditorData::entries($set),
             'activities' => $set->activities()->latest()->get(['id', 'game_id', 'created_at']),
             'languages' => Language::enabled()->get(['code', 'name_zh', 'name_native']),
             'licenses' => SetDetailsRequest::LICENSES,
+            'curriculumRefs' => CurriculumRef::query()
+                ->whereIn('language_code', Language::enabled()->pluck('code'))
+                ->orderBy('volume')
+                ->orderBy('lesson')
+                ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh']),
         ]);
     }
 
@@ -87,12 +95,15 @@ class SetController extends Controller
         Gate::authorize('manage', $set);
 
         $data = $request->validated();
+        $tags = array_values(array_unique(array_filter(array_map('trim', $data['tags'] ?? []))));
         $set->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'language_code' => $data['language_code'],
             'license' => $data['license'],
+            'tags' => $tags ?: null,
         ]);
+        $set->curriculumRefs()->sync($data['curriculum_ref_ids'] ?? []);
         $writer->write($set, $data, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => '題組已儲存']);

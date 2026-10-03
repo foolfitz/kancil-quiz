@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -74,5 +75,46 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Pas
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class, 'owner_id');
+    }
+
+    /**
+     * 審核者負責的語言（docs/SPEC.md 第 2 節：審核者的權限可以限定在特定語言）。
+     *
+     * @return BelongsToMany<Language, $this>
+     */
+    public function reviewLanguages(): BelongsToMany
+    {
+        return $this->belongsToMany(Language::class, 'language_user', 'user_id', 'language_code');
+    }
+
+    /**
+     * 能否審核與修正這種語言的題組：管理員全部都可以，審核者只限負責的語言。
+     */
+    public function canReview(string $languageCode): bool
+    {
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        return $this->hasRole('curator')
+            && $this->reviewLanguages()->whereKey($languageCode)->exists();
+    }
+
+    /**
+     * 能審核的語言代碼；null 表示全部（管理員）。
+     *
+     * @return list<string>|null
+     */
+    public function reviewableLanguageCodes(): ?array
+    {
+        if ($this->hasRole('admin')) {
+            return null;
+        }
+
+        if (! $this->hasRole('curator')) {
+            return [];
+        }
+
+        return array_values($this->reviewLanguages()->pluck('languages.code')->all());
     }
 }
