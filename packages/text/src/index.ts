@@ -12,13 +12,34 @@ export function isNfc(text: string): boolean {
     return text === nfc(text);
 }
 
+// 遊戲排版時會反覆切字，所以每種語言只建立一次 Segmenter。
+const segmenters = new Map<string, Intl.Segmenter>();
+
+function graphemeSegmenter(language = ''): Intl.Segmenter {
+    let segmenter = segmenters.get(language);
+    if (!segmenter) {
+        try {
+            segmenter = new Intl.Segmenter(language || undefined, {
+                granularity: 'grapheme',
+            });
+        } catch {
+            // 語言代碼不合法時退回瀏覽器預設語言；字素的切法與語言幾乎無關
+            segmenter = new Intl.Segmenter(undefined, {
+                granularity: 'grapheme',
+            });
+        }
+        segmenters.set(language, segmenter);
+    }
+    return segmenter;
+}
+
 // 把文字切成字素（使用者看到的一個字）。凡是把文字拆成格子或字塊都必須用它，
 // 不可以用 split('') 或 [...text]，否則泰文、高棉文的附加符號會被拆開。
 export function graphemes(text: string, language?: string): string[] {
-    const segmenter = new Intl.Segmenter(language, {
-        granularity: 'grapheme',
-    });
-    return Array.from(segmenter.segment(nfc(text)), ({ segment }) => segment);
+    return Array.from(
+        graphemeSegmenter(language).segment(nfc(text)),
+        ({ segment }) => segment,
+    );
 }
 
 export interface MatchOptions {

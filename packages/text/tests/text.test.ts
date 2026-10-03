@@ -45,6 +45,11 @@ describe('graphemes()', () => {
         expect(parts.join('')).toBe('ខ្មែរ');
         expect(parts.length).toBeLessThan('ខ្មែរ'.length);
     });
+
+    it('語言代碼不合法時退回預設語言，不丟出錯誤', () => {
+        expect(graphemes('hấu', 'not a language')).toEqual(['h', 'ấ', 'u']);
+        expect(graphemes('hấu', '')).toEqual(['h', 'ấ', 'u']);
+    });
 });
 
 describe('isMatch()', () => {

@@ -109,7 +109,10 @@ describe('layoutLabel', () => {
             .join('')
             .replace('…', '')
             .replaceAll(' ', '');
-        expect(text.replaceAll(' ', '').startsWith(shown)).toBe(true);
+        // 切字時會轉成 NFC，所以和 NFC 的原文比較
+        expect(
+            text.normalize('NFC').replaceAll(' ', '').startsWith(shown),
+        ).toBe(true);
     });
 
     it('空白的文字沒有任何一行', () => {
