@@ -14,6 +14,8 @@ export type Auth = {
     user: User;
     // 審核者與管理員（docs/SPEC.md C-01）
     canReview: boolean;
+    // Filament 後台的網址，只給管理員與審核者
+    adminUrl: string | null;
 };
 
 export type Passkey = {

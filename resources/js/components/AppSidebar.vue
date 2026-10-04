@@ -6,6 +6,7 @@ import {
     GraduationCap,
     LayoutGrid,
     Library,
+    Wrench,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
@@ -54,6 +55,16 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: '待審題組',
                   href: SetReviewController.index(),
                   icon: ClipboardCheck,
+              },
+          ]
+        : []),
+    ...(page.props.auth.adminUrl
+        ? [
+              {
+                  title: '後台',
+                  href: page.props.auth.adminUrl,
+                  icon: Wrench,
+                  external: true,
               },
           ]
         : []),

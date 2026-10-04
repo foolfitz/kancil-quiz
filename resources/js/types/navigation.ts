@@ -11,4 +11,6 @@ export type NavItem = {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
     isActive?: boolean;
+    // 不是 Inertia 頁面（例如 Filament 後台），用一般連結整頁載入
+    external?: boolean;
 };

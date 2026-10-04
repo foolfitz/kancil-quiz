@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 // Filament 後台只給管理員與審核者使用（docs/SPEC.md A-01、10.1）
@@ -45,5 +46,13 @@ class AdminPanelTest extends TestCase
     public function test_teachers_cannot_use_the_admin_panel(): void
     {
         $this->actingAs($this->userWithRole('teacher'))->get('/admin')->assertForbidden();
+    }
+
+    public function test_the_sidebar_links_to_the_admin_panel_only_for_admins_and_curators(): void
+    {
+        foreach (['admin' => url('/admin'), 'curator' => url('/admin'), 'teacher' => null] as $role => $url) {
+            $this->actingAs($this->userWithRole($role))->get('/dashboard')
+                ->assertInertia(fn (Assert $page) => $page->where('auth.adminUrl', $url));
+        }
     }
 }

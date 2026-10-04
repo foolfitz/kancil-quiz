@@ -22,6 +22,18 @@ final class Textbook
      */
     public const FACES = ['prompt' => ['image', 'translation_zh'], 'answer' => ['text']];
 
+    /**
+     * 教材題組與詞條的作者與授權，資料檔沒寫時使用（App\Curriculum\VolumeFile）。作者寫本專案的名稱，不寫個人。
+     */
+    public const AUTHORS = [['name' => 'Kancil Quiz']];
+
+    public const LICENSE = 'CC-BY-4.0';
+
+    /**
+     * 在後台上傳插圖時的預設署名。
+     */
+    public const IMAGE_ATTRIBUTION = ['authors' => self::AUTHORS, 'license' => 'CC-BY-4.0', 'source' => 'AI 生成'];
+
     public static function owner(): User
     {
         return User::firstOrCreate(['email' => self::OWNER_EMAIL], [
@@ -38,6 +50,15 @@ final class Textbook
         $name = trim(($ref->title_native ?? '').' '.($ref->title_zh ?? ''));
 
         return "第 {$ref->volume} 冊第 {$ref->lesson} 課".($name === '' ? '' : "：{$name}");
+    }
+
+    /**
+     * 詞的對應鍵：與答案比對相同，不分大小寫、忽略頭尾與重複的空白（docs/SPEC.md 第 8 節）。
+     * 重新匯入時以它對應既有的詞條，題目 ID 才不會變。
+     */
+    public static function wordKey(string $text): string
+    {
+        return mb_strtolower((string) preg_replace('/\s+/u', ' ', trim($text)));
     }
 
     public static function lessonUrl(CurriculumRef $ref): string

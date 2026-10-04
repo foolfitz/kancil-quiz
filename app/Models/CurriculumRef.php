@@ -16,8 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $title_zh
  * @property string|null $title_native
  * @property string|null $set_id
+ * @property int|null $imported_revision 教材題組最近一次匯入詞彙後的版本號（App\Curriculum\CurriculumImporter::editedOnSite()）
  */
-#[Fillable(['language_code', 'volume', 'lesson', 'title_zh', 'title_native', 'set_id'])]
+#[Fillable(['language_code', 'volume', 'lesson', 'title_zh', 'title_native', 'set_id', 'imported_revision'])]
 class CurriculumRef extends Model
 {
     public $timestamps = false;

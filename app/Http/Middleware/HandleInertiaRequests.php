@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,6 +36,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $admin = Filament::getPanel('admin');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -42,6 +45,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 // 側邊欄的「待審題組」（docs/SPEC.md C-01）
                 'canReview' => (bool) $request->user()?->hasAnyRole(['admin', 'curator']),
+                // 側邊欄的「後台」：管理員與審核者（App\Models\User::canAccessPanel()）
+                'adminUrl' => $request->user()?->canAccessPanel($admin) ? url($admin->getPath()) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

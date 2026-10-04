@@ -27,7 +27,18 @@ const { isCurrentUrl } = useCurrentUrl();
                     :is-active="isCurrentUrl(item.href)"
                     :tooltip="item.title"
                 >
-                    <Link :href="item.href">
+                    <a
+                        v-if="item.external"
+                        :href="
+                            typeof item.href === 'string'
+                                ? item.href
+                                : item.href.url
+                        "
+                    >
+                        <component :is="item.icon" />
+                        <span>{{ item.title }}</span>
+                    </a>
+                    <Link v-else :href="item.href">
                         <component :is="item.icon" />
                         <span>{{ item.title }}</span>
                     </Link>
