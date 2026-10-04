@@ -32,8 +32,12 @@ test.describe.serial('字卡', () => {
             .toBeGreaterThan(0);
         await page.screenshot({ path: testInfo.outputPath('cards-front.png') });
 
+        // 背面真的看不到（有的 WebKit 不支援 backface-visibility，背面會鏡像蓋在正面上）
+        await expect(page.locator('.kq-cards__side--second')).toBeHidden();
+
         // 點卡片翻面，看到印尼語
         await page.locator('.kq-cards__card').click();
+        await expect(page.locator('.kq-cards__side--first')).toBeHidden();
         await expect(inner).toHaveClass(/is-flipped/);
         await expect(page.locator('.kq-cards__side--second')).toHaveAttribute(
             'aria-hidden',
