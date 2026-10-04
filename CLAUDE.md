@@ -27,7 +27,7 @@
   - `app/Support/ActivitySettings.php`：活動的兩個設定（SPEC 3.4）：要不要輸入名字（存成 `mode = assignment`）與開放、截止時間。老師端以 `config('kancil.timezone')`（台灣時間）輸入與顯示，格式同 `datetime-local`，資料庫存 UTC；建立活動的預設是今天起一週。
   - `app/Grading/PlayerLabel.php`：學生輸入的名字或座號在存入前統一格式（NFKC、合併空白、數字去掉前導的 0）。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
-  - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。
+  - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。瀏覽器錄音（T-06）也原樣上傳到這裡；前端的錄音在 `resources/js/lib/recorder.ts`、`components/kancil/AudioRecorder.vue`（單一欄位）與 `SequentialRecorder.vue`（逐詞錄音）。E2E 的 Chromium 用假的麥克風（`playwright.config.ts`），WebKit 不測錄音。
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
 - 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 與 `packages/player/standalone/main.ts` 登記，並執行 `npm run games:manifest`。
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
