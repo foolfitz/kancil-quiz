@@ -27,6 +27,9 @@ import './style.css';
 
 export { PlayerApi } from './api';
 export { computeResults } from './results';
+export { openSetZip } from './setZip';
+export type { SetZip } from './setZip';
+export { ZipError } from './zip';
 
 // 遊戲宿主（docs/SPEC.md 7.2）：載入活動、轉換題目、解鎖音訊、掛載遊戲、收集作答並顯示結果。
 // 學生端要盡量輕量，所以不用 Vue；所有樣式限定在 .kq-player 之下。
@@ -41,6 +44,8 @@ export interface PlayerConfig {
     games: Record<string, () => Promise<AnyGame>>;
     // 預覽模式：不建立作答紀錄
     preview?: boolean;
+    // 獨立播放器（O-02）：沒有伺服器，不建立作答紀錄，成績在本機判定
+    standalone?: boolean;
     // 已經取得的播放格式，有的話就不向 API 取得（老師在建立活動之前預覽）
     activity?: KancilActivity;
 }
@@ -69,11 +74,26 @@ function faceText(face: Face): string {
     return [face.text, face.romanization].filter(Boolean).join(' ');
 }
 
-export async function startPlayer(config: PlayerConfig): Promise<void> {
+export interface PlayerHandle {
+    // 結束目前的遊戲並移除播放器（獨立播放器換遊戲時使用）
+    destroy(): void;
+}
+
+export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
     const api = new PlayerApi(config.apiBase);
     const audio = new AudioHost();
     const root = el('div', 'kq-player');
     config.root.replaceChildren(root);
+    const offline = config.preview === true || config.standalone === true;
+    // 正在進行的遊戲；結束或換遊戲時清理
+    let stopGame: (() => void) | null = null;
+    const handle: PlayerHandle = {
+        destroy() {
+            stopGame?.();
+            audio.stopAll();
+            root.remove();
+        },
+    };
 
     const show = (...children: HTMLElement[]) =>
         root.replaceChildren(...children);
@@ -104,7 +124,7 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
                 ? '連結可能有誤，或活動已被刪除。'
                 : '請檢查網路連線後重新整理。',
         );
-        return;
+        return handle;
     }
 
     root.lang = activity.set.language;
@@ -122,7 +142,7 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
                 ? `這個活動在 ${opensAt.toLocaleString('zh-TW')} 開放。`
                 : '這個活動已經截止。',
         );
-        return;
+        return handle;
     }
 
     const startScreen = () => {
@@ -166,7 +186,7 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
         }
 
         let attempt: AttemptSession | null = null;
-        if (!config.preview) {
+        if (!offline) {
             try {
                 const started = await api.start(activity.id, {
                     set_revision_id: activity.set_revision_id,
@@ -209,6 +229,12 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
             }
         };
         document.addEventListener('visibilitychange', onHide);
+        stopGame = () => {
+            stopGame = null;
+            instance?.destroy();
+            instance = null;
+            document.removeEventListener('visibilitychange', onHide);
+        };
 
         const emit = (event: GameEvent) => {
             if (event.type === 'answered' || event.type === 'viewed') {
@@ -240,8 +266,7 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
                 finished = true;
                 // 遊戲在自己的事件處理中呼叫 emit，等它返回後再卸載。
                 setTimeout(() => {
-                    instance?.destroy();
-                    document.removeEventListener('visibilitychange', onHide);
+                    stopGame?.();
                     void finish(event.gameScore, event.durationMs);
                 });
             }
@@ -266,7 +291,8 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
         ): Promise<void> {
             message('計算成績中…');
             let serverResults;
-            let uploaded = attempt === null && config.preview === true;
+            // 預覽與獨立播放器本來就不上傳，不必提示
+            let uploaded = attempt === null && offline;
             if (attempt) {
                 try {
                     serverResults = (
@@ -369,4 +395,5 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
     }
 
     startScreen();
+    return handle;
 }

@@ -8,7 +8,8 @@
     ],
     "type": "module",
     "scripts": {
-        "build": "vp build",
+        "build": "vp build && npm run build:standalone",
+        "build:standalone": "vp build packages/player/standalone",
         "build:ssr": "vp build && vp build --ssr",
         "dev": "vp dev",
         "check": "vp check",

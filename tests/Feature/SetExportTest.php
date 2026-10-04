@@ -153,8 +153,10 @@ class SetExportTest extends TestCase
 
         $this->unzip($this->actingAs($this->colleague)->get("/sets/{$this->set->id}/export"));
         auth()->logout();
-        $files = $this->unzip($this->get("/api/v1/sets/{$this->set->id}/export"));
-        $this->assertArrayHasKey('set.json', $files);
+        // 放在其他網站的獨立播放器也能以 ?zip= 載入（O-02），所以開放跨來源讀取
+        $response = $this->get("/api/v1/sets/{$this->set->id}/export", ['Origin' => 'https://example.org']);
+        $response->assertHeader('Access-Control-Allow-Origin', '*');
+        $this->assertArrayHasKey('set.json', $this->unzip($response));
     }
 
     public function test_pages_offer_the_download_only_to_those_who_may_export(): void

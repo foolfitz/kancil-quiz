@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 // 各遊戲的 E2E 共用的檢查。
 
@@ -45,4 +45,42 @@ export async function createActivity(
     await page.waitForURL('**/activities/*');
     const url = await page.locator('code').first().textContent();
     return new URL(url ?? '').pathname;
+}
+
+// 配對（match-up）用：以滑鼠拖曳
+export async function dragTo(
+    page: Page,
+    from: Locator,
+    to: Locator,
+): Promise<void> {
+    const a = await from.boundingBox();
+    const b = await to.boundingBox();
+    if (!a || !b) {
+        throw new Error('找不到要拖曳的位置');
+    }
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, {
+        steps: 10,
+    });
+    await page.mouse.up();
+}
+
+// 配好這一頁：雙數題用拖曳，單數題用點選（先點卡片，再點題目旁的空格）
+export async function matchPage(page: Page): Promise<void> {
+    const rows = page.locator('.kq-match__row');
+    const ids = await rows.evaluateAll((elements) =>
+        elements.map((el) => (el as HTMLElement).dataset.entryId ?? ''),
+    );
+    for (const [i, id] of ids.entries()) {
+        const card = page.locator(`.kq-match__pool [data-entry-id="${id}"]`);
+        const row = page.locator(`.kq-match__row[data-entry-id="${id}"]`);
+        if (i % 2 === 0) {
+            await dragTo(page, card, row);
+        } else {
+            await card.click();
+            await row.locator('.kq-match__drop').click();
+        }
+        await expect(row).toHaveClass(/is-matched/);
+    }
 }

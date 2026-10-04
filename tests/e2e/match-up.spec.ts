@@ -1,42 +1,14 @@
 import { expect, test } from '@playwright/test';
-import type { Locator, Page } from '@playwright/test';
-import { collectErrors, createActivity, expectNothingClipped } from './helpers';
+import {
+    collectErrors,
+    createActivity,
+    dragTo,
+    expectNothingClipped,
+    matchPage,
+} from './helpers';
 
 // 配對（docs/SPEC.md 7.4、7.5、7.6）：拖曳或點選配對，放錯的卡片退回，每題以第一次放的卡片計分；
 // 題目多時分頁。每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
-
-async function dragTo(page: Page, from: Locator, to: Locator): Promise<void> {
-    const a = await from.boundingBox();
-    const b = await to.boundingBox();
-    if (!a || !b) {
-        throw new Error('找不到要拖曳的位置');
-    }
-    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, {
-        steps: 10,
-    });
-    await page.mouse.up();
-}
-
-// 配好這一頁：雙數題用拖曳，單數題用點選（先點卡片，再點題目旁的空格）
-async function matchPage(page: Page): Promise<void> {
-    const rows = page.locator('.kq-match__row');
-    const ids = await rows.evaluateAll((elements) =>
-        elements.map((el) => (el as HTMLElement).dataset.entryId ?? ''),
-    );
-    for (const [i, id] of ids.entries()) {
-        const card = page.locator(`.kq-match__pool [data-entry-id="${id}"]`);
-        const row = page.locator(`.kq-match__row[data-entry-id="${id}"]`);
-        if (i % 2 === 0) {
-            await dragTo(page, card, row);
-        } else {
-            await card.click();
-            await row.locator('.kq-match__drop').click();
-        }
-        await expect(row).toHaveClass(/is-matched/);
-    }
-}
 
 test.describe.serial('配對', () => {
     let playPath = '';

@@ -1,0 +1,204 @@
+/* 獨立播放器的外框（選題組、選遊戲）。遊戲畫面由 @kancil-quiz/player 負責。 */
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+#app {
+    display: flex;
+    min-height: 100%;
+}
+
+.kq-standalone {
+    --kq-standalone-bg: #f6f4ee;
+    --kq-standalone-fg: #1f2933;
+    --kq-standalone-muted: #61707d;
+    --kq-standalone-card: #ffffff;
+    --kq-standalone-border: #d5dbe1;
+    --kq-standalone-accent: #2563eb;
+    --kq-standalone-wrong: #b91c1c;
+
+    box-sizing: border-box;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    background: var(--kq-standalone-bg);
+    color: var(--kq-standalone-fg);
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        'Noto Sans',
+        'Noto Sans TC',
+        sans-serif;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.kq-standalone *,
+.kq-standalone *::before,
+.kq-standalone *::after {
+    box-sizing: inherit;
+}
+
+.kq-standalone__brand {
+    margin: 0;
+    color: var(--kq-standalone-muted);
+}
+
+.kq-standalone__title {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    line-height: 1.4;
+}
+
+.kq-standalone__subtitle {
+    margin: 1rem 0 0;
+    font-size: 1.25rem;
+}
+
+.kq-standalone__detail {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--kq-standalone-muted);
+    font-size: 1.05rem;
+}
+
+.kq-standalone__error {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--kq-standalone-wrong);
+    font-weight: 600;
+}
+
+.kq-standalone__button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0.5rem 1.75rem;
+    border-radius: 999px;
+    background: var(--kq-standalone-accent);
+    color: #fff;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.kq-standalone__button:focus-within {
+    outline: 3px solid var(--kq-standalone-accent);
+    outline-offset: 3px;
+}
+
+/* 原生的檔案選擇框不好看，藏起來，由外層的 label 觸發 */
+.kq-standalone__file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.kq-standalone__games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 0.75rem;
+    width: min(100%, 48rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.kq-standalone__game {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    height: 100%;
+    min-height: 64px;
+    padding: 0.75rem 1rem;
+    border: 3px solid var(--kq-standalone-border);
+    border-radius: 1rem;
+    background: var(--kq-standalone-card);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.kq-standalone__game:not(:disabled):hover,
+.kq-standalone__game:focus-visible {
+    border-color: var(--kq-standalone-accent);
+    outline: none;
+}
+
+.kq-standalone__game:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.kq-standalone__game-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.kq-standalone__game-issue {
+    color: var(--kq-standalone-muted);
+    font-size: 0.95rem;
+}
+
+.kq-standalone__license {
+    width: min(100%, 48rem);
+    text-align: left;
+}
+
+.kq-standalone__license summary {
+    cursor: pointer;
+}
+
+.kq-standalone__license pre {
+    overflow-x: auto;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: var(--kq-standalone-card);
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+.kq-standalone__link {
+    min-height: 44px;
+    border: none;
+    background: none;
+    color: var(--kq-standalone-accent);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.kq-standalone__player {
+    display: flex;
+    flex: 1;
+}
+
+/* 疊在播放器工具列的左邊（右邊是聲音開關），不佔版面 */
+.kq-standalone__back {
+    position: fixed;
+    top: 0.25rem;
+    left: 0.5rem;
+    z-index: 10;
+    min-height: 44px;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #61707d;
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        'Noto Sans TC',
+        sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+}

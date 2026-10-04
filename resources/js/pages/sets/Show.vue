@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Check, Copy, Download, Gamepad2, Pencil } from '@lucide/vue';
+import {
+    Check,
+    Copy,
+    Download,
+    Gamepad2,
+    MonitorPlay,
+    Pencil,
+} from '@lucide/vue';
 import { ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
@@ -13,7 +20,7 @@ import ResultFace from '@/components/kancil/ResultFace.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { library } from '@/routes';
-import { KIND_NAMES, curriculumLabel } from '@/types/kancil';
+import { KIND_NAMES, curriculumLabel, standaloneUrl } from '@/types/kancil';
 import type {
     RevisionEntry,
     SetReviewEntry,
@@ -126,6 +133,19 @@ const dateTime = (iso: string) =>
                         "
                         data-test="export-set"
                         ><Download class="size-4" /> 下載 zip</a
+                    >
+                </Button>
+                <Button
+                    v-if="set.visibility === 'public'"
+                    as-child
+                    variant="ghost"
+                >
+                    <a
+                        :href="standaloneUrl(set.id)"
+                        target="_blank"
+                        rel="noopener"
+                        data-test="standalone-set"
+                        ><MonitorPlay class="size-4" /> 用獨立播放器開啟</a
                     >
                 </Button>
             </div>

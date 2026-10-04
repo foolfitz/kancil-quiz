@@ -1,4 +1,5 @@
 import type { GameRequirements } from '@kancil-quiz/games-sdk';
+import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
 
 // 老師端頁面與後端（app/Corpus/SetEditorData.php）之間的資料形狀。
 
@@ -179,6 +180,12 @@ export function curriculumLabel(ref: {
 }): string {
     const label = `第 ${ref.volume} 冊第 ${ref.lesson} 課`;
     return ref.title_zh ? `${label}：${ref.title_zh}` : label;
+}
+
+// 用獨立播放器（docs/SPEC.md O-02）開啟公開題組：從不需登入的開放資料網址載入 zip
+export function standaloneUrl(setId: string): string {
+    const zip = SetExportController.openData.url(setId);
+    return `/standalone.html?zip=${encodeURIComponent(zip)}`;
 }
 
 // 題組檢視頁（app/Corpus/SetViewData.php）

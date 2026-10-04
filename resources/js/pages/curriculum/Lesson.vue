@@ -5,6 +5,7 @@ import {
     Download,
     Gamepad2,
     ListChecks,
+    MonitorPlay,
     Pencil,
     Volume2,
 } from '@lucide/vue';
@@ -16,7 +17,7 @@ import SetCopyController from '@/actions/App/Http/Controllers/SetCopyController'
 import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { KIND_NAMES } from '@/types/kancil';
+import { KIND_NAMES, standaloneUrl } from '@/types/kancil';
 import type { SetKind, VocabEntryInput } from '@/types/kancil';
 
 // 教材的一課（docs/SPEC.md T-18）：教材題組的詞彙，直接建立活動、複製或挑詞，
@@ -164,6 +165,15 @@ function play(url: string): void {
                         :href="SetExportController.show.url(set.id)"
                         data-test="export-set"
                         ><Download class="size-4" /> 下載 zip</a
+                    >
+                </Button>
+                <Button v-if="set.can.export" as-child variant="ghost">
+                    <a
+                        :href="standaloneUrl(set.id)"
+                        target="_blank"
+                        rel="noopener"
+                        data-test="standalone-set"
+                        ><MonitorPlay class="size-4" /> 用獨立播放器開啟</a
                     >
                 </Button>
                 <Button v-if="set.can.edit" as-child variant="ghost">
