@@ -18,9 +18,9 @@
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。
 - 後端的主要程式：
-  - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）。
+  - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）。
   - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。教材資料本身放在 `database/curriculum/`，格式見該目錄的 README。
-  - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
+  - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
   - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
@@ -77,7 +77,7 @@
 
 ## 環境
 
-- PHP 8.4 以上，需要 `intl`、`pdo_sqlite`、`gd`（含 WebP）擴充，以及 `ffmpeg`；Node 22 以上。
+- PHP 8.4 以上，需要 `intl`、`pdo_sqlite`、`gd`（含 WebP）、`zip` 擴充，以及 `ffmpeg`；Node 22 以上。
 - 上傳的媒體放在 `public` disk，需要 `php artisan storage:link`（`composer setup` 會執行）。
 - 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
