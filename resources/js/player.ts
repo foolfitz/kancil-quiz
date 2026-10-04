@@ -23,6 +23,10 @@ if (root?.dataset.activity) {
                 import('@kancil-quiz/game-flash-cards').then((m) => m.default),
             'match-up': () =>
                 import('@kancil-quiz/game-match-up').then((m) => m.default),
+            'card-wall': () =>
+                import('@kancil-quiz/game-card-wall').then((m) => m.default),
+            'spin-wheel': () =>
+                import('@kancil-quiz/game-spin-wheel').then((m) => m.default),
         },
     });
 }

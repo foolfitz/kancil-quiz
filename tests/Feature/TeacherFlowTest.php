@@ -247,7 +247,7 @@ class TeacherFlowTest extends TestCase
 
         $this->get("/sets/{$set->id}/activities/create")->assertInertia(fn (Assert $page) => $page
             ->component('activities/Create')
-            ->has('games', 4)
+            ->has('games', 6)
             ->where('content.entries.0.item.text', 'quả chuối'));
 
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'quiz', 'options' => ['autoAdvance' => false]])->assertRedirect();
@@ -283,6 +283,23 @@ class TeacherFlowTest extends TestCase
         $games = fn (iterable $activities) => collect($activities)->pluck('game')->sort()->values()->all() === ['字卡', '配對'];
         $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page->where('activities', $games));
         $this->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('activities', $games));
+    }
+
+    public function test_card_wall_and_spin_wheel_validate_their_options(): void
+    {
+        $set = $this->createSet();
+        $this->put("/sets/{$set->id}", $this->vocabPayload([['quả chuối', '香蕉'], ['quả táo', '蘋果'], ['quả cam', '柳橙']]));
+
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['sliceLabel' => 'emoji']])
+            ->assertSessionHasErrors('options');
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['sliceLabel' => 'number']])->assertRedirect();
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'card-wall'])->assertRedirect();
+
+        $this->assertSame(
+            ['startWith' => 'front', 'sliceLabel' => 'number', 'removeAfterSpin' => true, 'autoPlayAudio' => true],
+            Activity::where('game_id', 'spin-wheel')->firstOrFail()->options,
+        );
+        $this->assertSame(['startWith' => 'front', 'autoPlayAudio' => true], Activity::where('game_id', 'card-wall')->firstOrFail()->options);
     }
 
     public function test_a_teacher_previews_a_game_before_creating_the_activity(): void

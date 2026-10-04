@@ -3,11 +3,12 @@ import type { KancilSet, QuizSet, VocabSet } from '@kancil-quiz/schema';
 import { describe, expect, it } from 'vite-plus/test';
 import grading from '../../schema/fixtures/grading/cases.json';
 import {
-    IncompatibleSetError,
     buildRounds,
     check,
     countCorrect,
     createRng,
+    groupGames,
+    IncompatibleSetError,
     judge,
 } from '../src';
 import type { Response } from '../src';
@@ -273,5 +274,27 @@ describe('buildRounds()', () => {
             mcq: buildRounds(set, mcq, { rng: rng() }),
             pair: buildRounds(set, pair, { rng: rng() }),
         }).toMatchSnapshot();
+    });
+});
+
+describe('groupGames', () => {
+    it('分成計分的遊戲與不計分的互動教材，保持原本的順序，沒有遊戲的分類不列出', () => {
+        const games = [
+            { id: 'flash-cards', requires: { scored: false } },
+            { id: 'quiz', requires: { scored: true } },
+            { id: 'spin-wheel', requires: { scored: false } },
+        ];
+        expect(
+            groupGames(games).map(({ category, games }) => [
+                category.title,
+                games.map((game) => game.id),
+            ]),
+        ).toEqual([
+            ['遊戲', ['quiz']],
+            ['互動教材', ['flash-cards', 'spin-wheel']],
+        ]);
+        expect(
+            groupGames([games[1]]).map(({ category }) => category.id),
+        ).toEqual(['game']);
     });
 });

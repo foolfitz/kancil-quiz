@@ -5,6 +5,8 @@ export type {
     CompatibilityIssue,
     CompatibilityReport,
 } from './rounds';
+export { GAME_CATEGORIES, gameCategory, groupGames } from './categories';
+export type { GameCategory } from './categories';
 export { countCorrect, judge } from './judge';
 export type { Response } from './judge';
 export { createRng, randomSeed, shuffle } from './rng';

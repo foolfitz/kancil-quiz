@@ -1,8 +1,10 @@
-import { check } from '@kancil-quiz/deck';
+import { check, groupGames } from '@kancil-quiz/deck';
+import cardWall from '@kancil-quiz/game-card-wall';
 import flashCards from '@kancil-quiz/game-flash-cards';
 import matchUp from '@kancil-quiz/game-match-up';
 import mazeQuiz from '@kancil-quiz/game-maze-quiz';
 import quiz from '@kancil-quiz/game-quiz';
+import spinWheel from '@kancil-quiz/game-spin-wheel';
 import type { GameModule } from '@kancil-quiz/games-sdk';
 import type { KancilActivity } from '@kancil-quiz/schema';
 import { ZipError, openSetZip, startPlayer } from '../src';
@@ -16,7 +18,14 @@ import './standalone.css';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyGame = GameModule<any>;
 
-const GAMES: AnyGame[] = [quiz, mazeQuiz, flashCards, matchUp];
+const GAMES: AnyGame[] = [
+    quiz,
+    mazeQuiz,
+    matchUp,
+    flashCards,
+    cardWall,
+    spinWheel,
+];
 
 const LANGUAGE_NAMES: Record<string, string> = {
     id: '印尼語',
@@ -131,8 +140,7 @@ function showGames(): void {
         `授權：${LICENSE_NAMES[set.license] ?? set.license}`,
     ].join('｜');
 
-    const list = el('ul', 'kq-standalone__games');
-    for (const game of GAMES) {
+    function gameItem(game: AnyGame): HTMLElement {
         const report = check(set, game.requires);
         const item = el('li', '');
         const button = el('button', 'kq-standalone__game');
@@ -151,8 +159,17 @@ function showGames(): void {
         }
         button.addEventListener('click', () => void play(game));
         item.append(button);
-        list.append(item);
+        return item;
     }
+
+    // 分成計分的「遊戲」與不計分的「互動教材」（docs/SPEC.md 7.5）
+    const lists = groupGames(GAMES).map(({ category, games }) => {
+        const list = el('ul', 'kq-standalone__games');
+        for (const game of games) {
+            list.append(gameItem(game));
+        }
+        return [el('h2', 'kq-standalone__subtitle', category.title), list];
+    });
 
     const other = el('button', 'kq-standalone__link', '換一個題組');
     other.type = 'button';
@@ -161,8 +178,7 @@ function showGames(): void {
     const children: HTMLElement[] = [
         el('h1', 'kq-standalone__title', set.title),
         facts,
-        el('h2', 'kq-standalone__subtitle', '選一個遊戲'),
-        list,
+        ...lists.flat(),
     ];
     if (license) {
         const details = el('details', 'kq-standalone__license');

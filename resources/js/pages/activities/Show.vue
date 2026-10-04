@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { check } from '@kancil-quiz/deck';
+import { check, groupGames } from '@kancil-quiz/deck';
 import type { KancilSet } from '@kancil-quiz/schema';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
@@ -66,13 +66,15 @@ const game = computed(() =>
 const gameTitle = (id: string) =>
     props.games.find((g) => g.id === id)?.title['zh-TW'] ?? id;
 
-// 同一題組一鍵換成其他遊戲（docs/SPEC.md T-10）：只列出相容的遊戲
+// 同一題組一鍵換成其他遊戲（docs/SPEC.md T-10）：只列出相容的遊戲，依分類分組（7.5）
 const otherGames = computed(() =>
-    props.games.filter(
-        (g) =>
-            g.id !== props.activity.game_id &&
-            props.content &&
-            check(props.content, g.requires).ok,
+    groupGames(
+        props.games.filter(
+            (g) =>
+                g.id !== props.activity.game_id &&
+                props.content &&
+                check(props.content, g.requires).ok,
+        ),
     ),
 );
 
@@ -344,9 +346,16 @@ onBeforeUnmount(() =>
             <p class="text-sm text-muted-foreground">
                 用同一個題組建立新的活動，不需要重新出題。
             </p>
-            <div class="flex flex-wrap gap-2">
+            <div
+                v-for="group in otherGames"
+                :key="group.category.id"
+                class="flex flex-wrap items-center gap-2"
+            >
+                <span class="w-20 text-sm text-muted-foreground">{{
+                    group.category.title
+                }}</span>
                 <Button
-                    v-for="other in otherGames"
+                    v-for="other in group.games"
                     :key="other.id"
                     type="button"
                     variant="secondary"

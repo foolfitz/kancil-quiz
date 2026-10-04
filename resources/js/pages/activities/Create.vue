@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { check } from '@kancil-quiz/deck';
+import { check, groupGames } from '@kancil-quiz/deck';
 import type { CompatibilityReport } from '@kancil-quiz/deck';
 import type { KancilSet } from '@kancil-quiz/schema';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -54,8 +54,14 @@ const reports = computed(() =>
     ),
 );
 
+// 分成計分的「遊戲」與不計分的「互動教材」（docs/SPEC.md 7.5）
+const groups = computed(() => groupGames(props.games));
+
+// 預設選畫面上第一個相容的
 const selected = ref<GameInfo | null>(
-    props.games.find((g) => reports.value[g.id].ok) ?? null,
+    groups.value
+        .flatMap((group) => group.games)
+        .find((g) => reports.value[g.id].ok) ?? null,
 );
 const form = useForm({
     game_id: selected.value?.id ?? '',
@@ -106,52 +112,67 @@ function choose(game: GameInfo): void {
             description="同一個題組可以建立多個活動，各用不同的遊戲。"
         />
 
-        <ul class="grid gap-3 sm:grid-cols-2">
-            <li v-for="game in games" :key="game.id">
-                <button
-                    type="button"
-                    class="h-full w-full rounded-xl border p-4 text-left transition"
-                    :class="[
-                        selected?.id === game.id
-                            ? 'border-primary ring-2 ring-primary/30'
-                            : '',
-                        reports[game.id].ok
-                            ? 'hover:border-primary'
-                            : 'cursor-not-allowed opacity-70',
-                    ]"
-                    :aria-disabled="!reports[game.id].ok"
-                    @click="choose(game)"
-                >
-                    <span class="flex items-center gap-2 text-lg font-semibold">
-                        <CheckCircle2
-                            v-if="reports[game.id].ok"
-                            class="size-5 text-green-600"
-                        />
-                        <CircleAlert v-else class="size-5 text-amber-600" />
-                        {{ game.title['zh-TW'] }}
-                    </span>
-                    <ul class="mt-2 space-y-1 text-sm">
-                        <li
-                            v-for="issue in reports[game.id].issues"
-                            :key="issue.message"
-                            :class="
-                                issue.severity === 'error'
-                                    ? 'text-amber-700 dark:text-amber-400'
-                                    : 'text-muted-foreground'
-                            "
+        <section
+            v-for="group in groups"
+            :key="group.category.id"
+            class="space-y-3"
+            :data-test="`game-group-${group.category.id}`"
+        >
+            <div>
+                <h2 class="font-semibold">{{ group.category.title }}</h2>
+                <p class="text-sm text-muted-foreground">
+                    {{ group.category.description }}
+                </p>
+            </div>
+            <ul class="grid gap-3 sm:grid-cols-2">
+                <li v-for="game in group.games" :key="game.id">
+                    <button
+                        type="button"
+                        class="h-full w-full rounded-xl border p-4 text-left transition"
+                        :class="[
+                            selected?.id === game.id
+                                ? 'border-primary ring-2 ring-primary/30'
+                                : '',
+                            reports[game.id].ok
+                                ? 'hover:border-primary'
+                                : 'cursor-not-allowed opacity-70',
+                        ]"
+                        :aria-disabled="!reports[game.id].ok"
+                        @click="choose(game)"
+                    >
+                        <span
+                            class="flex items-center gap-2 text-lg font-semibold"
                         >
-                            {{ issue.message }}
-                        </li>
-                        <li
-                            v-if="reports[game.id].issues.length === 0"
-                            class="text-muted-foreground"
-                        >
-                            可以使用
-                        </li>
-                    </ul>
-                </button>
-            </li>
-        </ul>
+                            <CheckCircle2
+                                v-if="reports[game.id].ok"
+                                class="size-5 text-green-600"
+                            />
+                            <CircleAlert v-else class="size-5 text-amber-600" />
+                            {{ game.title['zh-TW'] }}
+                        </span>
+                        <ul class="mt-2 space-y-1 text-sm">
+                            <li
+                                v-for="issue in reports[game.id].issues"
+                                :key="issue.message"
+                                :class="
+                                    issue.severity === 'error'
+                                        ? 'text-amber-700 dark:text-amber-400'
+                                        : 'text-muted-foreground'
+                                "
+                            >
+                                {{ issue.message }}
+                            </li>
+                            <li
+                                v-if="reports[game.id].issues.length === 0"
+                                class="text-muted-foreground"
+                            >
+                                可以使用
+                            </li>
+                        </ul>
+                    </button>
+                </li>
+            </ul>
+        </section>
         <InputError :message="form.errors.game_id" />
 
         <section v-if="selected" class="space-y-4 rounded-xl border p-4">
