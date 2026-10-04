@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Games\GameRegistry;
 use App\Models\Activity;
 use App\Models\Set;
+use App\Support\ActivitySettings;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,6 +30,7 @@ class DashboardController extends Controller
                     'game' => $games->title($activity->game_id),
                     'set_title' => $activity->set?->title,
                     'attempts_count' => $activity->attempts_count,
+                    'settings' => ActivitySettings::of($activity),
                 ]),
         ]);
     }

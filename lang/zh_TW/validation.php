@@ -8,6 +8,7 @@ return [
     'confirmed' => '兩次輸入的:attribute不一致。',
     'current_password' => '密碼不正確。',
     'date' => ':attribute 不是正確的日期。',
+    'date_format' => ':attribute 不是正確的日期與時間。',
     'different' => ':attribute 與 :other 不能相同。',
     'distinct' => ':attribute 有重複的值。',
     'email' => ':attribute 不是正確的 email。',
@@ -57,5 +58,8 @@ return [
         'file' => '檔案',
         'rights' => '權利聲明',
         'code' => '驗證碼',
+        'player_label' => '名字或座號',
+        'opens_at' => '開放時間',
+        'closes_at' => '截止時間',
     ],
 ];

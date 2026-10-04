@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Corpus\SetWriter;
 use App\Models\Activity;
+use App\Models\Attempt;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\User;
@@ -211,6 +212,77 @@ class StudentApiTest extends TestCase
             'set_revision_id' => $this->set->current_revision_id,
             'seed' => 1,
             'round_count' => 1,
-        ])->assertForbidden();
+        ])->assertForbidden()->assertJsonPath('message', '這個活動已經截止');
+
+        $this->activity->update(['opens_at' => now()->addDay(), 'closes_at' => null]);
+
+        $this->postJson("/api/v1/activities/{$this->activity->id}/attempts", [
+            'set_revision_id' => $this->set->current_revision_id,
+            'seed' => 1,
+            'round_count' => 1,
+        ])->assertForbidden()->assertJsonPath('message', '這個活動還沒開放');
+    }
+
+    public function test_attempts_started_before_the_deadline_can_be_finished_after_it(): void
+    {
+        $this->activity->update(['closes_at' => now()->addMinutes(2)]);
+        ['attempt_id' => $attemptId, 'token' => $token] = $this->start();
+
+        $this->travel(5)->minutes();
+        $this->assertSame('closed', $this->activity->fresh()?->status());
+
+        $this->postJson("/api/v1/attempts/{$attemptId}/responses", [
+            'token' => $token,
+            'responses' => [['entry_id' => $this->entryIds()[0], 'presented' => $this->entryIds(), 'selected' => [$this->entryIds()[0]]]],
+        ])->assertOk();
+        $this->postJson("/api/v1/attempts/{$attemptId}/complete", ['token' => $token])
+            ->assertOk()
+            ->assertJsonPath('correct_count', 1);
+    }
+
+    public function test_activities_that_require_a_name_reject_attempts_without_one(): void
+    {
+        $this->activity->update(['mode' => 'assignment']);
+        $start = fn (mixed $label) => $this->postJson("/api/v1/activities/{$this->activity->id}/attempts", [
+            'set_revision_id' => $this->set->current_revision_id,
+            'seed' => 1,
+            'round_count' => 3,
+            'player_label' => $label,
+        ]);
+
+        $start(null)->assertUnprocessable()->assertJsonPath('message', '請填寫名字或座號。');
+        $start('   ')->assertUnprocessable();
+        $start(str_repeat('王', 21))->assertUnprocessable()->assertJsonPath('message', '名字或座號 最多 20 個字。');
+        $start(str_repeat('王', 20))->assertCreated();
+    }
+
+    public function test_names_are_normalized_so_the_same_student_matches(): void
+    {
+        $this->activity->update(['mode' => 'assignment']);
+        $label = function (string $label): ?string {
+            $id = $this->postJson("/api/v1/activities/{$this->activity->id}/attempts", [
+                'set_revision_id' => $this->set->current_revision_id,
+                'seed' => 1,
+                'round_count' => 3,
+                'player_label' => $label,
+            ])->assertCreated()->json('attempt_id');
+
+            return Attempt::findOrFail($id)->player_label;
+        };
+
+        // 全形轉半形、合併空白、數字去掉前導的 0
+        $this->assertSame('5', $label('０５'));
+        $this->assertSame('5', $label(' 05 '));
+        $this->assertSame('0', $label('00'));
+        $this->assertSame('3年2班 7', $label('3年2班　　７'));
+        $this->assertSame('Andi', $label('Ａｎｄｉ'));
+        // 越南文以 NFC 儲存
+        $this->assertSame("Nguy\u{1EC5}n", $label("Nguye\u{0302}\u{0303}n"));
+    }
+
+    public function test_practice_activities_do_not_need_a_name(): void
+    {
+        $this->start();
+        $this->assertDatabaseHas('attempts', ['activity_id' => $this->activity->id, 'player_label' => null]);
     }
 }

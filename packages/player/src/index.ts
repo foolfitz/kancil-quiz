@@ -70,6 +70,18 @@ function button(className: string, text: string, onClick: () => void) {
     return node;
 }
 
+// 例：10/10（週六） 23:59。學生的平板應該都在台灣時區，直接用裝置的時區顯示。
+function formatTime(time: Date): string {
+    return time.toLocaleString('zh-TW', {
+        month: 'numeric',
+        day: 'numeric',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+}
+
 function faceText(face: Face): string {
     return [face.text, face.romanization].filter(Boolean).join(' ');
 }
@@ -130,22 +142,30 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
     root.lang = activity.set.language;
     document.title = `${activity.set.title}｜${game.title['zh-TW']}`;
 
+    // 學生先用平板的時鐘判斷；開始作答時以伺服器為準（見 play()）。
+    // 預覽不受開放時間限制，老師在開放前也能先試玩。
     const opensAt = activity.opens_at ? new Date(activity.opens_at) : null;
     const closesAt = activity.closes_at ? new Date(activity.closes_at) : null;
     if (
-        (opensAt && opensAt > new Date()) ||
-        (closesAt && closesAt < new Date())
+        !config.preview &&
+        ((opensAt && opensAt > new Date()) ||
+            (closesAt && closesAt < new Date()))
     ) {
         message(
             activity.set.title,
             opensAt && opensAt > new Date()
-                ? `這個活動在 ${opensAt.toLocaleString('zh-TW')} 開放。`
+                ? `這個活動在 ${formatTime(opensAt)} 開放。`
                 : '這個活動已經截止。',
         );
         return handle;
     }
 
-    const startScreen = () => {
+    // 要不要先輸入名字或座號（docs/SPEC.md 3.4、S-04）。
+    // 名字只存在這一頁的記憶體中：教室的平板常是多位學生輪流用，記住上一位的名字容易交錯。
+    const needsLabel = activity.mode === 'assignment';
+    let playerLabel = '';
+
+    const startScreen = (error?: string) => {
         const box = el('div', 'kq-player__screen');
         box.append(
             el('p', 'kq-player__game', game.title['zh-TW']),
@@ -155,13 +175,81 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 'kq-player__detail',
                 `共 ${activity.set.entries.length} 題`,
             ),
-            button('kq-player__start', '開始', () => void play()),
         );
+        if (closesAt) {
+            box.append(
+                el('p', 'kq-player__detail', `${formatTime(closesAt)} 截止`),
+            );
+        }
+
+        if (needsLabel) {
+            const form = el('form', 'kq-player__label');
+            const label = el(
+                'label',
+                'kq-player__label-text',
+                '你的名字或座號',
+            );
+            const input = el('input', 'kq-player__label-input');
+            input.id = 'kq-player-label';
+            label.htmlFor = input.id;
+            input.type = 'text';
+            input.maxLength = 20;
+            input.autocomplete = 'off';
+            input.spellcheck = false;
+            input.enterKeyHint = 'go';
+            input.setAttribute('autocapitalize', 'off');
+            input.value = playerLabel;
+            const start = el(
+                'button',
+                'kq-player__button kq-player__start',
+                '開始',
+            );
+            start.type = 'submit';
+            // 預覽不留紀錄，不填也能開始
+            const sync = () => {
+                start.disabled = !config.preview && input.value.trim() === '';
+            };
+            input.addEventListener('input', sync);
+            sync();
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                if (start.disabled) {
+                    return;
+                }
+                playerLabel = input.value.trim();
+                void play();
+            });
+            form.append(label, input);
+            if (error) {
+                form.append(el('p', 'kq-player__error', error));
+            }
+            form.append(start);
+            box.append(form);
+        } else {
+            box.append(button('kq-player__start', '開始', () => void play()));
+        }
+
         if (config.preview) {
             box.append(
                 el('p', 'kq-player__note', '預覽模式：不會留下作答紀錄'),
             );
         }
+        show(box);
+    };
+
+    // 要記名的活動沒有連上伺服器時不讓學生玩：學生會以為交了作業，其實沒有紀錄。
+    const failedToStart = () => {
+        const box = el('div', 'kq-player__screen');
+        box.append(
+            el('h1', 'kq-player__title', '沒有連上伺服器'),
+            el(
+                'p',
+                'kq-player__detail',
+                '這次作答不會被記錄。請檢查網路，再試一次。',
+            ),
+            button('kq-player__start', '再試一次', () => void play()),
+            button('kq-player__secondary', '返回', () => startScreen()),
+        );
         show(box);
     };
 
@@ -187,15 +275,30 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
 
         let attempt: AttemptSession | null = null;
         if (!offline) {
+            message('準備中…');
             try {
                 const started = await api.start(activity.id, {
                     set_revision_id: activity.set_revision_id,
                     seed,
                     round_count: rounds.length,
+                    ...(needsLabel ? { player_label: playerLabel } : {}),
                 });
                 attempt = api.attempt(started.attempt_id, started.token);
-            } catch {
-                // 無法建立作答紀錄時仍然讓學生玩，結果在本機判定。
+            } catch (error) {
+                if (error instanceof ApiError && error.status === 403) {
+                    // 尚未開放或已經截止：以伺服器的時間為準
+                    message(activity.set.title, error.message);
+                    return;
+                }
+                if (needsLabel) {
+                    if (error instanceof ApiError && error.status === 422) {
+                        startScreen(error.message);
+                    } else {
+                        failedToStart();
+                    }
+                    return;
+                }
+                // 不記名的活動無法建立作答紀錄時仍然讓學生玩，結果在本機判定。
                 attempt = null;
             }
         }
@@ -332,12 +435,18 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             );
         }
 
+        if (needsLabel && playerLabel) {
+            box.prepend(el('p', 'kq-player__game', playerLabel));
+        }
+
         if (!uploaded) {
             box.append(
                 el(
                     'p',
                     'kq-player__note',
-                    '成績沒有上傳成功（可能是網路中斷），以上是這台裝置的計算結果。',
+                    needsLabel
+                        ? '成績沒有上傳成功，請告訴老師。以上是這台裝置的計算結果。'
+                        : '成績沒有上傳成功（可能是網路中斷），以上是這台裝置的計算結果。',
                 ),
             );
         }
@@ -391,6 +500,14 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
         }
 
         box.append(button('kq-player__start', '再玩一次', () => void play()));
+        if (needsLabel) {
+            box.append(
+                button('kq-player__secondary', '換人', () => {
+                    playerLabel = '';
+                    startScreen();
+                }),
+            );
+        }
         show(box);
     }
 

@@ -9,14 +9,22 @@ import ActivityController from '@/actions/App/Http/Controllers/ActivityControlle
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import ActivitySettingsFields from '@/components/kancil/ActivitySettingsFields.vue';
 import GameOptionsForm from '@/components/kancil/GameOptionsForm.vue';
 import { Button } from '@/components/ui/button';
-import type { GameInfo, OptionValues, SetKind } from '@/types/kancil';
+import type {
+    ActivitySettings,
+    GameInfo,
+    OptionValues,
+    SetKind,
+} from '@/types/kancil';
 
 const props = defineProps<{
     set: { id: string; title: string; kind: SetKind };
     content: KancilSet | null;
     games: GameInfo[];
+    // 預設：不必輸入名字，今天起開放一週（docs/SPEC.md 3.4）
+    settings: ActivitySettings;
 }>();
 
 defineOptions({
@@ -52,6 +60,15 @@ const selected = ref<GameInfo | null>(
 const form = useForm({
     game_id: selected.value?.id ?? '',
     options: { ...selected.value?.defaultOptions } as OptionValues,
+    ...props.settings,
+});
+const settings = computed<ActivitySettings>({
+    get: () => ({
+        require_label: form.require_label,
+        opens_at: form.opens_at,
+        closes_at: form.closes_at,
+    }),
+    set: (value) => Object.assign(form, value),
 });
 
 // 建立之前，以目前的遊戲與設定在新分頁試玩，不留作答紀錄（docs/SPEC.md T-08）
@@ -61,6 +78,7 @@ const previewUrl = computed(() =>
               query: {
                   game: selected.value.id,
                   options: JSON.stringify(form.options),
+                  ...(form.require_label ? { require_label: 1 } : {}),
               },
           })
         : null,
@@ -144,6 +162,16 @@ function choose(game: GameInfo): void {
                 :game="selected"
             />
             <InputError :message="form.errors.options" />
+        </section>
+
+        <section class="space-y-4 rounded-xl border p-4">
+            <div>
+                <h2 class="font-semibold">給學生的設定</h2>
+                <p class="text-sm text-muted-foreground">
+                    建立之後也可以在活動頁修改。
+                </p>
+            </div>
+            <ActivitySettingsFields v-model="settings" :errors="form.errors" />
         </section>
 
         <div class="flex flex-wrap gap-2">

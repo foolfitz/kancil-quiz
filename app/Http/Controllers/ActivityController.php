@@ -8,6 +8,7 @@ use App\Curriculum\Textbook;
 use App\Games\GameRegistry;
 use App\Models\Activity;
 use App\Models\Set;
+use App\Support\ActivitySettings;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -22,7 +23,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * 活動：為題組選遊戲、調整設定、分享（docs/SPEC.md T-08、T-09、T-10）。
+ * 活動：為題組選遊戲、調整設定、分享（docs/SPEC.md T-08、T-09、T-10），
+ * 以及學生要不要輸入名字、開放與截止時間（3.4、T-14）。
  */
 class ActivityController extends Controller
 {
@@ -36,6 +38,7 @@ class ActivityController extends Controller
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind],
             'content' => SetEditorData::currentContent($set),
             'games' => array_values($this->games->all()),
+            'settings' => ActivitySettings::defaults(),
         ]);
     }
 
@@ -61,7 +64,8 @@ class ActivityController extends Controller
             'game_id' => $game['id'],
             'game_version' => $game['version'],
             'options' => $options,
-            'mode' => 'practice',
+            // 讓老師看到學生的開始畫面；預覽不受開放時間限制，也不留紀錄
+            'mode' => $request->boolean('require_label') ? 'assignment' : 'practice',
         ]);
         $activity->id = $activity->newUniqueId();
 
@@ -79,6 +83,7 @@ class ActivityController extends Controller
         $data = $request->validate([
             'game_id' => ['required', Rule::in(array_keys($this->games->all()))],
             'options' => ['nullable', 'array'],
+            ...ActivitySettings::rules(),
         ]);
 
         $game = $this->games->get($data['game_id']);
@@ -98,11 +103,37 @@ class ActivityController extends Controller
             'game_id' => $game['id'],
             'game_version' => $game['version'],
             'options' => $options,
-            'mode' => 'practice',
+            ...ActivitySettings::attributes($data),
             'owner_id' => $request->user()->id,
         ]);
 
         return to_route('activities.show', $activity);
+    }
+
+    /**
+     * 修改學生要不要輸入名字、開放與截止時間。遊戲與遊戲設定不能改：要換就建立新的活動（T-10）。
+     */
+    public function update(Request $request, Activity $activity): RedirectResponse
+    {
+        Gate::authorize('manage', $activity);
+
+        $activity->update(ActivitySettings::attributes($request->validate(ActivitySettings::rules())));
+        Inertia::flash('toast', ['type' => 'success', 'message' => '設定已更新']);
+
+        return back();
+    }
+
+    /**
+     * 立即截止：之後不能開始新的作答，已經開始的仍可以送完。
+     */
+    public function close(Activity $activity): RedirectResponse
+    {
+        Gate::authorize('manage', $activity);
+
+        $activity->update(['closes_at' => now()]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => '活動已截止']);
+
+        return back();
     }
 
     public function show(Activity $activity): Response
@@ -119,6 +150,7 @@ class ActivityController extends Controller
                 'options' => (object) $activity->options,
                 'created_at' => $activity->created_at?->toIso8601String(),
                 'attempts_count' => $activity->attempts()->count(),
+                'settings' => ActivitySettings::of($activity),
             ],
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind, 'url' => $this->setUrl($set)],
             'content' => SetEditorData::currentContent($set),
@@ -127,6 +159,8 @@ class ActivityController extends Controller
             'siblings' => $set->activities()->where('owner_id', $activity->owner_id)->whereKeyNot($activity->id)->latest()->get(['id', 'game_id']),
             'playUrl' => $url,
             'qrSvg' => $this->qrSvg($url),
+            // 換成其他遊戲時，已截止的活動改用建立活動的預設時間
+            'defaults' => ActivitySettings::defaults(),
         ]);
     }
 

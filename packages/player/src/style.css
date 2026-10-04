@@ -89,6 +89,58 @@
     font-weight: 700;
 }
 
+.kq-player__start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.kq-player__secondary {
+    padding: 0.5rem 1.5rem;
+    background: transparent;
+    color: var(--kq-player-muted);
+    font-size: 1.125rem;
+    text-decoration: underline;
+}
+
+/* 輸入名字或座號（docs/SPEC.md S-04） */
+.kq-player__label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: min(100%, 22rem);
+}
+
+.kq-player__label-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.kq-player__label-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--kq-player-muted);
+    border-radius: 0.75rem;
+    background: var(--kq-player-card);
+    color: inherit;
+    /* 16px 以上，iPad 聚焦時才不會自動放大畫面 */
+    font: inherit;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.kq-player__label-input:focus {
+    border-color: var(--kq-player-accent);
+    outline: none;
+}
+
+.kq-player__error {
+    margin: 0;
+    color: var(--kq-player-wrong);
+    font-size: 1rem;
+}
+
 /* 遊戲區要有明確的高度，迷宮的 canvas 依它決定大小 */
 .kq-player__stage {
     display: flex;

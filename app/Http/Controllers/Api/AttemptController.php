@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Games\GameRegistry;
 use App\Grading\Judge;
+use App\Grading\PlayerLabel;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Attempt;
@@ -24,7 +25,13 @@ class AttemptController extends Controller
 
     public function store(Request $request, Activity $activity): JsonResponse
     {
-        abort_unless($activity->isOpen(), 403, '這個活動目前沒有開放');
+        // 截止前開始的作答，截止後仍可以送完（responses、complete 不檢查時間）
+        abort_if($activity->status() === 'scheduled', 403, '這個活動還沒開放');
+        abort_if($activity->status() === 'closed', 403, '這個活動已經截止');
+
+        if (is_string($request->input('player_label'))) {
+            $request->merge(['player_label' => PlayerLabel::normalize($request->input('player_label'))]);
+        }
 
         $data = $request->validate([
             'set_revision_id' => [
@@ -33,7 +40,7 @@ class AttemptController extends Controller
             ],
             'seed' => ['required', 'integer', 'min:0', 'max:4294967295'],
             'round_count' => ['required', 'integer', 'min:1', 'max:1000'],
-            'player_label' => [$activity->mode === 'assignment' ? 'required' : 'nullable', 'string', 'max:40'],
+            'player_label' => [$activity->requiresLabel() ? 'required' : 'nullable', 'string', 'max:'.PlayerLabel::MAX_LENGTH],
         ]);
 
         $token = Str::random(40);

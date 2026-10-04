@@ -7,8 +7,8 @@ import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
-import { KIND_NAMES } from '@/types/kancil';
-import type { SetKind } from '@/types/kancil';
+import { KIND_NAMES, STATUS_NAMES, localTime } from '@/types/kancil';
+import type { ActivitySettingsView, SetKind } from '@/types/kancil';
 
 defineProps<{
     sets: { id: string; kind: SetKind; title: string; entries_count: number }[];
@@ -17,6 +17,7 @@ defineProps<{
         game: string;
         set_title: string | null;
         attempts_count: number;
+        settings: ActivitySettingsView;
     }[];
 }>();
 
@@ -99,6 +100,17 @@ defineOptions({
                         <span class="mt-1 block font-semibold">{{
                             activity.set_title
                         }}</span>
+                        <span class="mt-1 block text-xs text-muted-foreground"
+                            >{{
+                                activity.settings.status === 'open'
+                                    ? activity.settings.closes_at
+                                        ? `${localTime(activity.settings.closes_at)} 截止`
+                                        : '不截止'
+                                    : STATUS_NAMES[activity.settings.status]
+                            }}{{
+                                activity.settings.require_label ? '・記名' : ''
+                            }}</span
+                        >
                     </Link>
                 </li>
             </ul>

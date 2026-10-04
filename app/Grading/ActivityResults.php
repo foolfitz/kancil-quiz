@@ -18,9 +18,15 @@ use stdClass;
  * 活動的作答結果（docs/SPEC.md T-11）：全班的逐題答錯率，以及每次作答依當時的題組版本
  * 顯示題目與對錯（3.3）。對錯一律用伺服器的判定，每題以第一筆作答計算（7.4）。
  *
+ * 學生有填名字或座號時（3.4、S-04），依名字彙整，每位學生以第一次玩完的作答計算成績；
+ * 沒有玩完過的，用他第一次的作答。平均答對率與逐題統計也只算這一次，
+ * 重玩不會稀釋「最常答錯」。沒有填名字的作答無從分辨是誰，每次各算一次。
+ *
  * @phpstan-import-type Face from EntryFaces
  *
  * @phpstan-type AttemptRow array{id: string, player_label: string|null, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, game_score: int|null, duration_ms: int|null, revision_number: int}
+ * @phpstan-type StudentAttempt array{id: string, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, counted: bool}
+ * @phpstan-type StudentRow array{label: string, attempts: list<StudentAttempt>, completed: int, counted: StudentAttempt, best: array{correct_count: int, round_count: int}|null, last_at: string}
  */
 class ActivityResults
 {
@@ -28,6 +34,9 @@ class ActivityResults
     private array $contents = [];
 
     private ?string $shape = null;
+
+    /** @var array{rows: list<StudentRow>, uncounted: list<string>}|null */
+    private ?array $students = null;
 
     /**
      * @param  string|null  $revisionId  只看某個版本的作答；null 表示全部
@@ -60,12 +69,12 @@ class ActivityResults
     }
 
     /**
-     * @return array{attempts: int, completed: int, average_rate: float|null}
+     * @return array{attempts: int, completed: int, students: int, unlabelled: int, average_rate: float|null}
      */
     public function summary(): array
     {
         $completed = $this->attempts()->whereNotNull('completed_at');
-        $rate = (clone $completed)
+        $rate = $this->counted((clone $completed))
             ->whereNotNull('correct_count')
             ->where('round_count', '>', 0)
             ->selectRaw('AVG(1.0 * correct_count / round_count) AS rate')
@@ -74,8 +83,20 @@ class ActivityResults
         return [
             'attempts' => $this->attempts()->count(),
             'completed' => $completed->count(),
+            'students' => count($this->studentGroups()['rows']),
+            'unlabelled' => $this->attempts()->whereNull('player_label')->count(),
             'average_rate' => $rate === null ? null : round((float) $rate, 4),
         ];
+    }
+
+    /**
+     * 依名字或座號彙整的成績，依名字排序（數字依數值，2 排在 10 前面）。
+     *
+     * @return list<StudentRow>
+     */
+    public function students(): array
+    {
+        return $this->studentGroups()['rows'];
     }
 
     /**
@@ -86,10 +107,12 @@ class ActivityResults
      */
     public function questions(): array
     {
+        $uncounted = $this->studentGroups()['uncounted'];
         $firstResponses = DB::table('attempt_responses')
             ->join('attempts', 'attempts.id', '=', 'attempt_responses.attempt_id')
             ->where('attempts.activity_id', $this->activity->id)
             ->when($this->revisionId, fn ($query, $id) => $query->where('attempts.set_revision_id', $id))
+            ->when($uncounted !== [], fn ($query) => $query->whereNotIn('attempts.id', $uncounted))
             ->groupBy('attempt_responses.attempt_id', 'attempt_responses.entry_id')
             ->selectRaw('MIN(attempt_responses.id)');
 
@@ -227,6 +250,85 @@ class ActivityResults
             'revision_number' => (int) $attempt->revision->getAttribute('number'),
             'rounds' => $rounds,
         ];
+    }
+
+    /**
+     * 只留下計入成績的作答：同一位學生重玩的作答不算（見類別說明）。
+     *
+     * @param  Builder<Attempt>  $query
+     * @return Builder<Attempt>
+     */
+    private function counted(Builder $query): Builder
+    {
+        $uncounted = $this->studentGroups()['uncounted'];
+
+        return $uncounted === [] ? $query : $query->whereNotIn('id', $uncounted);
+    }
+
+    /**
+     * @return array{rows: list<StudentRow>, uncounted: list<string>}
+     */
+    private function studentGroups(): array
+    {
+        if ($this->students !== null) {
+            return $this->students;
+        }
+
+        $attempts = $this->attempts()
+            ->whereNotNull('player_label')
+            ->orderBy('started_at')
+            ->orderBy('id')
+            ->get(['id', 'player_label', 'started_at', 'completed_at', 'correct_count', 'round_count']);
+
+        /** @var array<string, non-empty-list<Attempt>> $groups */
+        $groups = [];
+        foreach ($attempts as $attempt) {
+            $groups[PlayerLabel::key((string) $attempt->player_label)][] = $attempt;
+        }
+
+        $rows = [];
+        $uncounted = [];
+        foreach ($groups as $mine) {
+            $completed = array_values(array_filter($mine, fn (Attempt $attempt) => $attempt->completed_at !== null));
+            $counted = $completed[0] ?? $mine[0];
+
+            $best = null;
+            foreach ($completed as $attempt) {
+                if ($attempt->correct_count !== null && $attempt->round_count > 0 && ($best === null
+                    || $attempt->correct_count / $attempt->round_count > $best['correct_count'] / max(1, $best['round_count']))) {
+                    $best = ['correct_count' => $attempt->correct_count, 'round_count' => $attempt->round_count];
+                }
+            }
+
+            $row = fn (Attempt $attempt) => [
+                'id' => $attempt->id,
+                'started_at' => $attempt->started_at->toIso8601String(),
+                'completed_at' => $attempt->completed_at?->toIso8601String(),
+                'correct_count' => $attempt->correct_count,
+                'round_count' => $attempt->round_count,
+                'counted' => $attempt->id === $counted->id,
+            ];
+
+            $rows[] = [
+                // 同一位學生打的大小寫可能不同，以第一次的寫法顯示
+                'label' => (string) $mine[0]->player_label,
+                'attempts' => array_map($row, $mine),
+                'completed' => count($completed),
+                'counted' => $row($counted),
+                'best' => $best,
+                // 都是 UTC 的 ISO 8601，字串比較即時間先後
+                'last_at' => max(array_map(fn (Attempt $attempt) => $attempt->started_at->toIso8601String(), $mine)),
+            ];
+            foreach ($mine as $attempt) {
+                if ($attempt->id !== $counted->id) {
+                    $uncounted[] = $attempt->id;
+                }
+            }
+        }
+
+        usort($rows, fn (array $a, array $b) => strnatcasecmp($a['label'], $b['label']));
+
+        return $this->students = ['rows' => $rows, 'uncounted' => $uncounted];
     }
 
     /**

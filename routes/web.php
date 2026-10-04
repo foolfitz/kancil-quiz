@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityResultsController;
+use App\Http\Controllers\ActivityResultsCsvController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LibraryController;
@@ -47,7 +48,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sets/{set}/activities/preview', [ActivityController::class, 'preview'])->name('activities.preview');
     Route::post('sets/{set}/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::get('activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
+    Route::patch('activities/{activity}', [ActivityController::class, 'update'])->name('activities.update');
+    Route::post('activities/{activity}/close', [ActivityController::class, 'close'])->name('activities.close');
     Route::get('activities/{activity}/results', ActivityResultsController::class)->name('activities.results');
+    Route::get('activities/{activity}/results.csv', ActivityResultsCsvController::class)->name('activities.results.csv');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
 });
 

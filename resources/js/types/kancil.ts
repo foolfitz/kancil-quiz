@@ -126,6 +126,50 @@ export interface AttemptDetail {
     }[];
 }
 
+// 結果頁依名字或座號彙整的成績（docs/SPEC.md 3.4）：以第一次玩完的作答（counted）計算
+export interface StudentAttempt {
+    id: string;
+    started_at: string;
+    completed_at: string | null;
+    correct_count: number | null;
+    round_count: number;
+    counted: boolean;
+}
+
+export interface StudentRow {
+    label: string;
+    attempts: StudentAttempt[];
+    completed: number;
+    counted: StudentAttempt;
+    best: { correct_count: number; round_count: number } | null;
+    last_at: string;
+}
+
+// 活動的設定（docs/SPEC.md 3.4）。時間是伺服器設定時區（台灣）的當地時間，
+// 格式與 <input type="datetime-local"> 相同（2026-10-10T23:59）。
+export interface ActivitySettings {
+    require_label: boolean;
+    opens_at: string | null;
+    closes_at: string | null;
+}
+
+export type ActivityStatus = 'scheduled' | 'open' | 'closed';
+
+export interface ActivitySettingsView extends ActivitySettings {
+    status: ActivityStatus;
+}
+
+export const STATUS_NAMES: Record<ActivityStatus, string> = {
+    scheduled: '尚未開放',
+    open: '進行中',
+    closed: '已截止',
+};
+
+// 「2026-10-10T23:59」顯示成「2026/10/10 23:59」。已經是當地時間，不再換算時區。
+export function localTime(value: string): string {
+    return value.replace('T', ' ').replaceAll('-', '/');
+}
+
 export interface Paginated<T> {
     data: T[];
     current_page: number;

@@ -11,7 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * 老師檢視自己活動的作答紀錄與逐題答錯率（docs/SPEC.md T-11）。
+ * 老師檢視自己活動的作答紀錄與逐題答錯率（docs/SPEC.md T-11），以及每位學生的成績（3.4、M3 驗收）。
  */
 class ActivityResultsController extends Controller
 {
@@ -33,6 +33,7 @@ class ActivityResultsController extends Controller
                 'game_id' => $activity->game_id,
                 'game_title' => $game['title']['zh-TW'] ?? $activity->game_id,
                 'scored' => $game['requires']['scored'] ?? true,
+                'require_label' => $activity->requiresLabel(),
             ],
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind, 'language' => $set->language_code],
             'revisions' => $revisions,
@@ -40,6 +41,7 @@ class ActivityResultsController extends Controller
             // 以 closure 傳入：展開作答明細的 partial reload 不必重算統計
             'summary' => fn () => $results->summary(),
             'questions' => fn () => $results->questions(),
+            'students' => fn () => $results->students(),
             'attempts' => fn () => $results->attemptList(),
             // 展開某一次作答時才以 partial reload 取得（?attempt=ID）
             'detail' => function () use ($request, $activity, $results) {

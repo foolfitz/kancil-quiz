@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import {
-    ChevronDown,
-    ChevronRight,
-    CircleCheck,
-    CircleMinus,
-    CircleX,
-} from '@lucide/vue';
+import { ChevronDown, ChevronRight, Download } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import ActivityResultsController from '@/actions/App/Http/Controllers/ActivityResultsController';
+import ActivityResultsCsvController from '@/actions/App/Http/Controllers/ActivityResultsCsvController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
+import AttemptRounds from '@/components/kancil/AttemptRounds.vue';
 import ResultFace from '@/components/kancil/ResultFace.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,16 +17,19 @@ import type {
     Paginated,
     QuestionResult,
     SetKind,
+    StudentRow,
 } from '@/types/kancil';
 
 // 老師檢視活動的作答紀錄與逐題答錯率（docs/SPEC.md T-11）。
 // 對錯一律以伺服器的判定為準，每題以第一筆作答計算（7.4）。
+// 學生有填名字或座號時，依名字列出每位學生的成績，以第一次玩完的作答計算（3.4）。
 const props = defineProps<{
     activity: {
         id: string;
         game_id: string;
         game_title: string;
         scored: boolean;
+        require_label: boolean;
     };
     set: { id: string; title: string; kind: SetKind; language: string };
     revisions: {
@@ -43,9 +42,12 @@ const props = defineProps<{
     summary: {
         attempts: number;
         completed: number;
+        students: number;
+        unlabelled: number;
         average_rate: number | null;
     };
     questions: QuestionResult[];
+    students: StudentRow[];
     attempts: Paginated<AttemptRow>;
     detail: AttemptDetail | null;
 }>();
@@ -101,23 +103,55 @@ watch(
     },
 );
 
-function toggle(attempt: AttemptRow): void {
-    if (expanded.value === attempt.id) {
-        expanded.value = null;
-        return;
-    }
-    expanded.value = attempt.id;
-    if (props.detail?.id !== attempt.id) {
-        loading.value = attempt.id;
+function loadDetail(id: string): void {
+    if (props.detail?.id !== id) {
+        loading.value = id;
         router.reload({
             only: ['detail'],
-            data: { attempt: attempt.id },
+            data: { attempt: id },
             onFinish: () => {
                 loading.value = null;
             },
         });
     }
 }
+
+function toggle(attempt: AttemptRow): void {
+    expandedStudent.value = null;
+    if (expanded.value === attempt.id) {
+        expanded.value = null;
+        return;
+    }
+    expanded.value = attempt.id;
+    loadDetail(attempt.id);
+}
+
+// 每位學生：展開時顯示他每次的成績，以及計分那一次的逐題明細
+const expandedStudent = ref<string | null>(null);
+function toggleStudent(student: StudentRow): void {
+    expanded.value = null;
+    if (expandedStudent.value === student.label) {
+        expandedStudent.value = null;
+        return;
+    }
+    expandedStudent.value = student.label;
+    loadDetail(student.counted.id);
+}
+
+const csvUrl = computed(() =>
+    ActivityResultsCsvController.url(props.activity.id, {
+        query: props.revision ? { revision: props.revision } : {},
+    }),
+);
+
+const score = (attempt: {
+    completed_at: string | null;
+    correct_count: number | null;
+    round_count: number;
+}) =>
+    attempt.completed_at === null
+        ? '沒有玩完'
+        : `${attempt.correct_count ?? '—'} / ${attempt.round_count}`;
 
 const dateTime = (iso: string) =>
     new Date(iso).toLocaleString('zh-TW', {
@@ -186,7 +220,13 @@ function duration(ms: number | null): string {
         </p>
 
         <template v-else>
-            <dl class="grid gap-3 sm:grid-cols-3">
+            <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div v-if="students.length > 0" class="rounded-xl border p-4">
+                    <dt class="text-sm text-muted-foreground">學生</dt>
+                    <dd class="mt-1 text-2xl font-semibold">
+                        {{ summary.students }} 位
+                    </dd>
+                </div>
                 <div class="rounded-xl border p-4">
                     <dt class="text-sm text-muted-foreground">作答次數</dt>
                     <dd class="mt-1 text-2xl font-semibold">
@@ -201,7 +241,11 @@ function duration(ms: number | null): string {
                 </div>
                 <div v-if="activity.scored" class="rounded-xl border p-4">
                     <dt class="text-sm text-muted-foreground">
-                        平均答對率（只算玩完的）
+                        {{
+                            students.length > 0
+                                ? '平均答對率（每位學生算第一次玩完的）'
+                                : '平均答對率（只算玩完的）'
+                        }}
                     </dt>
                     <dd class="mt-1 text-2xl font-semibold">
                         {{
@@ -212,6 +256,190 @@ function duration(ms: number | null): string {
                     </dd>
                 </div>
             </dl>
+
+            <section
+                v-if="students.length > 0"
+                class="space-y-3"
+                data-test="students"
+            >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="font-semibold">每位學生</h2>
+                    <Button as-child variant="outline" size="sm">
+                        <a :href="csvUrl" download
+                            ><Download class="size-4" /> 下載 CSV</a
+                        >
+                    </Button>
+                </div>
+                <p class="text-sm text-muted-foreground">
+                    依學生輸入的名字或座號列出。可以重玩，成績以第一次玩完的那次為準；點一下可以看那一次每一題的作答。
+                </p>
+
+                <div class="overflow-x-auto rounded-xl border">
+                    <table class="w-full text-sm">
+                        <thead class="bg-muted/50 text-left">
+                            <tr>
+                                <th class="w-8 p-3"></th>
+                                <th class="p-3 font-medium">名字或座號</th>
+                                <th
+                                    v-if="activity.scored"
+                                    class="p-3 font-medium"
+                                >
+                                    答對（第一次玩完）
+                                </th>
+                                <th
+                                    v-if="activity.scored"
+                                    class="p-3 font-medium"
+                                >
+                                    最高
+                                </th>
+                                <th class="p-3 font-medium">次數</th>
+                                <th class="p-3 font-medium">最後作答</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template
+                                v-for="student in students"
+                                :key="student.label"
+                            >
+                                <tr
+                                    class="cursor-pointer border-t hover:bg-muted/40"
+                                    data-test="student-row"
+                                    @click="toggleStudent(student)"
+                                >
+                                    <td class="p-3">
+                                        <button
+                                            type="button"
+                                            class="flex"
+                                            :aria-expanded="
+                                                expandedStudent ===
+                                                student.label
+                                            "
+                                            :aria-label="
+                                                expandedStudent ===
+                                                student.label
+                                                    ? '收合'
+                                                    : '展開'
+                                            "
+                                            @click.stop="toggleStudent(student)"
+                                        >
+                                            <ChevronDown
+                                                v-if="
+                                                    expandedStudent ===
+                                                    student.label
+                                                "
+                                                class="size-4"
+                                            />
+                                            <ChevronRight
+                                                v-else
+                                                class="size-4"
+                                            />
+                                        </button>
+                                    </td>
+                                    <td class="p-3 font-medium">
+                                        {{ student.label }}
+                                    </td>
+                                    <td
+                                        v-if="activity.scored"
+                                        class="p-3 whitespace-nowrap"
+                                        :class="
+                                            student.counted.completed_at ===
+                                            null
+                                                ? 'text-muted-foreground'
+                                                : ''
+                                        "
+                                    >
+                                        {{ score(student.counted) }}
+                                    </td>
+                                    <td
+                                        v-if="activity.scored"
+                                        class="p-3 whitespace-nowrap"
+                                    >
+                                        {{
+                                            student.best
+                                                ? `${student.best.correct_count} / ${student.best.round_count}`
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td class="p-3 whitespace-nowrap">
+                                        {{ student.attempts.length }} 次<span
+                                            v-if="
+                                                student.completed !==
+                                                student.attempts.length
+                                            "
+                                            class="text-muted-foreground"
+                                            >（玩完
+                                            {{ student.completed }}）</span
+                                        >
+                                    </td>
+                                    <td class="p-3 whitespace-nowrap">
+                                        {{ dateTime(student.last_at) }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="expandedStudent === student.label"
+                                    class="bg-muted/20"
+                                >
+                                    <td
+                                        :colspan="activity.scored ? 6 : 4"
+                                        class="space-y-3 p-3"
+                                    >
+                                        <ul
+                                            v-if="student.attempts.length > 1"
+                                            class="flex flex-wrap gap-2"
+                                        >
+                                            <li
+                                                v-for="attempt in student.attempts"
+                                                :key="attempt.id"
+                                                class="rounded-full border px-3 py-1"
+                                                :class="
+                                                    attempt.counted
+                                                        ? 'border-primary'
+                                                        : ''
+                                                "
+                                            >
+                                                {{
+                                                    dateTime(
+                                                        attempt.started_at,
+                                                    )
+                                                }}・{{ score(attempt)
+                                                }}{{
+                                                    attempt.counted
+                                                        ? '（計分）'
+                                                        : ''
+                                                }}
+                                            </li>
+                                        </ul>
+                                        <p
+                                            v-if="
+                                                loading ===
+                                                    student.counted.id ||
+                                                detail?.id !==
+                                                    student.counted.id
+                                            "
+                                            class="text-muted-foreground"
+                                        >
+                                            載入中…
+                                        </p>
+                                        <AttemptRounds
+                                            v-else
+                                            :rounds="detail?.rounds ?? []"
+                                            :scored="activity.scored"
+                                            :lang="set.language"
+                                        />
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <p
+                    v-if="summary.unlabelled > 0"
+                    class="text-sm text-muted-foreground"
+                >
+                    另有 {{ summary.unlabelled }}
+                    次作答沒有填名字（例如開啟「學生要先輸入名字或座號」之前的作答），列在下方的「每次作答」中。
+                </p>
+            </section>
 
             <section class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -245,7 +473,9 @@ function duration(ms: number | null): string {
                     </div>
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    同一位學生在同一題答了好幾次（例如迷宮答錯後重試）時，只算第一次。
+                    <template v-if="students.length > 0"
+                        >每位學生只算計分的那一次作答，重玩不重複計算。</template
+                    >同一題答了好幾次（例如迷宮答錯後重試）時，只算第一次。
                 </p>
 
                 <!-- 以容器寬度決定欄數：側邊欄展開時，平板橫向的內容區也很窄 -->
@@ -349,7 +579,7 @@ function duration(ms: number | null): string {
                             <tr>
                                 <th class="w-8 p-3"></th>
                                 <th class="p-3 font-medium">開始時間</th>
-                                <th class="p-3 font-medium">暱稱／座號</th>
+                                <th class="p-3 font-medium">名字或座號</th>
                                 <th
                                     v-if="activity.scored"
                                     class="p-3 font-medium"
@@ -448,109 +678,12 @@ function duration(ms: number | null): string {
                                         >
                                             載入中…
                                         </p>
-                                        <ul
+                                        <AttemptRounds
                                             v-else
-                                            class="divide-y"
-                                            data-test="attempt-detail"
-                                        >
-                                            <li
-                                                v-for="round in detail?.rounds ??
-                                                []"
-                                                :key="round.entry_id"
-                                                class="flex flex-wrap items-start gap-x-6 gap-y-1 py-2"
-                                            >
-                                                <span
-                                                    class="flex w-20 shrink-0 items-center gap-1"
-                                                >
-                                                    <template
-                                                        v-if="!round.answered"
-                                                    >
-                                                        <CircleMinus
-                                                            class="size-4 text-muted-foreground"
-                                                        />
-                                                        {{
-                                                            activity.scored
-                                                                ? '沒作答'
-                                                                : '沒看過'
-                                                        }}
-                                                    </template>
-                                                    <template
-                                                        v-else-if="
-                                                            round.correct ===
-                                                            null
-                                                        "
-                                                    >
-                                                        <CircleCheck
-                                                            class="size-4 text-muted-foreground"
-                                                        />
-                                                        看過
-                                                    </template>
-                                                    <template
-                                                        v-else-if="
-                                                            round.correct
-                                                        "
-                                                    >
-                                                        <CircleCheck
-                                                            class="size-4 text-green-600"
-                                                        />
-                                                        答對
-                                                    </template>
-                                                    <template v-else>
-                                                        <CircleX
-                                                            class="size-4 text-red-600"
-                                                        />
-                                                        答錯
-                                                    </template>
-                                                </span>
-                                                <span class="min-w-40 flex-1">
-                                                    <ResultFace
-                                                        :face="round.question"
-                                                        :lang="set.language"
-                                                    />
-                                                </span>
-                                                <span
-                                                    v-if="
-                                                        round.correct === false
-                                                    "
-                                                    class="flex flex-1 flex-col gap-1"
-                                                >
-                                                    <span
-                                                        class="flex flex-wrap items-center gap-1"
-                                                    >
-                                                        <span
-                                                            class="text-muted-foreground"
-                                                            >選了：</span
-                                                        >
-                                                        <ResultFace
-                                                            :face="
-                                                                round.selected
-                                                            "
-                                                            :lang="set.language"
-                                                            missing="（不在題組中的選項）"
-                                                        />
-                                                    </span>
-                                                    <span
-                                                        v-if="round.answer"
-                                                        class="flex flex-wrap items-center gap-1"
-                                                    >
-                                                        <span
-                                                            class="text-muted-foreground"
-                                                            >正解：</span
-                                                        >
-                                                        <ResultFace
-                                                            :face="round.answer"
-                                                            :lang="set.language"
-                                                        />
-                                                    </span>
-                                                </span>
-                                                <span
-                                                    v-if="round.tries > 1"
-                                                    class="text-muted-foreground"
-                                                    >共作答
-                                                    {{ round.tries }} 次</span
-                                                >
-                                            </li>
-                                        </ul>
+                                            :rounds="detail?.rounds ?? []"
+                                            :scored="activity.scored"
+                                            :lang="set.language"
+                                        />
                                     </td>
                                 </tr>
                             </template>

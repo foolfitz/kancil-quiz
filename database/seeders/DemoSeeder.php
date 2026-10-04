@@ -11,6 +11,7 @@ use App\Models\CurriculumRef;
 use App\Models\Set;
 use App\Models\SetEntry;
 use App\Models\User;
+use App\Support\ActivitySettings;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -57,8 +58,12 @@ class DemoSeeder extends Seeder
             }
         }
 
-        // 示範老師：直接用教材建立活動，並從第 1、2 課挑詞組成自己的題組（T-18）
-        $this->activity($this->lesson(1), 'quiz', $teacher);
+        // 示範老師：直接用教材建立活動，並從第 1、2 課挑詞組成自己的題組（T-18）。
+        // 第 1 課要學生輸入名字或座號，今天起開放一週（3.4、T-14）
+        $this->activity($this->lesson(1), 'quiz', $teacher, ActivitySettings::attributes([
+            ...ActivitySettings::defaults(),
+            'require_label' => true,
+        ]));
         $this->activity($this->lesson(2), 'match-up', $teacher);
         $this->activity($this->lesson(3), 'maze-quiz', $teacher);
         $this->activity($this->lesson(4), 'flash-cards', $teacher);
@@ -89,7 +94,7 @@ class DemoSeeder extends Seeder
 
         $this->command->info('老師：teacher@example.com、colleague@example.com；審核者：curator@example.com；管理員：admin@example.com（密碼都是 password）');
         foreach ($teacher->activities()->with('set')->get() as $activity) {
-            $this->command->line(sprintf('%-40s %-10s %s', $activity->set->title, $activity->game_id, route('play', $activity)));
+            $this->command->line(sprintf('%-40s %-10s %s%s', $activity->set->title, $activity->game_id, route('play', $activity), $activity->requiresLabel() ? '（要輸入名字）' : ''));
         }
     }
 
@@ -188,7 +193,10 @@ class DemoSeeder extends Seeder
         ];
     }
 
-    private function activity(Set $set, string $game, User $owner): void
+    /**
+     * @param  array<string, mixed>  $settings  ActivitySettings::attributes() 的結果
+     */
+    private function activity(Set $set, string $game, User $owner, array $settings = []): void
     {
         $manifest = app(GameRegistry::class)->get($game);
 
@@ -196,6 +204,7 @@ class DemoSeeder extends Seeder
             'game_id' => $game,
             'game_version' => $manifest['version'],
             'options' => $manifest['defaultOptions'],
+            ...$settings,
             'owner_id' => $owner->id,
         ]);
     }

@@ -62,9 +62,28 @@ class Activity extends Model
         return $this->hasMany(Attempt::class);
     }
 
+    /**
+     * 學生要先輸入名字或座號（docs/SPEC.md 3.4、S-04）。
+     */
+    public function requiresLabel(): bool
+    {
+        return $this->mode === 'assignment';
+    }
+
+    /**
+     * @return 'scheduled'|'open'|'closed' 尚未開放、進行中、已截止
+     */
+    public function status(): string
+    {
+        if ($this->closes_at !== null && ! $this->closes_at->isFuture()) {
+            return 'closed';
+        }
+
+        return $this->opens_at !== null && $this->opens_at->isFuture() ? 'scheduled' : 'open';
+    }
+
     public function isOpen(): bool
     {
-        return ($this->opens_at === null || $this->opens_at->isPast())
-            && ($this->closes_at === null || $this->closes_at->isFuture());
+        return $this->status() === 'open';
     }
 }
