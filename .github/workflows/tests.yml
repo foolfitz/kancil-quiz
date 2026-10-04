@@ -27,6 +27,10 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      # 音檔轉檔的測試要用 ffmpeg（docs/SPEC.md 第 9 節）；GitHub 的 Ubuntu 執行環境沒有預裝
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
