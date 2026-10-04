@@ -100,3 +100,22 @@ test('老師從教材挑詞建立自己的題組', async ({ page }, testInfo) =>
 
     expect(errors).toEqual([]);
 });
+
+test('老師下載教材一課的 zip（T-15）', async ({ page }) => {
+    await page.goto('/curriculum/id/1/3');
+    const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.locator('[data-test="export-set"]').click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(
+        /^set-[0-9A-HJKMNP-TV-Z]{26}\.zip$/,
+    );
+
+    // zip 檔以 PK 開頭
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+        chunks.push(chunk as Buffer);
+    }
+    expect(Buffer.concat(chunks).subarray(0, 2).toString()).toBe('PK');
+});

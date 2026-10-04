@@ -9,6 +9,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\SetController;
 use App\Http\Controllers\SetCopyController;
+use App\Http\Controllers\SetExportController;
 use App\Http\Controllers\SetPublicationController;
 use App\Http\Controllers\SetReviewController;
 use App\Http\Controllers\SetShareController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('sets/{set}/share', [SetShareController::class, 'store'])->name('sets.share.store');
     Route::delete('sets/{set}/share', [SetShareController::class, 'destroy'])->name('sets.share.destroy');
     Route::get('shared/{token}', [SetShareController::class, 'show'])->name('sets.shared');
+    Route::get('sets/{set}/export', [SetExportController::class, 'show'])->name('sets.export');
+    Route::get('shared/{token}/export', [SetExportController::class, 'shared'])->name('sets.shared.export');
     Route::post('sets/{set}/publication', [SetPublicationController::class, 'store'])->name('sets.publication.store');
     Route::delete('sets/{set}/publication', [SetPublicationController::class, 'destroy'])->name('sets.publication.destroy');
     Route::get('library', LibraryController::class)->name('library');

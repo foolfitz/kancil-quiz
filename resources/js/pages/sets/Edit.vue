@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Gamepad2 } from '@lucide/vue';
+import { Download, Gamepad2 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
+import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import CurriculumPicker from '@/components/kancil/CurriculumPicker.vue';
@@ -42,7 +43,7 @@ const props = defineProps<{
         textbook_url: string | null;
     };
     entries: (VocabEntryInput | QuizEntryInput)[];
-    can: { manage: boolean };
+    can: { manage: boolean; export: boolean };
     sharing: SetSharing | null;
     activities: { id: string; game: string }[];
     languages: Language[];
@@ -219,18 +220,34 @@ function destroy(): void {
                 </div>
                 <Heading :title="set.title" class="mt-2" />
             </div>
-            <Button
-                v-if="can.manage && !form.isDirty"
-                as-child
-                variant="default"
-            >
-                <Link :href="ActivityController.create(set.id)">
-                    <Gamepad2 class="size-4" /> 選遊戲、建立活動
-                </Link>
-            </Button>
-            <span v-else-if="can.manage" class="text-sm text-muted-foreground">
-                有尚未儲存的修改，儲存後才能建立活動。
-            </span>
+            <div class="flex flex-wrap items-center gap-2">
+                <Button
+                    v-if="can.export && !form.isDirty"
+                    as-child
+                    variant="outline"
+                >
+                    <a
+                        :href="SetExportController.show.url(set.id)"
+                        data-test="export-set"
+                        ><Download class="size-4" /> 匯出 zip</a
+                    >
+                </Button>
+                <Button
+                    v-if="can.manage && !form.isDirty"
+                    as-child
+                    variant="default"
+                >
+                    <Link :href="ActivityController.create(set.id)">
+                        <Gamepad2 class="size-4" /> 選遊戲、建立活動
+                    </Link>
+                </Button>
+                <span
+                    v-else-if="can.manage"
+                    class="text-sm text-muted-foreground"
+                >
+                    有尚未儲存的修改，儲存後才能建立活動或匯出。
+                </span>
+            </div>
         </div>
 
         <p

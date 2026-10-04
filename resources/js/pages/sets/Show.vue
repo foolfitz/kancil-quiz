@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Check, Copy, Gamepad2, Pencil } from '@lucide/vue';
+import { Check, Copy, Download, Gamepad2, Pencil } from '@lucide/vue';
 import { ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetCopyController from '@/actions/App/Http/Controllers/SetCopyController';
+import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
 import SetReviewController from '@/actions/App/Http/Controllers/SetReviewController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -30,6 +31,7 @@ const props = defineProps<{
         activity: boolean;
         edit: boolean;
         review: boolean;
+        export: boolean;
     };
     token: string | null;
     reviews: SetReviewEntry[];
@@ -113,6 +115,17 @@ const dateTime = (iso: string) =>
                 <Button v-if="can.activity" as-child variant="outline">
                     <Link :href="ActivityController.create(set.id)"
                         ><Gamepad2 class="size-4" /> 選遊戲、建立活動</Link
+                    >
+                </Button>
+                <Button v-if="can.export" as-child variant="outline">
+                    <a
+                        :href="
+                            token
+                                ? SetExportController.shared.url(token)
+                                : SetExportController.show.url(set.id)
+                        "
+                        data-test="export-set"
+                        ><Download class="size-4" /> 下載 zip</a
                     >
                 </Button>
             </div>

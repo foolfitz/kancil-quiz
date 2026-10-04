@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Copy, Gamepad2, ListChecks, Pencil, Volume2 } from '@lucide/vue';
+import {
+    Copy,
+    Download,
+    Gamepad2,
+    ListChecks,
+    Pencil,
+    Volume2,
+} from '@lucide/vue';
 import { ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetCopyController from '@/actions/App/Http/Controllers/SetCopyController';
+import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { KIND_NAMES } from '@/types/kancil';
@@ -27,7 +35,12 @@ const props = defineProps<{
         description: string | null;
         license: string;
         authors: string[];
-        can: { activity: boolean; copy: boolean; edit: boolean };
+        can: {
+            activity: boolean;
+            copy: boolean;
+            edit: boolean;
+            export: boolean;
+        };
     } | null;
     words: VocabEntryInput[];
     imageCredits: string[];
@@ -144,6 +157,13 @@ function play(url: string): void {
                             })
                         "
                         ><ListChecks class="size-4" /> 挑詞建立題組</Link
+                    >
+                </Button>
+                <Button v-if="set.can.export" as-child variant="outline">
+                    <a
+                        :href="SetExportController.show.url(set.id)"
+                        data-test="export-set"
+                        ><Download class="size-4" /> 下載 zip</a
                     >
                 </Button>
                 <Button v-if="set.can.edit" as-child variant="ghost">

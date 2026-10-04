@@ -150,7 +150,10 @@ class SetController extends Controller
                 'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
             ],
             'entries' => SetEditorData::entries($set),
-            'can' => ['manage' => Gate::allows('manage', $set)],
+            'can' => [
+                'manage' => Gate::allows('manage', $set),
+                'export' => $set->current_revision_id !== null && Gate::allows('export', $set),
+            ],
             // 分享與公開（T-17、T-12），只有擁有者看得到
             'sharing' => Gate::allows('manage', $set) ? [
                 'visibility' => $set->visibility,

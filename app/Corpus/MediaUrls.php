@@ -38,6 +38,23 @@ class MediaUrls
     }
 
     /**
+     * 內容引用的媒體：zip 內的相對路徑對應到媒體 ID（匯出 zip 時用，docs/SPEC.md 6.2）。
+     *
+     * @return array<string, string>
+     */
+    public static function referenced(stdClass $content): array
+    {
+        $paths = [];
+        self::walk($content, function (stdClass $media) use (&$paths) {
+            if (preg_match(self::PATTERN, $media->src, $match)) {
+                $paths[$media->src] = $match[1];
+            }
+        });
+
+        return $paths;
+    }
+
+    /**
      * 對內容中每個媒體物件（有 src 字串的物件）呼叫 $callback。
      *
      * @param  callable(stdClass): void  $callback

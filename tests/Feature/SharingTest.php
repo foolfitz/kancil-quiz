@@ -88,7 +88,7 @@ class SharingTest extends TestCase
 
         $this->actingAs($this->colleague)->get("/sets/{$this->set->id}")
             ->assertInertia(fn (Assert $page) => $page
-                ->where('can', ['copy' => true, 'manage' => false, 'activity' => false, 'edit' => false, 'review' => false])
+                ->where('can', ['copy' => true, 'manage' => false, 'activity' => false, 'edit' => false, 'review' => false, 'export' => true])
                 ->where('reviews', []));
 
         $this->post("/sets/{$this->set->id}/copy")->assertRedirect();

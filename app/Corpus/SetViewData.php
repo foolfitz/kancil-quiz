@@ -71,6 +71,8 @@ class SetViewData
                 'activity' => $gate->allows('createActivity', $set),
                 'edit' => $gate->allows('edit', $set),
                 'review' => $review,
+                // 匯出 zip（T-15）：透過分享連結檢視時，持有 token 就能下載
+                'export' => $set->current_revision_id !== null && ($token !== null || $gate->allows('export', $set)),
             ],
             'token' => $token,
             // 修訂紀錄（C-03）：擁有者、能修正或審核的人看得到

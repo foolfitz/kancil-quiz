@@ -67,6 +67,7 @@ class CurriculumController extends Controller
                     'activity' => Gate::allows('createActivity', $set),
                     'copy' => Gate::allows('copy', $set),
                     'edit' => Gate::allows('edit', $set),
+                    'export' => $set->current_revision_id !== null && Gate::allows('export', $set),
                 ],
             ],
             'words' => $set === null ? [] : SetEditorData::entries($set),

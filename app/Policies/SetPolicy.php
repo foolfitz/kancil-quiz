@@ -13,6 +13,8 @@ use App\Models\User;
  * - view：manage、已公開的題組（所有老師）、負責該語言的審核者檢視待審的題組（3.2）。
  * - copy：manage、已公開的題組。審核者為了審核才看得到待審的題組，不能複製。
  *   未公開（unlisted）的題組只能透過分享連結檢視與複製，由 SetShareController、SetCopyController 以 token 判斷（T-17）。
+ * - export：manage、已公開的題組（T-15）。公開題組另外有不需登入的開放資料網址；
+ *   未公開（unlisted）的題組由 SetExportController 以分享連結的 token 判斷。
  * - review：負責該語言的審核者；審核者不能審核自己的題組，管理員可以。
  * - createActivity：manage，加上所有老師都能用教材題組建立活動（3.6）。
  *
@@ -49,6 +51,11 @@ class SetPolicy
     }
 
     public function copy(User $user, Set $set): bool
+    {
+        return $this->manage($user, $set) || $set->isPublic();
+    }
+
+    public function export(User $user, Set $set): bool
     {
         return $this->manage($user, $set) || $set->isPublic();
     }
