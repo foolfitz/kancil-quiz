@@ -22,6 +22,10 @@ composer dev                              # 開發伺服器
 
 示範帳號是 `teacher@example.com`，密碼 `password`。架構、常用指令與開發規則見 [`CLAUDE.md`](CLAUDE.md)。
 
+## 部署
+
+以 Docker Compose 部署在一台 VM 上，自動取得 HTTPS 憑證。步驟、更新與備份見 [`docs/deploy.md`](docs/deploy.md)。
+
 ## 授權
 
 - 程式碼：[AGPL-3.0-or-later](LICENSE)。

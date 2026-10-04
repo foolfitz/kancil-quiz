@@ -1,0 +1,24 @@
+# 正式環境（docs/deploy.md）：設定好 .env.production 後執行 docker compose up -d --build
+name: kancil-quiz
+
+services:
+    app:
+        build: .
+        image: kancil-quiz
+        restart: unless-stopped
+        env_file: .env.production
+        ports:
+            - '80:80'
+            - '443:443'
+            - '443:443/udp' # HTTP/3
+        volumes:
+            # SQLite 資料庫與上傳的媒體；備份這一個就夠了
+            - storage:/app/storage
+            # Caddy 取得的 HTTPS 憑證
+            - caddy_data:/data
+            - caddy_config:/config
+
+volumes:
+    storage:
+    caddy_data:
+    caddy_config:

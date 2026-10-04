@@ -1,0 +1,27 @@
+# 不進映像檔的東西（Dockerfile）：本機的依賴、建置產物、資料與設定
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+vendor
+public/build
+public/hot
+public/storage
+public/e2e-media
+public/standalone.html
+public/css/filament
+public/js/filament
+public/fonts/filament
+# 本機的資料、快取與備份；映像檔中的目錄由 Dockerfile 建立
+storage/*
+bootstrap/cache/*.php
+database/*.sqlite*
+test-results
+playwright-report
+.phpunit.cache
+.phpunit.result.cache
+packages/games/maze-quiz/.git
+packages/games/maze-quiz/dist

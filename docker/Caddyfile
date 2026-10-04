@@ -1,0 +1,28 @@
+# FrankenPHP（Caddy）的設定（docs/deploy.md）。
+# SERVER_NAME 設成網域，Caddy 會自動向 Let's Encrypt 取得 HTTPS 憑證；設成 :80 則只用 HTTP（本機測試用）。
+{
+	skip_install_trust
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$SERVER_NAME:localhost} {
+	root public/
+	encode zstd br gzip
+
+	# 上傳的媒體：不讓搜尋引擎收錄；檔名隨機且內容不可變，可以長期快取（docs/SPEC.md 第 9 節）。
+	# file_server 預設不列出目錄內容。
+	header /storage/* {
+		X-Robots-Tag "noindex"
+		Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	# 打包過的前端檔，檔名含雜湊
+	header /build/assets/* Cache-Control "public, max-age=31536000, immutable"
+
+	php_server
+}

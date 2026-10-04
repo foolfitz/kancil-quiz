@@ -1,0 +1,130 @@
+# 部署
+
+Kancil Quiz 以 Docker Compose 部署在一台雲端 VM 上（規格第 11 節）。
+
+## 架構
+
+- 只有一個容器 `app`：[FrankenPHP](https://frankenphp.dev/) 同時負責 PHP 與靜態檔案，內建的 Caddy 會自動向 Let's Encrypt 取得並更新 HTTPS 憑證。錄音（T-06）只能在 HTTPS 下使用。
+- 映像檔由 repo 中的 `Dockerfile` 建置：PHP 8.4 加上 `intl`、`gd`（WebP）、`zip` 擴充、ffmpeg 與 sqlite3，前端在建置時打包好。上傳上限等 PHP 設定在 `docker/php.ini`，Caddy 的設定在 `docker/Caddyfile`。
+- 資料都在 volume `storage`（容器中的 `/app/storage`）：SQLite 資料庫 `database/kancil.sqlite` 與上傳的媒體 `app/public/`。備份這一個 volume 就夠了。
+- 容器啟動時會快取設定並套用 migration（`docker/entrypoint.sh`）。
+- 目前沒有佇列任務與排程，不需要另外的容器。之後加上媒體清除等排程時，用同一個映像檔再開一個執行 `php artisan schedule:work` 的服務。
+
+## 需要準備的
+
+| 項目 | 說明 |
+|---|---|
+| VM | Ubuntu 24.04 LTS；1 vCPU、2 GB 記憶體、20 GB 硬碟就夠。映像檔在 VM 上建置，打包前端時比較吃記憶體，1 GB 的機器建議先加 swap |
+| 網路 | 防火牆或雲端的安全群組開放 TCP 80、443，以及 UDP 443（HTTP/3，選用） |
+| 網域 | 一個網域或子網域，DNS 的 A 記錄指向 VM 的 IP。Caddy 用它申請憑證 |
+| 寄信（選用） | SMTP 帳號，忘記密碼與修改 email 時寄信用。沒有的話這兩個功能暫時無法使用，邀請註冊不受影響 |
+
+### 安裝 Docker（要 root，只做一次）
+
+在 VM 上執行（Docker 官方的安裝腳本）：
+
+```sh
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker "$USER"
+```
+
+登出再登入後，`docker` 就不必再加 `sudo`。之後的部署、更新、備份都不需要 root。
+
+## 第一次部署
+
+在家目錄執行：
+
+```sh
+cd ~
+git clone --recurse-submodules https://github.com/foolfitz/kancil-quiz.git
+cd kancil-quiz
+cp .env.production.example .env.production
+docker compose build
+docker compose run --rm app php artisan key:generate --show
+```
+
+最後一行會印出 `base64:` 開頭的金鑰。編輯 `.env.production`：
+
+- `APP_KEY`：貼上剛才的金鑰。
+- `APP_URL`：`https://` 加上你的網域。
+- `SERVER_NAME`：你的網域，不加 `https://`。
+- 有 SMTP 帳號的話，填寫 `MAIL_` 開頭的設定。
+
+啟動：
+
+```sh
+docker compose up -d
+docker compose logs -f app
+```
+
+記錄中出現 `certificate obtained successfully` 就表示 HTTPS 憑證已經取得，按 Ctrl+C 離開記錄。接著匯入教材，並建立管理員的邀請連結：
+
+```sh
+docker compose exec app php artisan kancil:import-curriculum database/curriculum/id/1
+docker compose exec app php artisan kancil:invite --role=admin
+```
+
+用瀏覽器打開邀請連結註冊管理員帳號。之後的老師帳號在後台（`/admin`）或用 `kancil:invite` 邀請。
+
+`.env.production` 中的 `APP_KEY` 要另外妥善保存：換掉的話，老師的雙重驗證設定會失效。
+
+## 更新
+
+```sh
+cd ~/kancil-quiz
+git pull
+git submodule update --init
+docker compose up -d --build
+```
+
+新的容器啟動時會自動套用 migration，網站會中斷幾秒。
+
+要回到舊版時，`git checkout` 到舊的 commit 後同樣執行 `git submodule update --init` 與 `docker compose up -d --build`。migration 不會自動還原，回到舊版之前先備份。
+
+## 常用指令
+
+| 指令 | 用途 |
+|---|---|
+| `docker compose logs -f app` | 看記錄（PHP 的錯誤也在這裡） |
+| `docker compose exec app php artisan <指令>` | 執行 artisan，例如 `kancil:invite` |
+| `docker compose restart app` | 重新啟動（改了 `.env.production` 之後） |
+| `docker compose ps` | 查看容器狀態 |
+
+## 備份與還原
+
+`docker/backup.sh` 用 SQLite 的 `.backup` 取得一致的資料庫快照（網站不必停止），連同上傳的媒體打包成一個 `kancil-<時間>.tar.gz`，預設保留最近 14 份：
+
+```sh
+docker/backup.sh ~/backups
+```
+
+先手動執行一次，確認可以備份（也會建立 `~/backups`）。之後每天凌晨 3 點自動備份（`crontab -e` 加入這一行，不需要 root）：
+
+```
+0 3 * * * cd ~/kancil-quiz && docker/backup.sh ~/backups >> ~/backups/backup.log 2>&1
+```
+
+規格要求備份放到異地。VM 上的 `~/backups` 只是第一份，還要再複製到別的地方，例如用 `rclone` 同步到雲端儲存空間，或使用雲端供應商的磁碟快照。`.env.production` 也要一起保存。
+
+還原會覆蓋目前的資料庫與媒體，網站會停止幾秒：
+
+```sh
+docker/restore.sh ~/backups/kancil-20261004-030000.tar.gz
+```
+
+規格要求每季實際演練還原一次。可以在另一台機器上用同一份備份與 `.env.production` 部署，確認資料完整。
+
+## 疑難排解
+
+| 狀況 | 檢查 |
+|---|---|
+| 瀏覽器顯示憑證錯誤，或連不上 | DNS 是否已經指向這台 VM（`dig +short 你的網域`）；80、443 port 是否開放；`docker compose logs app` 中搜尋 `acme` 看 Caddy 的錯誤 |
+| 頁面顯示 500 錯誤 | `docker compose logs app`。不要在正式環境打開 `APP_DEBUG` |
+| 容器一直重新啟動 | `docker compose logs app`；最常見的是 `.env.production` 沒有填 `APP_KEY` |
+| 上傳失敗 | 單檔上限 5 MB；PHP 的上限設定在 `docker/php.ini` |
+| 要換網域 | 修改 `.env.production` 的 `SERVER_NAME` 與 `APP_URL`，執行 `docker compose up -d` |
+
+## 尚未包含
+
+- 排程：媒體清除、作答紀錄的保存期限（規格第 5、9 節）還沒有實作，實作後再加 scheduler 服務。
+- 監控與告警：可以先用外部的網站監測服務定時檢查 `https://你的網域/up`。
