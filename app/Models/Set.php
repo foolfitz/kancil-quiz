@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -61,13 +62,25 @@ class Set extends Model
     }
 
     /**
+     * 教材題組：由某一課的詞彙匯入，所有老師都能直接用來建立活動（docs/SPEC.md 3.6）。
+     */
+    public function isTextbook(): bool
+    {
+        return $this->textbookLesson !== null;
+    }
+
+    /**
      * 交換格式的 authors：複製來源的作者在前，目前的擁有者加在最後（docs/SPEC.md 第 5 節）。
+     * 教材題組只列資料檔中的作者，不列擁有它的教材帳號（3.6）。
      *
      * @return list<array{name: string}>
      */
     public function effectiveAuthors(): array
     {
         $authors = $this->authors ?? [];
+        if ($authors !== [] && $this->isTextbook()) {
+            return $authors;
+        }
         if (! in_array($this->owner->name, array_column($authors, 'name'), true)) {
             $authors[] = ['name' => $this->owner->name];
         }
@@ -133,6 +146,16 @@ class Set extends Model
         return $this->belongsToMany(CurriculumRef::class, 'set_curriculum_ref')
             ->orderBy('volume')
             ->orderBy('lesson');
+    }
+
+    /**
+     * 教材題組對應的那一課；一般題組為 null。
+     *
+     * @return HasOne<CurriculumRef, $this>
+     */
+    public function textbookLesson(): HasOne
+    {
+        return $this->hasOne(CurriculumRef::class);
     }
 
     /**

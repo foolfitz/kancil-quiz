@@ -143,6 +143,33 @@ export interface CurriculumRef {
     volume: number;
     lesson: number;
     title_zh: string | null;
+    title_native: string | null;
+}
+
+// 教材的一課與教材題組中的詞（app/Curriculum/TextbookData.php，T-18）
+export interface TextbookLesson {
+    volume: number;
+    lesson: number;
+    title_zh: string | null;
+    title_native: string | null;
+    url: string;
+    words: {
+        id: string;
+        text: string;
+        translation_zh: string;
+        thumbnail_url: string | null;
+    }[];
+}
+
+// 冊課選單中的一課，例：第 3 課 Keluarga Saya 我的家人
+export function lessonLabel(ref: {
+    lesson: number;
+    title_zh?: string | null;
+    title_native?: string | null;
+}): string {
+    return [`第 ${ref.lesson} 課`, ref.title_native, ref.title_zh]
+        .filter(Boolean)
+        .join(' ');
 }
 
 export function curriculumLabel(ref: {
@@ -176,6 +203,7 @@ export interface SetView {
         owner: string;
         viewable: boolean;
     } | null;
+    textbook_url: string | null;
 }
 
 export interface SetViewEntry {

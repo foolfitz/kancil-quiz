@@ -24,7 +24,13 @@ import type {
 const props = defineProps<{
     set: SetView;
     entries: SetViewEntry[];
-    can: { copy: boolean; manage: boolean; edit: boolean; review: boolean };
+    can: {
+        copy: boolean;
+        manage: boolean;
+        activity: boolean;
+        edit: boolean;
+        review: boolean;
+    };
     token: string | null;
     reviews: SetReviewEntry[];
     revisions: RevisionEntry[];
@@ -76,7 +82,10 @@ const dateTime = (iso: string) =>
                         KIND_NAMES[set.kind]
                     }}</Badge>
                     <Badge variant="outline">{{ set.language.name_zh }}</Badge>
-                    <Badge v-if="set.visibility === 'public'">已公開</Badge>
+                    <Badge v-if="set.textbook_url">教材</Badge>
+                    <Badge v-else-if="set.visibility === 'public'"
+                        >已公開</Badge
+                    >
                 </div>
                 <Heading
                     :title="set.title"
@@ -101,7 +110,7 @@ const dateTime = (iso: string) =>
                         {{ can.manage ? '編輯' : '修正內容' }}</Link
                     >
                 </Button>
-                <Button v-if="can.manage" as-child variant="outline">
+                <Button v-if="can.activity" as-child variant="outline">
                     <Link :href="ActivityController.create(set.id)"
                         ><Gamepad2 class="size-4" /> 選遊戲、建立活動</Link
                     >
@@ -118,7 +127,19 @@ const dateTime = (iso: string) =>
             <dd>{{ set.license }}</dd>
             <template v-if="set.curriculum.length > 0">
                 <dt class="text-muted-foreground">對應教材</dt>
-                <dd>{{ set.curriculum.map(curriculumLabel).join('、') }}</dd>
+                <dd>
+                    <Link
+                        v-if="set.textbook_url"
+                        :href="set.textbook_url"
+                        class="underline-offset-4 hover:underline"
+                        >{{
+                            set.curriculum.map(curriculumLabel).join('、')
+                        }}</Link
+                    >
+                    <template v-else>{{
+                        set.curriculum.map(curriculumLabel).join('、')
+                    }}</template>
+                </dd>
             </template>
             <template v-if="set.tags.length > 0">
                 <dt class="text-muted-foreground">標籤</dt>

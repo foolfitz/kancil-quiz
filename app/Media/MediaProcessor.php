@@ -70,10 +70,20 @@ class MediaProcessor
      */
     public function image(UploadedFile $file, User $user, array $attribution = []): Media
     {
+        return $this->imageFromPath((string) $file->getRealPath(), $user, $attribution);
+    }
+
+    /**
+     * 同 image()，來源是本機檔案，例如匯入教材的插圖（App\Curriculum\CurriculumImporter）。
+     *
+     * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
+     */
+    public function imageFromPath(string $path, User $user, array $attribution = []): Media
+    {
         $manager = ImageManager::usingDriver(Driver::class);
 
         try {
-            $image = $manager->decode($file->getRealPath())->orient()->scaleDown(self::IMAGE_MAX_EDGE, self::IMAGE_MAX_EDGE);
+            $image = $manager->decode($path)->orient()->scaleDown(self::IMAGE_MAX_EDGE, self::IMAGE_MAX_EDGE);
         } catch (Throwable) {
             throw ValidationException::withMessages(['file' => '無法讀取這張圖片，請換一個檔案試試。']);
         }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityResultsController;
+use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MediaController;
@@ -21,6 +22,11 @@ Route::get('p/{activity}', [PlayerController::class, 'show'])->name('play');
 // 老師端（docs/SPEC.md 10.3）
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('curriculum', [CurriculumController::class, 'index'])->name('curriculum.index');
+    Route::get('curriculum/{language}/{volume}/{lesson}', [CurriculumController::class, 'show'])
+        ->whereNumber(['volume', 'lesson'])
+        ->name('curriculum.lesson');
 
     Route::resource('sets', SetController::class);
     Route::post('sets/{set}/copy', SetCopyController::class)->name('sets.copy');

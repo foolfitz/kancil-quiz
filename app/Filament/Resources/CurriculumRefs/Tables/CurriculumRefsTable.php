@@ -18,6 +18,8 @@ class CurriculumRefsTable
                 TextColumn::make('volume')->label('冊')->sortable(),
                 TextColumn::make('lesson')->label('課')->sortable(),
                 TextColumn::make('title_zh')->label('課名')->searchable(),
+                TextColumn::make('title_native')->label('目標語課名')->searchable(),
+                TextColumn::make('set_id')->label('教材題組')->formatStateUsing(fn () => '已匯入')->placeholder('—'),
             ])
             ->defaultSort('volume')
             ->filters([

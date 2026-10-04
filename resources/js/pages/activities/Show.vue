@@ -26,7 +26,7 @@ const props = defineProps<{
         created_at: string | null;
         attempts_count: number;
     };
-    set: { id: string; title: string; kind: SetKind };
+    set: { id: string; title: string; kind: SetKind; url: string };
     content: KancilSet | null;
     games: GameInfo[];
     siblings: { id: string; game_id: string }[];
@@ -106,7 +106,7 @@ onBeforeUnmount(() =>
     <div class="flex max-w-4xl flex-col gap-6 p-4">
         <div>
             <Link
-                :href="SetController.edit(set.id)"
+                :href="set.url"
                 class="text-sm text-muted-foreground hover:underline"
             >
                 ← {{ set.title }}

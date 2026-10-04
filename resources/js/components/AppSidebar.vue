@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, ClipboardCheck, LayoutGrid, Library } from '@lucide/vue';
+import {
+    BookOpen,
+    ClipboardCheck,
+    GraduationCap,
+    LayoutGrid,
+    Library,
+} from '@lucide/vue';
 import { computed } from 'vue';
+import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetReviewController from '@/actions/App/Http/Controllers/SetReviewController';
 import AppLogo from '@/components/AppLogo.vue';
@@ -25,6 +32,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: '首頁',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: '教材',
+        href: CurriculumController.index(),
+        icon: GraduationCap,
     },
     {
         title: '我的題組',

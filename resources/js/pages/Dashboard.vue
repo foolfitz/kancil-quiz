@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Plus } from '@lucide/vue';
+import { GraduationCap, Plus } from '@lucide/vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
+import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -37,11 +38,18 @@ const GAME_TITLES: Record<string, string> = {
     <div class="flex flex-col gap-8 p-4">
         <div class="flex items-start justify-between gap-4">
             <Heading title="首頁" description="出題、選遊戲、分享給學生。" />
-            <Button as-child>
-                <Link :href="SetController.create()"
-                    ><Plus class="size-4" /> 建立題組</Link
-                >
-            </Button>
+            <div class="flex flex-wrap justify-end gap-2">
+                <Button as-child variant="outline">
+                    <Link :href="CurriculumController.index()"
+                        ><GraduationCap class="size-4" /> 從教材開始</Link
+                    >
+                </Button>
+                <Button as-child>
+                    <Link :href="SetController.create()"
+                        ><Plus class="size-4" /> 建立題組</Link
+                    >
+                </Button>
+            </div>
         </div>
 
         <section class="space-y-3">
@@ -79,7 +87,7 @@ const GAME_TITLES: Record<string, string> = {
         <section class="space-y-3">
             <h2 class="text-lg font-semibold">最近的活動</h2>
             <p v-if="activities.length === 0" class="text-muted-foreground">
-                還沒有活動。在題組頁面選一個遊戲就能建立。
+                還沒有活動。在教材的某一課或自己的題組頁面選一個遊戲就能建立。
             </p>
             <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <li v-for="activity in activities" :key="activity.id">

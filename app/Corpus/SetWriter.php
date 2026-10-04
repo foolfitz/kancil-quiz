@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  *
  * 詞彙組的輸入：
  *   faces: {prompt: [...], answer: [...]}
- *   entries: [{id?, item: {text, romanization?, translation_zh, audio_ids: [], image_id?}}]
+ *   entries: [{id?, item: {text, romanization?, translation_zh, audio_ids: [], image_id?, authors?, license?, source?}}]
  * 問答組的輸入：
  *   entries: [{id?, question: {stem: {text?, audio_id?, image_id?}, options: [{id, text?, image_id?, correct}]}}]
  */
@@ -68,6 +68,8 @@ class SetWriter
                 'text' => $input['item']['text'],
                 'romanization' => $input['item']['romanization'] ?? null,
                 'translation_zh' => $input['item']['translation_zh'],
+                // 只有匯入教材時會指定（App\Curriculum\CurriculumImporter）；老師的編輯畫面沒有這些欄位，維持原值
+                ...Arr::only($input['item'], ['authors', 'license', 'source']),
             ];
 
             $item = $entry?->item;

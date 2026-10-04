@@ -1,0 +1,188 @@
+{
+    "language": "id",
+    "volume": 1,
+    "textbook": "新住民語文學習教材 印尼語第1冊",
+    "authors": [
+        {
+            "name": "Kancil Quiz"
+        }
+    ],
+    "license": "CC-BY-4.0",
+    "images": {
+        "authors": [
+            {
+                "name": "Kancil Quiz"
+            }
+        ],
+        "license": "CC-BY-4.0",
+        "source": "AI 生成"
+    },
+    "lessons": [
+        {
+            "lesson": 1,
+            "title_native": "Nama Saya",
+            "title_zh": "我的名字",
+            "vocabulary": [
+                {
+                    "text": "teman",
+                    "translation_zh": "朋友",
+                    "page": 6,
+                    "image": "images/teman.webp"
+                },
+                {
+                    "text": "saya",
+                    "translation_zh": "我",
+                    "page": 6,
+                    "image": "images/saya.webp"
+                },
+                {
+                    "text": "ibu guru",
+                    "translation_zh": "女老師",
+                    "page": 6,
+                    "image": "images/ibu_guru.webp"
+                },
+                {
+                    "text": "bapak guru",
+                    "translation_zh": "男老師",
+                    "page": 7,
+                    "image": "images/bapak_guru.webp"
+                },
+                {
+                    "text": "nama",
+                    "translation_zh": "名字",
+                    "page": 7,
+                    "image": "images/nama.webp"
+                },
+                {
+                    "text": "selamat pagi",
+                    "translation_zh": "早安",
+                    "page": 7,
+                    "image": "images/selamat_pagi.webp"
+                }
+            ]
+        },
+        {
+            "lesson": 2,
+            "title_native": "Silakan Duduk",
+            "title_zh": "請坐",
+            "vocabulary": [
+                {
+                    "text": "silakan",
+                    "translation_zh": "請",
+                    "page": 14,
+                    "image": "images/silakan.webp"
+                },
+                {
+                    "text": "terima kasih",
+                    "translation_zh": "謝謝",
+                    "page": 14,
+                    "image": "images/terima_kasih.webp"
+                },
+                {
+                    "text": "maaf",
+                    "translation_zh": "對不起",
+                    "page": 14,
+                    "image": "images/maaf.webp"
+                },
+                {
+                    "text": "anak",
+                    "translation_zh": "孩子",
+                    "page": 15,
+                    "image": "images/anak.webp"
+                },
+                {
+                    "text": "bagus",
+                    "translation_zh": "好棒",
+                    "page": 15,
+                    "image": "images/bagus.webp"
+                },
+                {
+                    "text": "duduk",
+                    "translation_zh": "坐",
+                    "page": 15,
+                    "image": "images/duduk.webp"
+                },
+                {
+                    "text": "tidak apa-apa",
+                    "translation_zh": "沒關係",
+                    "page": 15,
+                    "image": "images/tidak_apa_apa.webp"
+                }
+            ]
+        },
+        {
+            "lesson": 3,
+            "title_native": "Keluarga Saya",
+            "title_zh": "我的家人",
+            "vocabulary": [
+                {
+                    "text": "ayah",
+                    "translation_zh": "爸爸",
+                    "page": 26,
+                    "image": "images/ayah.webp"
+                },
+                {
+                    "text": "kakak",
+                    "translation_zh": "哥哥/姐姐",
+                    "page": 26,
+                    "image": "images/kakak.webp"
+                },
+                {
+                    "text": "ibu",
+                    "translation_zh": "媽媽",
+                    "page": 26,
+                    "image": "images/ibu.webp"
+                },
+                {
+                    "text": "adik",
+                    "translation_zh": "弟弟/妹妹",
+                    "page": 26,
+                    "image": "images/adik.webp"
+                },
+                {
+                    "text": "keluarga",
+                    "translation_zh": "家人",
+                    "page": 27,
+                    "image": "images/keluarga.webp"
+                },
+                {
+                    "text": "sayang",
+                    "translation_zh": "愛",
+                    "page": 27,
+                    "image": "images/sayang.webp"
+                }
+            ]
+        },
+        {
+            "lesson": 4,
+            "title_native": "Selamat Pagi, Kakek",
+            "title_zh": "爺爺早安",
+            "vocabulary": [
+                {
+                    "text": "selamat pagi",
+                    "translation_zh": "早安",
+                    "page": 34,
+                    "image": "images/selamat_pagi.webp"
+                },
+                {
+                    "text": "sampai jumpa",
+                    "translation_zh": "再見",
+                    "page": 34,
+                    "image": "images/sampai_jumpa.webp"
+                },
+                {
+                    "text": "kakek",
+                    "translation_zh": "爺爺",
+                    "page": 35,
+                    "image": "images/kakek.webp"
+                },
+                {
+                    "text": "nenek",
+                    "translation_zh": "奶奶",
+                    "page": 35,
+                    "image": "images/nenek.webp"
+                }
+            ]
+        }
+    ]
+}

@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Corpus\SetCopier;
 use App\Corpus\SetEditorData;
 use App\Corpus\SetRevisionRecorder;
 use App\Corpus\SetViewData;
 use App\Corpus\SetWriter;
+use App\Curriculum\Textbook;
+use App\Curriculum\TextbookData;
 use App\Http\Requests\Sets\SetContentRequest;
 use App\Http\Requests\Sets\SetDetailsRequest;
 use App\Models\CurriculumRef;
 use App\Models\Language;
 use App\Models\Set;
+use App\Models\SetEntry;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -43,24 +49,69 @@ class SetController extends Controller
         ]);
     }
 
-    public function create(): Response
+    /**
+     * 建立題組：自己出題，或從教材挑詞（T-18）。?language=&volume=&lesson= 預先選好教材的某一課。
+     */
+    public function create(Request $request): Response
     {
+        $languages = Language::enabled()->get(['code', 'name_zh', 'name_native']);
+        $codes = array_map('strval', $languages->modelKeys());
+        $language = in_array($request->query('language'), $codes, true) ? (string) $request->query('language') : ($codes[0] ?? '');
+
         return Inertia::render('sets/Create', [
-            'languages' => Language::enabled()->get(['code', 'name_zh', 'name_native']),
+            'languages' => $languages,
             'licenses' => SetDetailsRequest::LICENSES,
+            'language' => $language,
+            // 換語言時以 partial reload 重新取得
+            'textbook' => fn () => TextbookData::lessons($language),
+            'preset' => [
+                'volume' => $request->integer('volume') ?: null,
+                'lesson' => $request->integer('lesson') ?: null,
+            ],
         ]);
     }
 
-    public function store(SetDetailsRequest $request, SetRevisionRecorder $recorder): RedirectResponse
+    public function store(SetDetailsRequest $request, SetRevisionRecorder $recorder, SetCopier $copier): RedirectResponse
     {
         $data = $request->validated();
+        $picked = $this->textbookEntries($data['textbook_entries'] ?? [], $data['kind'], $data['language_code']);
+
         $set = $request->user()->sets()->create([
-            ...$data,
+            ...Arr::except($data, 'textbook_entries'),
             'faces' => $data['kind'] === 'vocab' ? ['prompt' => ['translation_zh'], 'answer' => ['text']] : null,
         ]);
-        $recorder->record($set, $request->user());
+
+        if ($picked->isEmpty()) {
+            $recorder->record($set, $request->user());
+        } else {
+            $copier->compose($set, $picked, $request->user());
+        }
 
         return to_route('sets.edit', $set);
+    }
+
+    /**
+     * 老師挑選的教材詞條，依挑選的順序。只能挑同一種語言的教材題組中的詞，建立的也必須是詞彙組。
+     *
+     * @param  list<string>  $ids
+     * @return EloquentCollection<int, SetEntry>
+     */
+    private function textbookEntries(array $ids, string $kind, string $language): EloquentCollection
+    {
+        if ($ids === []) {
+            return new EloquentCollection;
+        }
+
+        $entries = SetEntry::whereIn('id', $ids)->with('set.textbookLesson')->get()
+            ->filter(fn (SetEntry $entry) => $entry->item_id !== null && $entry->set?->isTextbook() && $entry->set->language_code === $language)
+            ->sortBy(fn (SetEntry $entry) => array_search($entry->id, $ids, true))
+            ->values();
+
+        if ($kind !== 'vocab' || $entries->count() !== count($ids)) {
+            throw ValidationException::withMessages(['textbook_entries' => '只能從同一種語言的教材挑詞，建立詞彙組。']);
+        }
+
+        return $entries;
     }
 
     /**
@@ -93,6 +144,8 @@ class SetController extends Controller
                 'tags' => $set->tags ?? [],
                 'curriculum_ref_ids' => $set->curriculumRefs()->pluck('curriculum_refs.id'),
                 'revision' => $set->currentRevision?->number,
+                // 教材題組（3.6）：審核者在這裡修正後，重新匯入時會略過這一課
+                'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
             ],
             'entries' => SetEditorData::entries($set),
             'can' => ['manage' => Gate::allows('manage', $set)],
@@ -112,7 +165,7 @@ class SetController extends Controller
                 ->whereIn('language_code', Language::enabled()->pluck('code'))
                 ->orderBy('volume')
                 ->orderBy('lesson')
-                ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh']),
+                ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh', 'title_native']),
         ]);
     }
 

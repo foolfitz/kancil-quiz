@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Storage;
 /**
  * 轉檔完成的音檔或圖片。檔案內容不可變，替換時產生新的 Media；署名資料可以修正
  * （docs/SPEC.md 第 9 節）。
+ *
+ * @property string $id
+ * @property string $kind audio、image
+ * @property string $path
+ * @property string $mime
+ * @property int $bytes
+ * @property int|null $duration_ms
+ * @property int|null $width
+ * @property int|null $height
+ * @property string|null $thumbnail_path
+ * @property list<array{name: string}>|null $authors
+ * @property string|null $license
+ * @property string|null $source
+ * @property int $uploaded_by
  */
 #[Fillable(['kind', 'path', 'mime', 'bytes', 'duration_ms', 'width', 'height', 'thumbnail_path', 'authors', 'license', 'source', 'uploaded_by'])]
 class Media extends Model

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { library } from '@/routes';
-import { KIND_NAMES, curriculumLabel } from '@/types/kancil';
+import { KIND_NAMES, curriculumLabel, lessonLabel } from '@/types/kancil';
 import type {
     CurriculumRef,
     Language,
@@ -37,6 +37,7 @@ const props = defineProps<{
         curriculum: { volume: number; lesson: number }[];
         tags: string[];
         forked: boolean;
+        textbook: boolean;
         updated_at: string | null;
     }>;
     filters: Filters;
@@ -63,21 +64,22 @@ function apply(changes: Partial<Filters>): void {
 
 const q = ref(props.filters.q ?? '');
 
-// 冊課只列出所選語言的對照表；沒選語言時不顯示
-const lessons = computed(() =>
+// 冊課只列出所選語言的對照表，先選冊再選課；沒選語言時不顯示
+const refs = computed(() =>
     props.curriculumRefs.filter(
         (item) => item.language_code === props.filters.language,
     ),
 );
-const lessonValue = computed(() =>
-    props.filters.volume && props.filters.lesson
-        ? `${props.filters.volume}-${props.filters.lesson}`
-        : '',
+const volumes = computed(() => [
+    ...new Set(refs.value.map((item) => item.volume)),
+]);
+// 網址參數是字串
+const volume = computed(() => Number(props.filters.volume) || undefined);
+const lessons = computed(() =>
+    refs.value.filter((item) => item.volume === volume.value),
 );
-function chooseLesson(value: string): void {
-    const [volume, lesson] = value.split('-').map(Number);
-    apply({ volume: volume || undefined, lesson: lesson || undefined });
-}
+const selectValue = (event: Event) =>
+    Number((event.target as HTMLSelectElement).value) || undefined;
 
 const filtered = computed(() =>
     Object.values(props.filters).some((value) => value !== undefined),
@@ -90,7 +92,7 @@ const filtered = computed(() =>
     <div class="flex flex-col gap-6 p-4">
         <Heading
             title="共備庫"
-            description="其他老師公開的題組，都經過審核者確認。複製到自己的題組後就可以改編。"
+            description="其他老師公開的題組都經過審核者確認；標示「教材」的是由教材詞彙匯入的題組。複製到自己的題組後就可以改編。"
         />
 
         <form
@@ -123,22 +125,38 @@ const filtered = computed(() =>
                     </option>
                 </select>
             </label>
-            <label v-if="lessons.length > 0" class="grid gap-1 text-sm">
-                <span class="font-medium">教材冊課</span>
+            <label v-if="volumes.length > 0" class="grid gap-1 text-sm">
+                <span class="font-medium">冊</span>
                 <select
                     class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
-                    :value="lessonValue"
+                    :value="volume ?? ''"
                     @change="
-                        chooseLesson(($event.target as HTMLSelectElement).value)
+                        apply({
+                            volume: selectValue($event),
+                            lesson: undefined,
+                        })
                     "
+                >
+                    <option value="">全部</option>
+                    <option v-for="v in volumes" :key="v" :value="v">
+                        第 {{ v }} 冊
+                    </option>
+                </select>
+            </label>
+            <label v-if="lessons.length > 0" class="grid gap-1 text-sm">
+                <span class="font-medium">課</span>
+                <select
+                    class="h-9 rounded-md border bg-transparent px-3 text-base md:text-sm"
+                    :value="Number(filters.lesson) || ''"
+                    @change="apply({ lesson: selectValue($event) })"
                 >
                     <option value="">全部</option>
                     <option
                         v-for="item in lessons"
                         :key="item.id"
-                        :value="`${item.volume}-${item.lesson}`"
+                        :value="item.lesson"
                     >
-                        {{ curriculumLabel(item) }}
+                        {{ lessonLabel(item) }}
                     </option>
                 </select>
             </label>
@@ -147,7 +165,7 @@ const filtered = computed(() =>
                 <Input
                     v-model="q"
                     type="search"
-                    placeholder="標題或詞，例如：水果、chuối"
+                    placeholder="標題或詞，例如：家人、ayah"
                 />
             </label>
             <Button type="submit"><Search class="size-4" /> 搜尋</Button>
@@ -199,6 +217,7 @@ const filtered = computed(() =>
                             KIND_NAMES[set.kind]
                         }}</Badge>
                         <Badge variant="outline">{{ set.language }}</Badge>
+                        <Badge v-if="set.textbook">教材</Badge>
                         <span class="text-sm text-muted-foreground"
                             >{{ set.entries_count }} 題</span
                         >

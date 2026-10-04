@@ -46,7 +46,7 @@ class LibraryController extends Controller
                         ->where('text', 'like', $like)
                         ->orWhere('translation_zh', 'like', $like)));
             })
-            ->with(['owner:id,name', 'language', 'curriculumRefs'])
+            ->with(['owner:id,name', 'language', 'curriculumRefs', 'textbookLesson'])
             ->withCount('entries')
             ->latest('updated_at')
             ->paginate(24)
@@ -62,6 +62,7 @@ class LibraryController extends Controller
                 'curriculum' => $set->curriculumRefs->map(fn (CurriculumRef $ref) => ['volume' => $ref->volume, 'lesson' => $ref->lesson])->all(),
                 'tags' => $set->tags ?? [],
                 'forked' => $set->forked_from_id !== null,
+                'textbook' => $set->isTextbook(),
                 'updated_at' => $set->updated_at?->toIso8601String(),
             ]);
 
@@ -73,7 +74,7 @@ class LibraryController extends Controller
                 ->whereIn('language_code', $codes)
                 ->orderBy('volume')
                 ->orderBy('lesson')
-                ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh']),
+                ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh', 'title_native']),
             'tags' => $this->popularTags($codes),
         ]);
     }

@@ -26,6 +26,9 @@ class SetDetailsRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:2000'],
             'language_code' => ['required', Rule::exists('languages', 'code')->where('enabled', true)],
             'license' => ['required', Rule::in(self::LICENSES)],
+            // 從教材挑詞建立詞彙組（docs/SPEC.md T-18），只在建立時使用；是否屬於教材題組由 SetController 檢查
+            'textbook_entries' => [$creating ? 'nullable' : 'prohibited', 'array', 'max:200'],
+            'textbook_entries.*' => ['ulid', 'distinct'],
         ];
     }
 
@@ -43,6 +46,7 @@ class SetDetailsRequest extends FormRequest
             'tags' => '標籤',
             'tags.*' => '標籤',
             'curriculum_ref_ids.*' => '教材冊課',
+            'textbook_entries' => '教材的詞',
         ];
     }
 }

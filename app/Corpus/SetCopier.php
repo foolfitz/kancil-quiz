@@ -7,6 +7,7 @@ use App\Models\Media;
 use App\Models\Set;
 use App\Models\SetEntry;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -55,6 +56,42 @@ class SetCopier
         $this->recorder->record($copy, $to);
 
         return $copy;
+    }
+
+    /**
+     * 從教材題組挑選詞條，加進老師剛建立的空題組（docs/SPEC.md T-18）。詞條同樣以複製的方式加入，
+     * 題組的冊課是這些詞條所屬的課，題目的呈現方式沿用第一個詞所屬的題組；
+     * 只來自一課時，forked_from_id 指向該課的教材題組。
+     *
+     * @param  Collection<int, SetEntry>  $entries  依加入的順序
+     */
+    public function compose(Set $into, Collection $entries, User $to): void
+    {
+        $sources = Set::with(['owner', 'textbookLesson', 'curriculumRefs'])->findMany($entries->pluck('set_id')->unique()->all());
+        $first = $sources->find($entries->first()?->set_id);
+        $authors = $sources->mapWithKeys(fn (Set $source) => [$source->id => $source->effectiveAuthors()]);
+
+        DB::transaction(function () use ($into, $entries, $to, $sources, $first, $authors) {
+            $upstream = $authors->flatten(1)
+                ->unique('name')
+                ->reject(fn (array $author) => $author['name'] === $to->name)
+                ->values()
+                ->all();
+
+            $into->update([
+                'faces' => $first->faces ?? $into->faces,
+                'authors' => $upstream ?: null,
+                'forked_from_id' => $sources->count() === 1 ? $first?->id : null,
+            ]);
+            $into->curriculumRefs()->sync($sources->flatMap(fn (Set $source) => $source->curriculumRefs->modelKeys())->unique()->values()->all());
+
+            $entries->load('item.media')->values()->each(fn (SetEntry $entry, int $position) => $into->entries()->create([
+                'position' => $position,
+                'item_id' => $this->copyItem($entry, $to, $authors->get($entry->set_id))->id,
+            ]));
+        });
+
+        $this->recorder->record($into, $to);
     }
 
     /**

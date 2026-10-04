@@ -39,6 +39,7 @@ const props = defineProps<{
         tags: string[];
         curriculum_ref_ids: number[];
         revision: number | null;
+        textbook_url: string | null;
     };
     entries: (VocabEntryInput | QuizEntryInput)[];
     can: { manage: boolean };
@@ -237,8 +238,17 @@ function destroy(): void {
             class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950/40"
             data-test="curator-notice"
         >
-            你正在以審核者身分修正 {{ set.owner }}
-            的公開題組。儲存後立即生效，修改會記在修訂紀錄中，擁有者看得到。
+            <template v-if="set.textbook_url">
+                你正在修正<Link
+                    :href="set.textbook_url"
+                    class="underline underline-offset-4"
+                    >教材題組</Link
+                >。儲存後立即生效，用這一課建立的活動也會跟著改，修改會記在修訂紀錄中。請一併通知管理員把修正寫回教材資料檔，否則之後重新匯入時會略過這一課。
+            </template>
+            <template v-else>
+                你正在以審核者身分修正 {{ set.owner }}
+                的公開題組。儲存後立即生效，修改會記在修訂紀錄中，擁有者看得到。
+            </template>
         </p>
 
         <SharingPanel v-if="sharing" :set-id="set.id" :sharing="sharing" />

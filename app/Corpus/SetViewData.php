@@ -2,6 +2,7 @@
 
 namespace App\Corpus;
 
+use App\Curriculum\Textbook;
 use App\Models\CurriculumRef;
 use App\Models\Set;
 use App\Models\SetReview;
@@ -20,7 +21,7 @@ class SetViewData
      */
     public static function props(Set $set, User $viewer, ?string $token = null): array
     {
-        $set->load(['owner', 'language', 'curriculumRefs', 'currentRevision', 'forkedFrom.owner']);
+        $set->load(['owner', 'language', 'curriculumRefs', 'currentRevision', 'forkedFrom.owner', 'textbookLesson']);
         $gate = Gate::forUser($viewer);
         $content = SetEditorData::currentContent($set);
         $manage = $gate->allows('manage', $set);
@@ -42,6 +43,8 @@ class SetViewData
                     'lesson' => $ref->lesson,
                     'title_zh' => $ref->title_zh,
                 ])->all(),
+                // 教材題組（3.6）：連到那一課的教材頁
+                'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
                 'authors' => array_column($set->effectiveAuthors(), 'name'),
                 'owner' => $set->owner->name,
                 'visibility' => $set->visibility,
@@ -65,6 +68,7 @@ class SetViewData
                 // 透過分享連結檢視時，持有 token 就能複製
                 'copy' => $token !== null || $gate->allows('copy', $set),
                 'manage' => $manage,
+                'activity' => $gate->allows('createActivity', $set),
                 'edit' => $gate->allows('edit', $set),
                 'review' => $review,
             ],

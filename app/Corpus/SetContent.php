@@ -21,7 +21,7 @@ class SetContent
      */
     public static function build(Set $set): array
     {
-        $set->load(['owner', 'curriculumRefs', 'entries.item.media']);
+        $set->load(['owner', 'textbookLesson', 'curriculumRefs', 'entries.item.media']);
 
         $content = array_filter([
             'format' => 'kancil-set',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Corpus\ActivityPlayback;
 use App\Corpus\SetEditorData;
+use App\Curriculum\Textbook;
 use App\Games\GameRegistry;
 use App\Models\Activity;
 use App\Models\Set;
@@ -29,7 +30,7 @@ class ActivityController extends Controller
 
     public function create(Set $set): Response
     {
-        Gate::authorize('manage', $set);
+        Gate::authorize('createActivity', $set);
 
         return Inertia::render('activities/Create', [
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind],
@@ -43,7 +44,7 @@ class ActivityController extends Controller
      */
     public function preview(Request $request, Set $set): View
     {
-        Gate::authorize('manage', $set);
+        Gate::authorize('createActivity', $set);
 
         $game = $this->games->find((string) $request->query('game'));
         abort_if($game === null, 422, '找不到這個遊戲');
@@ -73,7 +74,7 @@ class ActivityController extends Controller
 
     public function store(Request $request, Set $set): RedirectResponse
     {
-        Gate::authorize('manage', $set);
+        Gate::authorize('createActivity', $set);
 
         $data = $request->validate([
             'game_id' => ['required', Rule::in(array_keys($this->games->all()))],
@@ -119,10 +120,11 @@ class ActivityController extends Controller
                 'created_at' => $activity->created_at?->toIso8601String(),
                 'attempts_count' => $activity->attempts()->count(),
             ],
-            'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind],
+            'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind, 'url' => $this->setUrl($set)],
             'content' => SetEditorData::currentContent($set),
             'games' => array_values($this->games->all()),
-            'siblings' => $set->activities()->whereKeyNot($activity->id)->latest()->get(['id', 'game_id']),
+            // 只列同一位老師的活動：教材題組上有其他老師的活動，活動連結本身就是存取憑證（3.4）
+            'siblings' => $set->activities()->where('owner_id', $activity->owner_id)->whereKeyNot($activity->id)->latest()->get(['id', 'game_id']),
             'playUrl' => $url,
             'qrSvg' => $this->qrSvg($url),
         ]);
@@ -135,7 +137,17 @@ class ActivityController extends Controller
         $activity->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => '活動已刪除']);
 
-        return to_route('sets.edit', $activity->set_id);
+        return redirect($activity->set ? $this->setUrl($activity->set) : route('sets.index'));
+    }
+
+    /**
+     * 活動頁「回到題組」的連結：教材題組回到那一課，其他題組回到編輯頁。
+     */
+    private function setUrl(Set $set): string
+    {
+        $lesson = $set->textbookLesson;
+
+        return $lesson !== null ? Textbook::lessonUrl($lesson) : route('sets.edit', $set);
     }
 
     private function qrSvg(string $url): string

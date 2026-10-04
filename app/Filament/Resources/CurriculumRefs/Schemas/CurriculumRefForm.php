@@ -19,6 +19,7 @@ class CurriculumRefForm
                 TextInput::make('volume')->label('冊')->required()->integer()->minValue(1),
                 TextInput::make('lesson')->label('課')->required()->integer()->minValue(1),
                 TextInput::make('title_zh')->label('課名')->maxLength(255),
+                TextInput::make('title_native')->label('目標語課名')->maxLength(255),
             ]);
     }
 }
