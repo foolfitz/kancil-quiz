@@ -17,6 +17,7 @@
 | `games/*` | 各個遊戲 | 7.5 |
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。
+- 獨立播放器（O-02）在 `packages/player/standalone/`，有自己的 `vite.config.ts`，建置成單一個 HTML 檔 `public/standalone.html`（不進 git）。它打開匯出的 zip（`packages/player/src/zip.ts`、`setZip.ts`），以 `startPlayer({ standalone: true })` 播放，不連伺服器。新增遊戲時也要在 `standalone/main.ts` 登記。
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）。
   - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。教材資料本身放在 `database/curriculum/`，格式見該目錄的 README。
@@ -26,7 +27,7 @@
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
   - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
-- 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 登記，並執行 `npm run games:manifest`。
+- 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 與 `packages/player/standalone/main.ts` 登記，並執行 `npm run games:manifest`。
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
 - `answered` 事件的 `presented`：`mcq` 由宿主補上；配對的右側卡片分頁出現，由遊戲提供同一頁的卡片（SPEC 7.2）。伺服器限制每筆最多 12 個。
 - Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）。
@@ -72,6 +73,7 @@
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
 | `php artisan kancil:import-curriculum database/curriculum/id/1` | 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖 |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
+| `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |
 
