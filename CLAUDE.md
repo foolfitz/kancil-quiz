@@ -19,7 +19,8 @@
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）。
-  - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`review`；未公開題組的分享連結以 token 判斷，不經過 policy。
+  - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。教材資料本身放在 `database/curriculum/`，格式見該目錄的 README。
+  - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
   - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
@@ -38,7 +39,7 @@
 6. **不可變的資料**：題組版本與媒體檔一經產生就不再修改，作答紀錄指向版本（3.3、第 9 節）。
 7. **公開識別碼一律用 ULID**，網址與匯出檔不暴露遞增 ID。
 8. **學生是未成年人**：不存 IP、不放第三方追蹤碼，只存暱稱或座號。
-9. **語料全部自製**：不得放入國教署教材的文字、圖片或音檔（D-4）。
+9. **教材只引用課名與詞彙**：冊課對照依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」（紙本採 CC BY-NC-ND 4.0）。可以放入各課的課名與詞彙（詞與中文意思）；不得放入課文、教材插圖與音檔，插圖與發音一律自製（D-4）。
 
 ## Fixture
 
@@ -66,9 +67,10 @@
 | `composer test` | Pint、PHPStan、PHPUnit |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
-| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：teacher@example.com、lin@example.com（共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
+| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com、lin@example.com（共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
+| `php artisan kancil:import-curriculum database/curriculum/id/1` | 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖 |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
-| `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，iPad 直向、橫向與投影尺寸） |
+| `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |
 
 ## 環境
