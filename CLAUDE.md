@@ -31,7 +31,7 @@
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
 - `answered` 事件的 `presented`：`mcq` 由宿主補上；配對的右側卡片分頁出現，由遊戲提供同一頁的卡片（SPEC 7.2）。伺服器限制每筆最多 12 個。
 - 迷宮問答 `packages/games/maze-quiz` 是 git submodule，正本是獨立的 `maze-quiz` repo（MIT，SPEC 10.2），本機放在本 repo 旁邊的 `../maze-quiz`：
-  - 改迷宮時固定在 `../maze-quiz` 修改、測試（`npm test`、`npm run check`）、commit，再回到這裡執行 `git submodule update --remote packages/games/maze-quiz`，跑完這裡的檢查後 commit 新的 submodule 指標。不要直接在 submodule 目錄裡改，兩個工作目錄容易搞混；忘了更新指標，平台會停在舊版的迷宮。
+  - 改迷宮時固定在 `../maze-quiz` 修改、測試（`npm test`、`npm run check`）、commit，再回到這裡執行 `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz`，跑完這裡的檢查後 commit 新的 submodule 指標。不要直接在 submodule 目錄裡改，兩個工作目錄容易搞混；忘了更新指標，平台會停在舊版的迷宮。
   - 它單獨執行時用 `vendor/` 中 `games-sdk` 與 `text` 的副本。改了這兩個套件，要把新版複製到 `../maze-quiz/vendor/` 並 commit，再更新指標；`packages/games/maze-quiz.test.ts` 會檢查副本與正本相同。
   - 迷宮與 `judge()` 的一致測試（SPEC 7.6）也在 `packages/games/maze-quiz.test.ts`，因為要用到 `deck` 與 fixture。它直接 import 迷宮的內部模組（`src/session.ts` 等），迷宮重構時要一起改。
   - 這裡的 `vp check`、`vue-tsc` 與 Vitest 也會涵蓋 submodule 的檔案，所以迷宮的格式設定與這裡相同。
@@ -73,7 +73,7 @@
 | `npm run schema:types` | 從 JSON Schema 重新產生 TS 型別 |
 | `npm run schema:check` | 檢查產生的型別是否與 schema 同步 |
 | `composer test` | Pint、PHPStan、PHPUnit |
-| `git submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `maze-quiz` repo 的最新 commit，之後要 commit 新的指標 |
+| `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `../maze-quiz` 的最新 commit，之後要 commit 新的指標 |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
@@ -88,5 +88,5 @@
 - PHP 8.4 以上，需要 `intl`、`pdo_sqlite`、`gd`（含 WebP）、`zip` 擴充，以及 `ffmpeg`；Node 22 以上。
 - 上傳的媒體放在 `public` disk，需要 `php artisan storage:link`（`composer setup` 會執行）。
 - 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
-- 從本機路徑 clone 這個 repo 時，submodule 的網址也是本機路徑，git 2.38 起要加 `-c protocol.file.allow=always` 才能 clone（例如 `git -c protocol.file.allow=always submodule update --init`）；從 GitHub clone 不需要。
+- submodule 的網址是本機路徑時（本機的這份 repo，或從本機路徑 clone 的），git 2.38 起 submodule 的 clone 與 fetch 都要加 `-c protocol.file.allow=always`，例如上面的 `submodule update --remote`、`submodule update --init`；從 GitHub clone 的不需要。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
