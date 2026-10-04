@@ -90,6 +90,8 @@ export default defineConfig({
             PUBLIC_DISK_ROOT: media,
             PUBLIC_DISK_URL: `http://127.0.0.1:${port}/e2e-media`,
             PHP_CLI_SERVER_WORKERS: '4',
+            // 不存在的檔案：即使本機開著 composer dev（public/hot），也用建置好的前端
+            VITE_HOT_FILE: `${process.cwd()}/storage/framework/e2e-no-hot`,
         },
     },
 });

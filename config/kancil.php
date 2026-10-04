@@ -8,4 +8,10 @@ return [
     */
     'timezone' => env('KANCIL_TIMEZONE', 'Asia/Taipei'),
 
+    /*
+    | Vite 開發伺服器的 hot 檔，沒有設定時用 public/hot。E2E 指到不存在的檔案：
+    | 本機同時開著 composer dev 時，E2E 仍用建置好的前端，不經過開發伺服器的 SSR。
+    */
+    'vite_hot_file' => env('VITE_HOT_FILE'),
+
 ];
