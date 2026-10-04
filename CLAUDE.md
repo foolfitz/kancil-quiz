@@ -23,7 +23,9 @@
   - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。教材資料本身放在 `database/curriculum/`，格式見該目錄的 README。
   - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
-  - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。
+  - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。學生有填名字時依名字彙整（`students()`），每位學生只算第一次玩完的作答，重玩的作答不列入平均與逐題統計（SPEC 3.4、7.4）；CSV 由 `ActivityResultsCsvController` 產生。
+  - `app/Support/ActivitySettings.php`：活動的兩個設定（SPEC 3.4）：要不要輸入名字（存成 `mode = assignment`）與開放、截止時間。老師端以 `config('kancil.timezone')`（台灣時間）輸入與顯示，格式同 `datetime-local`，資料庫存 UTC；建立活動的預設是今天起一週。
+  - `app/Grading/PlayerLabel.php`：學生輸入的名字或座號在存入前統一格式（NFKC、合併空白、數字去掉前導的 0）。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
   - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
