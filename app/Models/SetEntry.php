@@ -44,4 +44,20 @@ class SetEntry extends Model
     {
         return $this->belongsTo(Item::class)->withTrashed();
     }
+
+    /**
+     * 問答題引用的媒體 ID（題幹的音檔與圖片、選項的圖片）。詞彙組的媒體在詞條上。
+     *
+     * @return list<string>
+     */
+    public function mediaIds(): array
+    {
+        $question = $this->payload ?? [];
+
+        return array_values(array_filter([
+            $question['stem']['audio_id'] ?? null,
+            $question['stem']['image_id'] ?? null,
+            ...array_map(fn ($option) => $option['image_id'] ?? null, $question['options'] ?? []),
+        ], fn ($id) => is_string($id) && $id !== ''));
+    }
 }

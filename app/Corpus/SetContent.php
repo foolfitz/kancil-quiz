@@ -90,15 +90,7 @@ class SetContent
      */
     private static function quizMedia(Collection $entries): Collection
     {
-        $ids = $entries->flatMap(function (SetEntry $entry) {
-            $question = $entry->payload ?? [];
-
-            return [
-                $question['stem']['audio_id'] ?? null,
-                $question['stem']['image_id'] ?? null,
-                ...array_map(fn ($option) => $option['image_id'] ?? null, $question['options'] ?? []),
-            ];
-        })->filter()->unique();
+        $ids = $entries->flatMap(fn (SetEntry $entry) => $entry->mediaIds())->unique();
 
         return Media::whereIn('id', $ids)->get()->keyBy('id');
     }

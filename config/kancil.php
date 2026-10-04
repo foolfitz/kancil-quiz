@@ -14,4 +14,18 @@ return [
     */
     'vite_hot_file' => env('VITE_HOT_FILE'),
 
+    /*
+    | 資料的保存期限（docs/SPEC.md 第 5、9 節）。每天由排程 kancil:prune 清除（App\Support\Pruner）。
+    */
+    'retention' => [
+        // 作答紀錄從開始作答起保存幾個月
+        'attempt_months' => (int) env('KANCIL_ATTEMPT_RETENTION_MONTHS', 12),
+        // 老師刪除的題組、活動與詞條，幾天後連同作答紀錄真正刪除
+        'trashed_days' => 30,
+        // 題組版本被新版本取代後至少保留幾天，修訂紀錄才看得到最近的修改
+        'revision_days' => 30,
+        // 上傳後還沒有用到的媒體保留幾天：老師可能還開著編輯頁，還沒儲存
+        'media_grace_days' => 7,
+    ],
+
 ];

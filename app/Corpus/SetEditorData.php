@@ -33,11 +33,7 @@ class SetEditorData
             ])->values()->all();
         }
 
-        $ids = $set->entries->flatMap(fn (SetEntry $entry) => [
-            $entry->payload['stem']['audio_id'] ?? null,
-            $entry->payload['stem']['image_id'] ?? null,
-            ...array_map(fn ($option) => $option['image_id'] ?? null, $entry->payload['options'] ?? []),
-        ])->filter()->unique();
+        $ids = $set->entries->flatMap(fn (SetEntry $entry) => $entry->mediaIds())->unique();
         /** @var Collection<string, Media> $media */
         $media = Media::whereIn('id', $ids)->get()->keyBy('id');
         $find = fn (?string $id) => $id !== null && $media->has($id) ? self::media($media->get($id)) : null;

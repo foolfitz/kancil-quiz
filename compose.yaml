@@ -1,12 +1,16 @@
 # 正式環境（docs/deploy.md）：設定好 .env.production 後執行 docker compose up -d --build
 name: kancil-quiz
 
+# 網站與排程用同一個映像檔、同一份設定
+x-app: &app
+    build: .
+    image: kancil-quiz
+    restart: unless-stopped
+    env_file: .env.production
+
 services:
     app:
-        build: .
-        image: kancil-quiz
-        restart: unless-stopped
-        env_file: .env.production
+        <<: *app
         ports:
             - '80:80'
             - '443:443'
@@ -17,6 +21,18 @@ services:
             # Caddy 取得的 HTTPS 憑證
             - caddy_data:/data
             - caddy_config:/config
+
+    # 排程：每天清除過了保存期限的資料（routes/console.php、docs/SPEC.md 第 5、9 節）
+    scheduler:
+        <<: *app
+        command: ['php', 'artisan', 'schedule:work']
+        # 基礎映像檔的 healthcheck 檢查的是網站（Caddy），這個容器沒有網站
+        healthcheck:
+            disable: true
+        volumes:
+            - storage:/app/storage
+        depends_on:
+            - app
 
 volumes:
     storage:

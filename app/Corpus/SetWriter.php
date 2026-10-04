@@ -190,11 +190,10 @@ class SetWriter
             return;
         }
 
-        // 版本內容以 SetContent::JSON_FLAGS 儲存，斜線沒有跳脫，可以直接比對媒體路徑
-        preg_match_all('#media/([0-9A-HJKMNP-TV-Z]{26})\.#', (string) $set->currentRevision?->getAttribute('content'), $matches);
+        $inRevision = MediaUrls::idsInJson((string) $set->currentRevision?->getAttribute('content'));
 
         $allowed = Media::whereIn('id', $requested)
-            ->where(fn ($query) => $query->where('uploaded_by', $by->id)->orWhereIn('id', $matches[1]))
+            ->where(fn ($query) => $query->where('uploaded_by', $by->id)->orWhereIn('id', $inRevision))
             ->pluck('id');
 
         if ($requested->diff($allowed)->isNotEmpty()) {

@@ -99,17 +99,25 @@ class SetViewData
         $result = [];
         foreach ($revisions->take($limit) as $i => $revision) {
             $previous = $revisions->get($i + 1);
+            // 舊版本沒有作答引用時會被清除（第 5 節，App\Support\Pruner），這時無法比較，或只能和更早的版本比較
+            $gap = $previous !== null && $previous->number < $revision->number - 1
+                ? [['kind' => 'unknown', 'label' => self::prunedLabel($previous->number + 1, $revision->number - 1)."，以下與第 {$previous->number} 版比較", 'before' => null, 'after' => null]]
+                : [];
             $result[] = [
                 'number' => $revision->number,
                 'created_by' => $revision->creator?->name,
                 'created_at' => $revision->created_at?->toIso8601String(),
-                // 舊版本沒有作答引用時會被清除（第 5 節），這時無法比較
                 'changes' => $previous === null && $revision->number > 1
                     ? [['kind' => 'unknown', 'label' => '更早的版本已清除，無法比較', 'before' => null, 'after' => null]]
-                    : RevisionDiff::between($previous?->content(), $revision->content()),
+                    : [...$gap, ...RevisionDiff::between($previous?->content(), $revision->content())],
             ];
         }
 
         return $result;
+    }
+
+    private static function prunedLabel(int $from, int $to): string
+    {
+        return $from === $to ? "第 {$from} 版已清除" : "第 {$from} 到 {$to} 版已清除";
     }
 }

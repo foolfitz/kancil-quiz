@@ -55,6 +55,19 @@ class MediaUrls
     }
 
     /**
+     * 版本內容（JSON 字串）引用的媒體 ID，不必先解開 JSON。版本內容以 SetContent::JSON_FLAGS 儲存，
+     * 斜線沒有跳脫，可以直接比對媒體路徑。
+     *
+     * @return list<string>
+     */
+    public static function idsInJson(string $json): array
+    {
+        preg_match_all('#media/([0-9A-HJKMNP-TV-Z]{26})\.#', $json, $matches);
+
+        return array_values(array_unique($matches[1]));
+    }
+
+    /**
      * 對內容中每個媒體物件（有 src 字串的物件）呼叫 $callback。
      *
      * @param  callable(stdClass): void  $callback

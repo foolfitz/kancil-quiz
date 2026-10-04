@@ -4,11 +4,12 @@ Kancil Quiz 以 Docker Compose 部署在一台雲端 VM 上（規格第 11 節�
 
 ## 架構
 
-- 只有一個容器 `app`：[FrankenPHP](https://frankenphp.dev/) 同時負責 PHP 與靜態檔案，內建的 Caddy 會自動向 Let's Encrypt 取得並更新 HTTPS 憑證。錄音（T-06）只能在 HTTPS 下使用。
+- 網站的容器 `app`：[FrankenPHP](https://frankenphp.dev/) 同時負責 PHP 與靜態檔案，內建的 Caddy 會自動向 Let's Encrypt 取得並更新 HTTPS 憑證。錄音（T-06）只能在 HTTPS 下使用。
+- 排程的容器 `scheduler`：同一個映像檔，執行 `php artisan schedule:work`。每天台灣時間凌晨 4 點（在備份之後）執行 `kancil:prune`，清除過了保存期限的資料（見下方「資料的保存期限」）。
 - 映像檔由 repo 中的 `Dockerfile` 建置：PHP 8.4 加上 `intl`、`gd`（WebP）、`zip` 擴充、ffmpeg 與 sqlite3，前端在建置時打包好。上傳上限等 PHP 設定在 `docker/php.ini`，Caddy 的設定在 `docker/Caddyfile`。
 - 資料都在 volume `storage`（容器中的 `/app/storage`）：SQLite 資料庫 `database/kancil.sqlite` 與上傳的媒體 `app/public/`。備份這一個 volume 就夠了。
 - 容器啟動時會快取設定並套用 migration（`docker/entrypoint.sh`）。
-- 目前沒有佇列任務與排程，不需要另外的容器。之後加上媒體清除等排程時，用同一個映像檔再開一個執行 `php artisan schedule:work` 的服務。
+- 目前沒有佇列任務，不需要 queue worker。
 
 ## 需要準備的
 
@@ -89,7 +90,8 @@ docker compose up -d --build
 |---|---|
 | `docker compose logs -f app` | 看記錄（PHP 的錯誤也在這裡） |
 | `docker compose exec app php artisan <指令>` | 執行 artisan，例如 `kancil:invite` |
-| `docker compose restart app` | 重新啟動（改了 `.env.production` 之後） |
+| `docker compose up -d` | 改了 `.env.production` 之後套用新設定（會重建兩個容器）。`docker compose restart` 不會讀入新的設定 |
+| `docker compose logs scheduler` | 看排程的記錄 |
 | `docker compose ps` | 查看容器狀態 |
 
 ## 備份與還原
@@ -116,6 +118,26 @@ docker/restore.sh ~/backups/kancil-20261004-030000.tar.gz
 
 規格要求每季實際演練還原一次。可以在另一台機器上用同一份備份與 `.env.production` 部署，確認資料完整。
 
+## 資料的保存期限
+
+`scheduler` 容器每天凌晨 4 點執行 `kancil:prune`（規格第 5 節）：
+
+| 資料 | 清除的時機 |
+|---|---|
+| 作答紀錄 | 開始作答 12 個月後。要改的話在 `.env.production` 設定 `KANCIL_ATTEMPT_RETENTION_MONTHS`，再執行 `docker compose up -d` |
+| 老師刪除的題組、活動與詞條 | 刪除 30 天後真正刪除，連同活動的作答紀錄。這 30 天內可以由管理員在資料庫中復原 |
+| 舊的題組版本 | 被新版本取代 30 天後，沒有作答或審核紀錄引用的 |
+| 媒體 | 沒有任何詞條、題目或版本用到，而且上傳超過 7 天的，連同檔案 |
+
+每次的結果附加在 volume 中的 `storage/logs/prune.log`。想先看看會刪除多少，或手動執行一次：
+
+```sh
+docker compose exec scheduler php artisan kancil:prune --dry-run
+docker compose exec scheduler php artisan kancil:prune
+```
+
+刪除的資料只能從備份還原，所以排程排在每天凌晨 3 點的備份之後。
+
 ## 疑難排解
 
 | 狀況 | 檢查 |
@@ -128,5 +150,4 @@ docker/restore.sh ~/backups/kancil-20261004-030000.tar.gz
 
 ## 尚未包含
 
-- 排程：媒體清除、作答紀錄的保存期限（規格第 5、9 節）還沒有實作，實作後再加 scheduler 服務。
 - 監控與告警：可以先用外部的網站監測服務定時檢查 `https://你的網域/up`。
