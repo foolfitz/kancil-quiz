@@ -11,6 +11,15 @@ const database = `${process.cwd()}/database/e2e.sqlite`;
 const media = `${process.cwd()}/public/e2e-media`;
 
 const ipad = devices['iPad (gen 7)'];
+// 錄音（recording.spec.ts）：Chromium 用假的麥克風並自動允許；WebKit 沒有這個功能
+const fakeMicrophone = {
+    launchOptions: {
+        args: [
+            '--use-fake-device-for-media-stream',
+            '--use-fake-ui-for-media-stream',
+        ],
+    },
+};
 const browsers = process.env.E2E_WEBKIT
     ? (['chromium', 'webkit'] as const)
     : (['chromium'] as const);
@@ -36,6 +45,7 @@ export default defineConfig({
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
+                    ...(browserName === 'chromium' ? fakeMicrophone : {}),
                     viewport: ipad.viewport,
                     hasTouch: true,
                     isMobile: browserName !== 'chromium' ? undefined : true,
@@ -48,6 +58,7 @@ export default defineConfig({
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
+                    ...(browserName === 'chromium' ? fakeMicrophone : {}),
                     viewport: {
                         width: ipad.viewport.height,
                         height: ipad.viewport.width,
@@ -62,6 +73,7 @@ export default defineConfig({
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
+                    ...(browserName === 'chromium' ? fakeMicrophone : {}),
                     viewport: { width: 1920, height: 1080 },
                 },
             },

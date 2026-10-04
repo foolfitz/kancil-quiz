@@ -1,14 +1,24 @@
 <script setup lang="ts">
-import { ImagePlus, Loader2, Mic, Play, X } from '@lucide/vue';
+import { ImagePlus, Loader2, Mic, Play, Upload, X } from '@lucide/vue';
 import { ref } from 'vue';
+import AudioRecorder from '@/components/kancil/AudioRecorder.vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { uploadMedia } from '@/lib/media';
 import type { MediaRef } from '@/types/kancil';
 
-// 一個音檔或圖片欄位：上傳、預覽、移除（docs/SPEC.md T-05）。
+// 一個音檔或圖片欄位：上傳、預覽、移除（docs/SPEC.md T-05）；音檔也可以直接錄音（T-06）。
 const props = defineProps<{
     kind: 'audio' | 'image';
     rightsConfirmed: boolean;
     label?: string;
+    // 錄音時顯示的詞或題目，讓老師知道在錄哪一個
+    context?: string;
 }>();
 
 const model = defineModel<MediaRef | null>({ required: true });
@@ -18,12 +28,28 @@ const input = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
 let player: HTMLAudioElement | null = null;
 
-function pick(): void {
+function rightsGiven(): boolean {
     if (!props.rightsConfirmed) {
         emit('error', '請先勾選上方的權利聲明，再上傳音檔或圖片。');
-        return;
     }
-    input.value?.click();
+    return props.rightsConfirmed;
+}
+
+function pick(): void {
+    if (rightsGiven()) {
+        input.value?.click();
+    }
+}
+
+const recording = ref(false);
+function record(): void {
+    if (rightsGiven()) {
+        recording.value = true;
+    }
+}
+function recorded(media: MediaRef): void {
+    model.value = media;
+    recording.value = false;
 }
 
 async function upload(event: Event): Promise<void> {
@@ -94,20 +120,51 @@ function play(): void {
             </button>
         </template>
 
-        <button
-            v-else
-            type="button"
-            class="inline-flex h-9 items-center gap-1 rounded-md border border-dashed px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-            :disabled="uploading"
-            :title="label ? `上傳${label}` : '上傳'"
-            @click="pick"
-        >
-            <Loader2 v-if="uploading" class="size-4 animate-spin" />
-            <Mic v-else-if="kind === 'audio'" class="size-4" />
-            <ImagePlus v-else class="size-4" />
-            <span class="hidden sm:inline">{{
-                uploading ? '處理中' : kind === 'audio' ? '音檔' : '圖片'
-            }}</span>
-        </button>
+        <template v-else>
+            <button
+                type="button"
+                class="inline-flex h-9 items-center gap-1 rounded-md border border-dashed px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                :disabled="uploading"
+                :title="label ? `上傳${label}` : '上傳'"
+                @click="pick"
+            >
+                <Loader2 v-if="uploading" class="size-4 animate-spin" />
+                <Upload v-else-if="kind === 'audio'" class="size-4" />
+                <ImagePlus v-else class="size-4" />
+                <span class="hidden sm:inline">{{
+                    uploading ? '處理中' : kind === 'audio' ? '音檔' : '圖片'
+                }}</span>
+            </button>
+            <button
+                v-if="kind === 'audio'"
+                type="button"
+                class="inline-flex h-9 items-center gap-1 rounded-md border border-dashed px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                :disabled="uploading"
+                :title="label ? `錄製${label}` : '錄音'"
+                @click="record"
+            >
+                <Mic class="size-4" />
+                <span class="hidden sm:inline">錄音</span>
+            </button>
+        </template>
+
+        <Dialog v-if="kind === 'audio'" v-model:open="recording">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{{
+                        label ? `錄製${label}` : '錄音'
+                    }}</DialogTitle>
+                    <DialogDescription>
+                        <span
+                            v-if="context"
+                            class="text-lg font-semibold text-foreground"
+                            >{{ context }}</span
+                        >
+                        <template v-else>對著麥克風說一次。</template>
+                    </DialogDescription>
+                </DialogHeader>
+                <AudioRecorder v-if="recording" @uploaded="recorded" />
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

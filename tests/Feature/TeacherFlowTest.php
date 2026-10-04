@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\KancilFormat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -195,6 +196,40 @@ class TeacherFlowTest extends TestCase
         $this->assertSame('audio/mp4', $media->mime);
         $this->assertStringEndsWith('.m4a', $media->path);
         $this->assertEqualsWithDelta(500, $media->duration_ms, 100);
+    }
+
+    /**
+     * 瀏覽器錄音（T-06）原樣上傳：Chrome 錄的是 webm（Opus），Safari 是分段的 mp4（AAC），
+     * Firefox 是 ogg（Opus）。上傳時的檔名是 recording.*，類型由伺服器判斷。
+     */
+    public function test_browser_recordings_are_converted_to_mono_aac(): void
+    {
+        Storage::fake('public');
+
+        $formats = [
+            'webm' => ['-c:a', 'libopus', '-f', 'webm'],
+            'm4a' => ['-c:a', 'aac', '-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov+default_base_moof'],
+            'ogg' => ['-c:a', 'libopus', '-f', 'ogg'],
+        ];
+        foreach ($formats as $extension => $codec) {
+            $path = tempnam(sys_get_temp_dir(), 'kq-recording-');
+            Process::run([
+                'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+                '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1.5:sample_rate=48000',
+                ...$codec, $path,
+            ])->throw();
+
+            $response = $this->actingAs($this->teacher)->post('/media', [
+                'kind' => 'audio',
+                'file' => new UploadedFile($path, "recording.{$extension}", null, null, true),
+                'rights' => '1',
+            ], ['Accept' => 'application/json'])->assertCreated();
+            @unlink($path);
+
+            $media = Media::findOrFail($response->json('id'));
+            $this->assertSame('audio/mp4', $media->mime, $extension);
+            $this->assertEqualsWithDelta(1500, $media->duration_ms, 150, $extension);
+        }
     }
 
     public function test_uploads_require_the_rights_confirmation(): void

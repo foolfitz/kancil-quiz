@@ -96,6 +96,7 @@ function markCorrect(entry: QuizEntryInput, index: number): void {
                                 v-model="entry.question.stem.audio"
                                 kind="audio"
                                 label="題幹音檔"
+                                :context="entry.question.stem.text"
                                 :rights-confirmed="rightsConfirmed"
                                 @error="emit('error', $event)"
                             />

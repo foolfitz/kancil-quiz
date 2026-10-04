@@ -5,6 +5,7 @@ namespace App\Media;
 use App\Models\Media;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -28,12 +29,15 @@ class MediaProcessor
 
     /**
      * 統一轉成單聲道 AAC（.m4a），並做音量標準化（EBU R128 loudnorm），讓 iPad 能播放、各老師錄的音量一致。
+     * 瀏覽器錄音（T-06）也走這裡：Chrome 錄的是 webm（Opus），Safari 是 mp4（AAC），由 ffmpeg 判斷格式。
      *
      * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
      */
     public function audio(UploadedFile $file, User $user, array $attribution = []): Media
     {
-        $output = tempnam(sys_get_temp_dir(), 'kq-audio-').'.m4a';
+        // ffmpeg 依副檔名決定輸出格式，所以另外加上 .m4a；tempnam 建立的原檔也要刪
+        $base = tempnam(sys_get_temp_dir(), 'kq-audio-');
+        $output = $base.'.m4a';
 
         try {
             $result = Process::timeout(60)->run([
@@ -46,6 +50,11 @@ class MediaProcessor
             ]);
 
             if ($result->failed() || ! is_file($output) || filesize($output) === 0) {
+                Log::warning('音檔轉檔失敗', [
+                    'mime' => $file->getMimeType(),
+                    'bytes' => $file->getSize(),
+                    'error' => Str::limit(trim($result->errorOutput()), 2000),
+                ]);
                 throw ValidationException::withMessages(['file' => '無法讀取這個音檔，請換一個檔案試試。']);
             }
 
@@ -60,6 +69,7 @@ class MediaProcessor
             ]);
         } finally {
             @unlink($output);
+            @unlink($base);
         }
     }
 

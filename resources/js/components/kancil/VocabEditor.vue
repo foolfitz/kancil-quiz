@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/vue';
+import { ArrowDown, ArrowUp, Mic, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import MediaSlot from '@/components/kancil/MediaSlot.vue';
+import SequentialRecorder from '@/components/kancil/SequentialRecorder.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { MediaRef, VocabEntryInput } from '@/types/kancil';
 
 // 詞彙組編輯：逐列輸入，或一次貼上多行「目標語<Tab>中文」（docs/SPEC.md T-04）。
-defineProps<{
+const props = defineProps<{
     errors: Partial<Record<string, string>>;
     rightsConfirmed: boolean;
     showRomanization: boolean;
@@ -93,6 +94,16 @@ function audioOf(entry: VocabEntryInput): MediaRef | null {
 function setAudio(entry: VocabEntryInput, media: MediaRef | null): void {
     entry.item.audio = media ? [media] : [];
 }
+
+// 逐詞錄音（docs/SPEC.md T-06）
+const recordingAll = ref(false);
+function recordAll(): void {
+    if (!props.rightsConfirmed) {
+        emit('error', '請先勾選上方的權利聲明，再上傳音檔或圖片。');
+        return;
+    }
+    recordingAll.value = true;
+}
 </script>
 
 <template>
@@ -126,6 +137,20 @@ function setAudio(entry: VocabEntryInput, media: MediaRef | null): void {
                 </div>
             </div>
         </details>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" @click="recordAll"
+                ><Mic class="size-4" /> 逐詞錄音</Button
+            >
+            <span class="text-sm text-muted-foreground"
+                >依序幫還沒有發音的詞錄音，不必一個一個開。</span
+            >
+        </div>
+        <SequentialRecorder
+            v-model:open="recordingAll"
+            :entries="entries"
+            @recorded="setAudio"
+        />
 
         <ol class="space-y-2">
             <li
@@ -174,6 +199,7 @@ function setAudio(entry: VocabEntryInput, media: MediaRef | null): void {
                     <MediaSlot
                         kind="audio"
                         label="發音"
+                        :context="entry.item.text"
                         :rights-confirmed="rightsConfirmed"
                         :model-value="audioOf(entry)"
                         @update:model-value="setAudio(entry, $event)"
