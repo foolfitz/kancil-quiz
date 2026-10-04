@@ -70,6 +70,9 @@ export type GameEvent =
           selected: string[]; // mcq 為選項 id；pair 為配到的右側卡片的 entryId。v1 一律只有一個元素
           correct: boolean; // 遊戲自己的判定，只用於即時回饋（見 7.4）
           durationMs: number;
+          // 這一題實際出現了哪些選項。mcq 省略，由宿主依 Round 補上；
+          // pair 的右側卡片由遊戲決定怎麼分批出現，所以由遊戲提供同一批的卡片（entryId）
+          presented?: string[];
       }
     | { type: 'viewed'; entryId: string } // 不計分的遊戲（例如字卡）
     | { type: 'completed'; gameScore?: number; durationMs: number }; // gameScore 為遊戲自己的得分，只供顯示

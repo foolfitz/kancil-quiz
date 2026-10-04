@@ -220,7 +220,9 @@ export async function startPlayer(config: PlayerConfig): Promise<void> {
                     event.type === 'answered'
                         ? {
                               entry_id: event.entryId,
-                              presented: presentedOptions(round, rounds),
+                              presented:
+                                  event.presented ??
+                                  presentedOptions(round, rounds),
                               selected: event.selected,
                               client_correct: event.correct,
                               duration_ms: event.durationMs,

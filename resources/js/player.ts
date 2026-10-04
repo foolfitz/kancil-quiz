@@ -19,6 +19,10 @@ if (root?.dataset.activity) {
             'maze-chase': () =>
                 import('@kancil-quiz/game-maze-chase').then((m) => m.default),
             quiz: () => import('@kancil-quiz/game-quiz').then((m) => m.default),
+            'flash-cards': () =>
+                import('@kancil-quiz/game-flash-cards').then((m) => m.default),
+            'match-up': () =>
+                import('@kancil-quiz/game-match-up').then((m) => m.default),
         },
     });
 }
