@@ -59,7 +59,9 @@ class DemoSeeder extends Seeder
 
         // 示範老師：直接用教材建立活動，並從第 1、2 課挑詞組成自己的題組（T-18）
         $this->activity($this->lesson(1), 'quiz', $teacher);
+        $this->activity($this->lesson(2), 'match-up', $teacher);
         $this->activity($this->lesson(3), 'maze-chase', $teacher);
+        $this->activity($this->lesson(4), 'flash-cards', $teacher);
         $review = $teacher->sets()->create(['kind' => 'vocab', 'title' => '第 1 冊第 1、2 課複習', 'language_code' => 'id', 'license' => 'CC-BY-4.0']);
         $copier->compose($review, $this->words([1 => null, 2 => null]), $teacher);
 

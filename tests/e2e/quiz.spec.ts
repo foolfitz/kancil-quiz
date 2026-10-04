@@ -1,38 +1,8 @@
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import { collectErrors, expectNothingClipped } from './helpers';
 
 // 老師建立活動、學生玩選擇題的完整流程（docs/SPEC.md M1 驗收 2、4、6；7.6）。
 // 每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
-
-function collectErrors(page: Page): string[] {
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    page.on('console', (message) => {
-        if (message.type() === 'error') {
-            errors.push(message.text());
-        }
-    });
-    return errors;
-}
-
-// 文字沒有被容器截切：內容高度不超過容器（越南文的疊加聲調符號最容易出問題）。
-async function expectNothingClipped(
-    page: Page,
-    selector: string,
-): Promise<void> {
-    const clipped = await page
-        .locator(selector)
-        .evaluateAll((elements) =>
-            elements
-                .filter(
-                    (el) =>
-                        el.scrollHeight > el.clientHeight + 1 ||
-                        el.scrollWidth > el.clientWidth + 1,
-                )
-                .map((el) => el.textContent),
-        );
-    expect(clipped).toEqual([]);
-}
 
 test.describe.serial('選擇題', () => {
     let playPath = '';
