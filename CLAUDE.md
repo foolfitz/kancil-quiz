@@ -20,7 +20,9 @@
 - 獨立播放器（O-02）在 `packages/player/standalone/`，有自己的 `vite.config.ts`，建置成單一個 HTML 檔 `public/standalone.html`（不進 git）。它打開匯出的 zip（`packages/player/src/zip.ts`、`setZip.ts`），以 `startPlayer({ standalone: true })` 播放，不連伺服器。新增遊戲時也要在 `standalone/main.ts` 登記。
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）。
-  - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。教材資料本身放在 `database/curriculum/`，格式見該目錄的 README。
+  - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組，`preview()` 在交易中匯入後還原；`VolumeFile` 讀取資料檔（repo 的 `volume.json`，或後台上傳的「課文與詞彙.json」）；`CurriculumImages` 依檔名把插圖對應到一冊的詞；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。repo 的 `database/curriculum/` 只放印尼語第 1 冊（示範資料與 E2E），格式見該目錄的 README；其他冊在後台匯入。
+  - `app/Filament/Pages/ImportCurriculum.php`：後台的「匯入教材」頁，只有管理員能用：上傳詞彙的 JSON、批次上傳插圖，都先預覽再寫入。審核者修正過的課以 `CurriculumImporter::editedOnSite()` 判斷（最近一次匯入詞彙之後有沒有教材帳號以外的版本，`curriculum_refs.imported_revision`）；寫入教材題組的程式要以教材帳號產生版本，否則會被當成修正。
+  - 老師端側邊欄的「後台」連結只給能進 Filament 的人（`auth.adminUrl`）；`NavItem.external` 的項目用一般連結整頁載入，不走 Inertia。
   - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
   - `app/Grading/ActivityResults.php`：老師成績頁的逐題答錯率與作答明細（T-11），每題以第一筆作答計算，題目依作答當時的版本顯示。學生有填名字時依名字彙整（`students()`），每位學生只算第一次玩完的作答，重玩的作答不列入平均與逐題統計（SPEC 3.4、7.4）；CSV 由 `ActivityResultsCsvController` 產生。
@@ -79,7 +81,7 @@
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
-| `php artisan kancil:import-curriculum database/curriculum/id/1` | 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖 |
+| `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |

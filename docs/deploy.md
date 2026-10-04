@@ -66,6 +66,8 @@ docker compose exec app php artisan kancil:invite --role=admin
 
 用瀏覽器打開邀請連結註冊管理員帳號。之後的老師帳號在後台（`/admin`）或用 `kancil:invite` 邀請。
 
+repo 中只有印尼語第 1 冊。其他冊用管理員帳號在後台的「匯入教材」頁匯入：先上傳詞彙的 JSON，再依檔名批次上傳插圖（`docs/SPEC.md` 3.6）。
+
 `.env.production` 中的 `APP_KEY` 要另外妥善保存：換掉的話，老師的雙重驗證設定會失效。
 
 ## 更新

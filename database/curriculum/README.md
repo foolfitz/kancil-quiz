@@ -6,6 +6,8 @@
 php artisan kancil:import-curriculum database/curriculum/id/1
 ```
 
+這裡只放示範資料與 E2E 用的印尼語第 1 冊。其他冊由管理員在後台的「匯入教材」頁（`/admin/import-curriculum`）匯入，不放進 repo：詞彙上傳整理教材時的「課文與詞彙.json」，插圖另外依檔名批次上傳。
+
 ## 來源與授權
 
 - 課名與詞彙依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」，紙本採 CC BY-NC-ND 4.0。
@@ -50,6 +52,7 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 - `images`：插圖的作者、授權與出處，記在每一張圖上。重新匯入時會更新已匯入圖片的這些資料，不必重新匯入圖檔。
 - `lessons[].title_native`：目標語的課名，選填。
 - `lessons[].vocabulary[]`：`text`（目標語）、`translation_zh`（中文意思）、`page`（課本頁碼，選填）、`image`（相對於這個目錄的路徑，選填）。同一課的詞不可重複，比對時不分大小寫、忽略多餘的空白。
+- 在後台上傳 `volume.json` 時不讀 `image`，插圖另外上傳。
 
 ## 插圖
 
@@ -60,4 +63,4 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 
 - 可以重複執行。詞以目標語文字對應，題目 ID 不變，學生的作答紀錄仍對得上；內容沒變時不產生新版本。
 - 審核者在網站上修正過的課會被略過，以免蓋掉修正。先把修正寫回 `volume.json`，再加上 `--force` 匯入。
-- 插圖只在詞還沒有圖時匯入。換了圖檔之後要加上 `--refresh-images`。
+- 插圖只在詞還沒有圖時匯入。換了圖檔之後要加上 `--refresh-images`。沒寫 `image` 的詞保留原本的插圖。
