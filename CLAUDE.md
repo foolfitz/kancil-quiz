@@ -31,6 +31,7 @@
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
   - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。瀏覽器錄音（T-06）也原樣上傳到這裡；前端的錄音在 `resources/js/lib/recorder.ts`、`components/kancil/AudioRecorder.vue`（單一欄位）與 `SequentialRecorder.vue`（逐詞錄音）。E2E 的 Chromium 用假的麥克風（`playwright.config.ts`），WebKit 不測錄音。
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
+  - `app/Support/Pruner.php`：資料的保存期限（SPEC 第 5 節），由排程每天執行 `kancil:prune`（`routes/console.php`，正式環境是 `compose.yaml` 的 `scheduler` 服務）。期限在 `config/kancil.php` 的 `retention`。新增會引用媒體或題組版本的資料時，要把它加進 `Pruner` 的引用檢查，否則被引用的媒體或版本會被清掉。
 - 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 與 `packages/player/standalone/main.ts` 登記，並執行 `npm run games:manifest`。
 - 遊戲分成計分的「遊戲」與不計分的「互動教材」（字卡、圖卡牆、轉盤），由 `requires.scored` 決定；老師端與獨立播放器用 `@kancil-quiz/deck` 的 `groupGames()` 分組（SPEC 7.5）。
 - 會翻面的卡片不要只靠 `backface-visibility`：Playwright 的 WebKit（Linux）不支援，背面會鏡像蓋在正面上。三個卡片類的遊戲都在翻到一半時用 `visibility` 藏起背面，E2E 以 `toBeHidden()` 檢查；翻面的那一層也不要加 `container-type` 或 `overflow`，縮放用的 container 放在裡面一層。
@@ -85,6 +86,7 @@
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
 | `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
+| `php artisan kancil:prune --dry-run` | 列出排程會清除的資料筆數，不刪除；拿掉 `--dry-run` 就會真的刪除 |
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |
