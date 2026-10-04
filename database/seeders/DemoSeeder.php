@@ -22,7 +22,7 @@ use RuntimeException;
  * - 示範老師：用教材第 1、3 課直接建立的活動，以及從第 1、2 課挑詞組成的題組。
  *   越南語還沒有教材資料，沿用 packages/schema/fixtures 中的越南語題組（E2E 用來檢查聲調符號），
  *   各有選擇題與迷宮追逐兩個活動，不對應冊課。
- * - 林老師：在共備庫有兩個由教材改編的公開題組，另有一個等待審核（M2）。
+ * - 示範同事：在共備庫有兩個由教材改編的公開題組，另有一個等待審核（M2）。
  * - 審核者：負責印尼語與越南語。
  *
  *   php artisan db:seed --class=DemoSeeder
@@ -43,8 +43,8 @@ class DemoSeeder extends Seeder
         $admin->syncRoles(['admin']);
 
         $teacher = $this->user('teacher@example.com', '示範老師', 'teacher');
-        $colleague = $this->user('lin@example.com', '林老師', 'teacher');
-        $curator = $this->user('curator@example.com', '陳審核', 'curator');
+        $colleague = $this->user('colleague@example.com', '示範同事', 'teacher');
+        $curator = $this->user('curator@example.com', '審核者', 'curator');
         $curator->reviewLanguages()->sync(['id', 'vi']);
 
         $importer->import(database_path('curriculum/id/1'));
@@ -63,7 +63,7 @@ class DemoSeeder extends Seeder
         $review = $teacher->sets()->create(['kind' => 'vocab', 'title' => '第 1 冊第 1、2 課複習', 'language_code' => 'id', 'license' => 'CC-BY-4.0']);
         $copier->compose($review, $this->words([1 => null, 2 => null]), $teacher);
 
-        // 共備庫：林老師由教材改編的公開題組，以及一個待審的題組
+        // 共備庫：示範同事由教材改編的公開題組，以及一個待審的題組
         $family = $copier->copy($this->lesson(3), $colleague);
         $this->adapt($recorder, $family, $colleague, '第 1 冊第 3 課 我的家人（看圖選詞）', ['prompt' => ['image'], 'answer' => ['text']], ['家人'], public: true);
 
@@ -85,7 +85,7 @@ class DemoSeeder extends Seeder
             'note' => '適合三、四年級',
         ]);
 
-        $this->command->info('老師：teacher@example.com、lin@example.com；審核者：curator@example.com；管理員：admin@example.com（密碼都是 password）');
+        $this->command->info('老師：teacher@example.com、colleague@example.com；審核者：curator@example.com；管理員：admin@example.com（密碼都是 password）');
         foreach ($teacher->activities()->with('set')->get() as $activity) {
             $this->command->line(sprintf('%-40s %-10s %s', $activity->set->title, $activity->game_id, route('play', $activity)));
         }
@@ -130,7 +130,7 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * 林老師改編教材：改標題、題目的呈現方式與標籤，公開的題組設為已通過審核。
+     * 示範同事改編教材：改標題、題目的呈現方式與標籤，公開的題組設為已通過審核。
      *
      * @param  array{prompt: list<string>, answer: list<string>}  $faces
      * @param  list<string>  $tags

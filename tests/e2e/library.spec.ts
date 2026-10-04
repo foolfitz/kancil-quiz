@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 // 共備（docs/SPEC.md M2）：老師在共備庫找到別人的題組、複製後改編，並產生分享連結給同事。
-// 資料來自 DemoSeeder：印尼語第 1 冊四課的教材題組，以及林老師由教材改編的兩個公開題組。
+// 資料來自 DemoSeeder：印尼語第 1 冊四課的教材題組，以及示範同事由教材改編的兩個公開題組。
 test('老師從共備庫複製題組，並產生分享連結', async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -28,7 +28,7 @@ test('老師從共備庫複製題組，並產生分享連結', async ({ page }, 
             name: '第 1 冊第 3 課 我的家人（看圖選詞）',
         }),
     ).toBeVisible();
-    await expect(page.getByText('林老師').first()).toBeVisible();
+    await expect(page.getByText('示範同事').first()).toBeVisible();
     await expect(page.locator('[data-test="set-entries"] > li')).toHaveCount(6);
 
     await page.screenshot({

@@ -67,7 +67,7 @@
 | `composer test` | Pint、PHPStan、PHPUnit |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
-| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com、lin@example.com（共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
+| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
 | `php artisan kancil:import-curriculum database/curriculum/id/1` | 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖 |
 | `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
