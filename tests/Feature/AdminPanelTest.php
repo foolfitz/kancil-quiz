@@ -30,6 +30,9 @@ class AdminPanelTest extends TestCase
             $this->actingAs($admin)->get($url)->assertOk();
         }
 
+        // 選單可以回到老師端的首頁
+        $this->get('/admin')->assertSee('回到首頁')->assertSee(route('dashboard'));
+
         // 使用者表單可以指定審核者負責的語言
         $this->get("/admin/users/{$admin->id}/edit")->assertOk()->assertSee('負責審核的語言');
     }
@@ -38,7 +41,7 @@ class AdminPanelTest extends TestCase
     {
         $curator = $this->userWithRole('curator');
 
-        $this->actingAs($curator)->get('/admin/invitations')->assertOk();
+        $this->actingAs($curator)->get('/admin/invitations')->assertOk()->assertSee('回到首頁');
         $this->actingAs($curator)->get('/admin/users')->assertForbidden();
         $this->actingAs($curator)->get('/admin/languages')->assertForbidden();
     }
