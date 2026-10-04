@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
 // （不要加 sudo，它會自己切換成 root）。安裝後設定 E2E_WEBKIT=1 就會一併執行。
 const port = 8124;
 const database = `${process.cwd()}/database/e2e.sqlite`;
+// 示範資料會匯入教材插圖；媒體另外放，每次執行前清空，不留在開發用的 storage
+const media = `${process.cwd()}/public/e2e-media`;
 
 const ipad = devices['iPad (gen 7)'];
 const browsers = process.env.E2E_WEBKIT
@@ -66,13 +68,15 @@ export default defineConfig({
         ]),
     ],
     webServer: {
-        command: `touch ${database} && php artisan migrate:fresh --seed --seeder=DemoSeeder --force && php artisan serve --no-reload --port=${port}`,
+        command: `rm -rf ${media} && touch ${database} && php artisan migrate:fresh --seed --seeder=DemoSeeder --force && php artisan serve --no-reload --port=${port}`,
         url: `http://127.0.0.1:${port}/up`,
         reuseExistingServer: false,
         timeout: 120_000,
         env: {
             DB_DATABASE: database,
             APP_URL: `http://127.0.0.1:${port}`,
+            PUBLIC_DISK_ROOT: media,
+            PUBLIC_DISK_URL: `http://127.0.0.1:${port}/e2e-media`,
             PHP_CLI_SERVER_WORKERS: '4',
         },
     },

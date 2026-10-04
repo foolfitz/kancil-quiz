@@ -38,10 +38,11 @@ return [
             'report' => false,
         ],
 
+        // E2E 改放到 public/e2e-media，每次執行前清空，不留在開發用的 storage（playwright.config.ts）
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage',
+            'root' => env('PUBLIC_DISK_ROOT', storage_path('app/public')),
+            'url' => env('PUBLIC_DISK_URL', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
