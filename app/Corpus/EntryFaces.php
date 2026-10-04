@@ -53,12 +53,23 @@ class EntryFaces
     }
 
     /**
-     * 學生選的答案。問答組的選項 ID 在整個版本中唯一；詞彙組的選項 ID 就是詞條的 entry ID（7.4）。
+     * 學生選的答案。問答組的選項 ID 在整個版本中唯一；詞彙組的選項 ID 就是詞條的 entry ID。
+     * 配對時學生放上去的是右側卡片，以詞條的 entry ID 識別，顯示那個詞條的正解（7.4）。
      *
      * @return Face|null 找不到這個選項時為 null
      */
-    public static function choice(stdClass $set, string $choice): ?array
+    public static function choice(stdClass $set, string $choice, string $shape = 'mcq'): ?array
     {
+        if ($shape === 'pair') {
+            foreach ($set->entries as $entry) {
+                if ($entry->id === $choice) {
+                    return $set->kind === 'vocab' ? self::itemFace($entry->item) : self::answer($set, $entry);
+                }
+            }
+
+            return null;
+        }
+
         foreach ($set->entries as $entry) {
             if ($set->kind === 'vocab') {
                 if ($entry->id === $choice) {

@@ -186,6 +186,74 @@ class ActivityResultsTest extends TestCase
                 ->where('detail.rounds.0.answer.text', 'cảm ơn'));
     }
 
+    public function test_match_up_on_a_quiz_set_shows_the_card_the_student_placed(): void
+    {
+        $set = Set::factory()->quiz()->for($this->teacher, 'owner')->create();
+        $question = fn (string $stem, string $answer) => [
+            'id' => null,
+            'question' => [
+                'stem' => ['text' => $stem, 'audio_id' => null, 'image_id' => null],
+                'options' => [
+                    ['id' => 'a', 'text' => $answer, 'image_id' => null, 'correct' => true],
+                    ['id' => 'b', 'text' => 'xin chào', 'image_id' => null, 'correct' => false],
+                ],
+            ],
+        ];
+        app(SetWriter::class)->write($set, ['entries' => [
+            $question('「謝謝」的越南語是？', 'cảm ơn'),
+            $question('「再見」的越南語是？', 'tạm biệt'),
+        ]], $this->teacher);
+        $this->set = $set->refresh();
+        $this->activity->update(['set_id' => $set->id, 'game_id' => 'match-up']);
+
+        // 配對時選的是右側卡片，以詞條的 entry ID 識別（7.4）
+        [$thanks, $bye] = $set->entries()->pluck('id')->all();
+        $attempt = $this->play([[$thanks, $bye], [$thanks, $thanks], [$bye, $bye]]);
+
+        $this->actingAs($this->teacher)
+            ->get("/activities/{$this->activity->id}/results?attempt={$attempt}")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('activity.scored', true)
+                ->where('questions.0.wrong', 1)
+                ->where('questions.0.common_mistake.face.text', 'tạm biệt')
+                ->where('questions.1.wrong', 0)
+                ->where('detail.rounds.0.selected.text', 'tạm biệt')
+                ->where('detail.rounds.0.answer.text', 'cảm ơn')
+                ->where('detail.rounds.0.tries', 2)
+                ->where('attempts.data.0.correct_count', 1));
+    }
+
+    public function test_flash_cards_record_which_cards_were_viewed(): void
+    {
+        $this->activity->update(['game_id' => 'flash-cards']);
+        [$banana, $apple] = $this->set->entries()->pluck('id')->all();
+
+        ['attempt_id' => $attemptId, 'token' => $token] = $this->postJson("/api/v1/activities/{$this->activity->id}/attempts", [
+            'set_revision_id' => $this->set->current_revision_id,
+            'seed' => 1,
+            'round_count' => 3,
+        ])->assertCreated()->json();
+        $viewed = fn (string $entry) => ['entry_id' => $entry, 'presented' => [], 'selected' => null, 'client_correct' => null, 'duration_ms' => null];
+        $this->postJson("/api/v1/attempts/{$attemptId}/responses", [
+            'token' => $token,
+            'responses' => [$viewed($banana), $viewed($apple)],
+        ])->assertOk();
+        $this->postJson("/api/v1/attempts/{$attemptId}/complete", ['token' => $token, 'duration_ms' => 30000])
+            ->assertOk()
+            ->assertJsonPath('correct_count', null);
+
+        $this->actingAs($this->teacher)
+            ->get("/activities/{$this->activity->id}/results?attempt={$attemptId}")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('activity.scored', false)
+                ->where('summary.average_rate', null)
+                ->where('questions.0.responses', 1)
+                ->where('questions.2.responses', 0)
+                ->where('detail.rounds.0.answered', true)
+                ->where('detail.rounds.0.correct', null)
+                ->where('detail.rounds.2.answered', false));
+    }
+
     public function test_old_attempts_are_shown_with_the_revision_they_used(): void
     {
         [$banana, $apple, $orange] = $this->set->entries()->pluck('id')->all();

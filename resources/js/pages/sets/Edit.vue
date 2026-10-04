@@ -44,7 +44,7 @@ const props = defineProps<{
     entries: (VocabEntryInput | QuizEntryInput)[];
     can: { manage: boolean };
     sharing: SetSharing | null;
-    activities: { id: string; game_id: string; created_at: string }[];
+    activities: { id: string; game: string }[];
     languages: Language[];
     licenses: string[];
     curriculumRefs: CurriculumRef[];
@@ -261,13 +261,7 @@ function destroy(): void {
                         :href="ActivityController.show(activity.id)"
                         class="inline-flex items-center rounded-full border px-3 py-1 text-sm hover:border-primary"
                     >
-                        {{
-                            activity.game_id === 'maze-chase'
-                                ? '迷宮追逐'
-                                : activity.game_id === 'quiz'
-                                  ? '選擇題'
-                                  : activity.game_id
-                        }}
+                        {{ activity.game }}
                     </Link>
                 </li>
             </ul>

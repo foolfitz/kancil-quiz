@@ -9,8 +9,10 @@ use App\Corpus\SetViewData;
 use App\Corpus\SetWriter;
 use App\Curriculum\Textbook;
 use App\Curriculum\TextbookData;
+use App\Games\GameRegistry;
 use App\Http\Requests\Sets\SetContentRequest;
 use App\Http\Requests\Sets\SetDetailsRequest;
+use App\Models\Activity;
 use App\Models\CurriculumRef;
 use App\Models\Language;
 use App\Models\Set;
@@ -127,7 +129,7 @@ class SetController extends Controller
     /**
      * 擁有者編輯題組；負責該語言的審核者也可以修正已公開的題組（C-03），修改記在題組版本中。
      */
-    public function edit(Set $set): Response
+    public function edit(Set $set, GameRegistry $games): Response
     {
         Gate::authorize('edit', $set);
 
@@ -157,7 +159,10 @@ class SetController extends Controller
                 'last_review' => $set->reviews()->with('user:id,name')->first()?->only(['action', 'note', 'created_at']),
             ] : null,
             'activities' => Gate::allows('manage', $set)
-                ? $set->activities()->latest()->get(['id', 'game_id', 'created_at'])
+                ? $set->activities()->latest()->get(['id', 'game_id'])->map(fn (Activity $activity) => [
+                    'id' => $activity->id,
+                    'game' => $games->title($activity->game_id),
+                ])
                 : [],
             'languages' => Language::enabled()->get(['code', 'name_zh', 'name_native']),
             'licenses' => SetDetailsRequest::LICENSES,

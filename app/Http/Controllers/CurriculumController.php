@@ -75,7 +75,7 @@ class CurriculumController extends Controller
             'activities' => $set === null ? [] : $set->activities()->where('owner_id', $user->id)->withCount('attempts')->latest()->get()
                 ->map(fn (Activity $activity) => [
                     'id' => $activity->id,
-                    'game' => $games->find($activity->game_id)['title']['zh-TW'] ?? $activity->game_id,
+                    'game' => $games->title($activity->game_id),
                     'attempts_count' => $activity->attempts_count,
                     'created_at' => $activity->created_at?->toIso8601String(),
                 ]),

@@ -53,6 +53,14 @@ class GameRegistry
         return $this->find($id) ?? throw new RuntimeException("找不到遊戲：{$id}");
     }
 
+    /**
+     * 老師端顯示的遊戲名稱；找不到時（例如遊戲已移除）顯示 ID。
+     */
+    public function title(string $id): string
+    {
+        return $this->find($id)['title']['zh-TW'] ?? $id;
+    }
+
     public function shape(string $id): string
     {
         return $this->get($id)['requires']['shape'];

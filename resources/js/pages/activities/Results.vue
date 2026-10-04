@@ -468,7 +468,11 @@ function duration(ms: number | null): string {
                                                         <CircleMinus
                                                             class="size-4 text-muted-foreground"
                                                         />
-                                                        沒作答
+                                                        {{
+                                                            activity.scored
+                                                                ? '沒作答'
+                                                                : '沒看過'
+                                                        }}
                                                     </template>
                                                     <template
                                                         v-else-if="

@@ -212,7 +212,7 @@ class TeacherFlowTest extends TestCase
 
         $this->get("/sets/{$set->id}/activities/create")->assertInertia(fn (Assert $page) => $page
             ->component('activities/Create')
-            ->has('games', 2)
+            ->has('games', 4)
             ->where('content.entries.0.item.text', 'quả chuối'));
 
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'quiz', 'options' => ['autoAdvance' => false]])->assertRedirect();
@@ -229,6 +229,25 @@ class TeacherFlowTest extends TestCase
         $this->assertSame(2, $set->activities()->count());
 
         $this->get("/p/{$quiz->id}")->assertOk()->assertSee("data-activity=\"{$quiz->id}\"", false);
+    }
+
+    public function test_flash_cards_and_match_up_validate_their_options(): void
+    {
+        $set = $this->createSet();
+        $this->put("/sets/{$set->id}", $this->vocabPayload([['quả chuối', '香蕉'], ['quả táo', '蘋果'], ['quả cam', '柳橙']]));
+
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'match-up', 'options' => ['pairsPerPage' => 9]])
+            ->assertSessionHasErrors('options');
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'match-up', 'options' => ['pairsPerPage' => 4]])->assertRedirect();
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'flash-cards', 'options' => ['startWith' => 'back']])->assertRedirect();
+
+        $this->assertSame(['pairsPerPage' => 4], Activity::where('game_id', 'match-up')->firstOrFail()->options);
+        $this->assertSame(['startWith' => 'back', 'autoPlayAudio' => true], Activity::where('game_id', 'flash-cards')->firstOrFail()->options);
+
+        // 遊戲名稱來自 manifest，不寫死在頁面中
+        $games = fn (iterable $activities) => collect($activities)->pluck('game')->sort()->values()->all() === ['字卡', '配對'];
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page->where('activities', $games));
+        $this->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('activities', $games));
     }
 
     public function test_a_teacher_previews_a_game_before_creating_the_activity(): void

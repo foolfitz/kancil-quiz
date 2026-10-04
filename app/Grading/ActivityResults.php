@@ -4,6 +4,7 @@ namespace App\Grading;
 
 use App\Corpus\EntryFaces;
 use App\Corpus\MediaUrls;
+use App\Games\GameRegistry;
 use App\Models\Activity;
 use App\Models\Attempt;
 use App\Models\AttemptResponse;
@@ -25,6 +26,8 @@ class ActivityResults
 {
     /** @var array<string, stdClass> 版本內容（媒體為絕對網址），以版本 ID 為鍵 */
     private array $contents = [];
+
+    private ?string $shape = null;
 
     /**
      * @param  string|null  $revisionId  只看某個版本的作答；null 表示全部
@@ -212,7 +215,7 @@ class ActivityResults
                 'entry_id' => $entry->id,
                 'question' => EntryFaces::question($set, $entry),
                 'answer' => EntryFaces::answer($set, $entry),
-                'selected' => $choice === null ? null : EntryFaces::choice($set, $choice),
+                'selected' => $choice === null ? null : EntryFaces::choice($set, $choice, $this->shape()),
                 'correct' => $first?->correct,
                 'answered' => $first !== null,
                 'tries' => $mine?->count() ?? 0,
@@ -236,6 +239,14 @@ class ActivityResults
             ->when($this->revisionId, fn ($query, $id) => $query->where('set_revision_id', $id));
     }
 
+    /**
+     * 活動的遊戲使用的題目形狀：配對時學生選的是另一題的右側卡片（7.4）。
+     */
+    private function shape(): string
+    {
+        return $this->shape ??= app(GameRegistry::class)->find($this->activity->game_id)['requires']['shape'] ?? 'mcq';
+    }
+
     private function content(string $revisionId): stdClass
     {
         return $this->contents[$revisionId] ??= MediaUrls::absolutize(
@@ -254,7 +265,7 @@ class ActivityResults
         $merged = [];
         foreach ($mistakes as $key => $count) {
             [$revisionId, $choice] = explode("\n", $key, 2);
-            $face = EntryFaces::choice($this->content($revisionId), $choice)
+            $face = EntryFaces::choice($this->content($revisionId), $choice, $this->shape())
                 ?? ['text' => null, 'note' => null, 'image' => null, 'audio' => null];
             $label = json_encode($face, JSON_THROW_ON_ERROR);
             $merged[$label] = ['face' => $face, 'count' => ($merged[$label]['count'] ?? 0) + $count];

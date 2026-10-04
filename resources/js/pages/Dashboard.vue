@@ -14,7 +14,7 @@ defineProps<{
     sets: { id: string; kind: SetKind; title: string; entries_count: number }[];
     activities: {
         id: string;
-        game_id: string;
+        game: string;
         set_title: string | null;
         attempts_count: number;
     }[];
@@ -25,11 +25,6 @@ defineOptions({
         breadcrumbs: [{ title: '首頁', href: dashboard() }],
     },
 });
-
-const GAME_TITLES: Record<string, string> = {
-    'maze-chase': '迷宮追逐',
-    quiz: '選擇題',
-};
 </script>
 
 <template>
@@ -96,10 +91,10 @@ const GAME_TITLES: Record<string, string> = {
                         class="block rounded-xl border p-4 hover:border-primary"
                     >
                         <span class="text-xs text-muted-foreground"
-                            >{{
-                                GAME_TITLES[activity.game_id] ??
-                                activity.game_id
-                            }}・{{ activity.attempts_count }} 次作答</span
+                            >{{ activity.game }}・{{
+                                activity.attempts_count
+                            }}
+                            次作答</span
                         >
                         <span class="mt-1 block font-semibold">{{
                             activity.set_title

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Games\GameRegistry;
 use App\Models\Activity;
 use App\Models\Set;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, GameRegistry $games): Response
     {
         $user = $request->user();
 
@@ -25,7 +26,7 @@ class DashboardController extends Controller
             'activities' => $user->activities()->with('set:id,title')->withCount('attempts')->latest()->limit(6)->get()
                 ->map(fn (Activity $activity) => [
                     'id' => $activity->id,
-                    'game_id' => $activity->game_id,
+                    'game' => $games->title($activity->game_id),
                     'set_title' => $activity->set?->title,
                     'attempts_count' => $activity->attempts_count,
                 ]),
