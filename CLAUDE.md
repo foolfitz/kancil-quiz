@@ -84,6 +84,7 @@
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |
+| `docker compose up -d --build` | 正式環境（`docs/deploy.md`）；需要 `.env.production`，範本是 `.env.production.example` |
 
 ## 環境
 
@@ -92,3 +93,4 @@
 - 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
 - submodule 的網址是本機路徑時（本機的這份 repo，或從本機路徑 clone 的），git 2.38 起 submodule 的 clone 與 fetch 都要加 `-c protocol.file.allow=always`，例如上面的 `submodule update --remote`、`submodule update --init`；從 GitHub clone 的不需要。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
+- 正式環境的映像檔（`Dockerfile`）：FrankenPHP 加上 PHP 擴充與 ffmpeg，PHP 設定在 `docker/php.ini`，Caddy 在 `docker/Caddyfile`。新增 PHP 擴充或系統套件時兩邊（本機與 `Dockerfile`）都要裝。`.dockerignore` 排除整個 `storage/`（本機的資料庫備份與快取不能進映像檔），映像檔中的空目錄由 `Dockerfile` 建立。
