@@ -39,7 +39,7 @@
             "required": ["id", "version", "options"],
             "properties": {
                 "id": {
-                    "description": "遊戲 ID，例：maze-chase",
+                    "description": "遊戲 ID，例：maze-quiz",
                     "type": "string",
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
                 },

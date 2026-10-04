@@ -28,7 +28,7 @@ function fixture(path: string): KancilSet {
 const vocab = () => fixture('sets/vi-vocab-fruits/set.json') as VocabSet;
 const quiz = () => fixture('sets/vi-quiz-greetings/set.json') as QuizSet;
 
-// 與迷宮追逐相同的需求
+// 與迷宮問答相同的需求
 const mcq: GameRequirements = {
     shape: 'mcq',
     minRounds: 1,

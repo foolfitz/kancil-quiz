@@ -286,12 +286,12 @@ class CurriculumTest extends TestCase
         $set = $this->lesson(3);
         $colleague = User::factory()->create(['name' => '李老師']);
         $mine = $set->activities()->create(['game_id' => 'quiz', 'game_version' => '0.1.0', 'options' => [], 'owner_id' => $this->teacher->id]);
-        $set->activities()->create(['game_id' => 'maze-chase', 'game_version' => '0.1.0', 'options' => [], 'owner_id' => $this->teacher->id]);
+        $set->activities()->create(['game_id' => 'maze-quiz', 'game_version' => '0.1.0', 'options' => [], 'owner_id' => $this->teacher->id]);
         $theirs = $set->activities()->create(['game_id' => 'quiz', 'game_version' => '0.1.0', 'options' => [], 'owner_id' => $colleague->id]);
 
         $this->actingAs($this->teacher)->get("/activities/{$mine->id}")->assertInertia(fn (Assert $page) => $page
             ->has('siblings', 1)
-            ->where('siblings.0.game_id', 'maze-chase')
+            ->where('siblings.0.game_id', 'maze-quiz')
             ->where('set.url', route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3])));
         $this->actingAs($this->teacher)->get("/activities/{$theirs->id}")->assertForbidden();
 

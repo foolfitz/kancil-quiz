@@ -1,7 +1,7 @@
 import type { GameContext, GameEvent, Round } from '@kancil-quiz/games-sdk';
 import { describe, expect, it } from 'vite-plus/test';
-import mazeChase from '../src';
-import { meta, type MazeChaseOptions } from '../src/meta';
+import mazeQuiz from '../src';
+import { meta, type MazeQuizOptions } from '../src/meta';
 import {
     createFakeEnvironment,
     FakeKeyboardEvent,
@@ -51,14 +51,14 @@ const rounds: Round[] = [
 ];
 
 interface Harness {
-    readonly ctx: GameContext<MazeChaseOptions>;
+    readonly ctx: GameContext<MazeQuizOptions>;
     readonly events: GameEvent[];
     readonly played: string[];
     readonly stopAll: { count: number };
 }
 
 function harness(
-    options: Partial<MazeChaseOptions> = {},
+    options: Partial<MazeQuizOptions> = {},
     gameRounds: Round[] = rounds,
 ): Harness {
     const events: GameEvent[] = [];
@@ -110,7 +110,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
 
         // 掛載前不播放任何聲音
         expect(played).toEqual([]);
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
 
         expect(events).toEqual([{ type: 'started' }]);
         // 第 1 關一開始就播放題目的音檔，題目列有「再聽一次」
@@ -168,7 +168,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
         const host = env.createHost();
         for (let i = 0; i < 3; i++) {
             const { ctx, events } = harness();
-            const instance = mazeChase.mount(host, ctx);
+            const instance = mazeQuiz.mount(host, ctx);
             expect(env.findAll(host, 'kq-maze')).toHaveLength(1);
             env.runFrames(30);
             expect(events[0]).toEqual({ type: 'started' });
@@ -181,7 +181,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
         const env = createFakeEnvironment();
         const host = env.createHost();
         const { ctx, stopAll } = harness();
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
         env.runFrames(5);
 
         instance.pause?.();
@@ -209,7 +209,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
     it('Esc／P 暫停與繼續；暫停畫面可以改觸控方向鍵的位置，記在 localStorage', () => {
         const env = createFakeEnvironment();
         const host = env.createHost();
-        const instance = mazeChase.mount(host, harness().ctx);
+        const instance = mazeQuiz.mount(host, harness().ctx);
         const root = env.find(host, 'kq-maze');
         // 沒有觸控螢幕：預設不顯示方向鍵
         expect(root?.dataset.dpad).toBe('off');
@@ -237,7 +237,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
         expectClean(env, host);
 
         // 下一次掛載記得上次的位置
-        const again = mazeChase.mount(host, harness().ctx);
+        const again = mazeQuiz.mount(host, harness().ctx);
         expect(env.find(host, 'kq-maze')?.dataset.dpad).toBe('left');
         again.destroy();
         expectClean(env, host);
@@ -247,7 +247,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
         const env = createFakeEnvironment({ storageThrows: true });
         const host = env.createHost();
         const { ctx, events } = harness();
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
         env.runFrames(30);
         expect(events[0]).toEqual({ type: 'started' });
         instance.destroy();
@@ -263,7 +263,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
             countDownSeconds: 30,
             lives: 9,
         });
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
         env.runFrames(200, 250);
 
         expect(events.map((event) => event.type)).toEqual([
@@ -300,7 +300,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
                 right: { text: 'R' },
             },
         ]);
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
         expect(events).toEqual([
             { type: 'started' },
             { type: 'completed', gameScore: 0, durationMs: 0 },
@@ -317,7 +317,7 @@ describe('mount() 與 destroy()（假的 DOM）', () => {
         const second = rounds[1];
         if (second === undefined) throw new Error('沒有第 2 題');
         const { ctx, played } = harness({}, [second]);
-        const instance = mazeChase.mount(host, ctx);
+        const instance = mazeQuiz.mount(host, ctx);
         env.runFrames(60);
         expect(played).toEqual([]);
         expect(env.find(host, 'kq-maze-replay')?.hidden).toBe(true);

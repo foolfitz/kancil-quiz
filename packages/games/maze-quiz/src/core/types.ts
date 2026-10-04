@@ -1,13 +1,13 @@
 /** 跨模組共用的型別。core/ 是純邏輯，不碰 DOM，所有隨機性都來自注入的 Rng。 */
 
-import type { MazeChaseOptions } from '../meta';
+import type { MazeQuizOptions } from '../meta';
 
 export type { Difficulty, TimerMode } from '../meta';
 
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
 /** 遊戲設定（老師在活動設定裡選的） */
-export type GameOptions = MazeChaseOptions;
+export type GameOptions = MazeQuizOptions;
 
 /** 一題（一關）：遊戲只需要題目代號與每個選項的代號、對錯 */
 export interface Question {

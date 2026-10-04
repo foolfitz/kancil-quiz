@@ -20,7 +20,7 @@ import { attachPointer } from './input/pointer';
 import { holdTouches, preventZoom } from './input/zoomGuard';
 import { startLoop, type Loop } from './loop';
 import { createImageCache } from './media';
-import type { MazeChaseOptions } from './meta';
+import type { MazeQuizOptions } from './meta';
 import { normalizeOptions } from './options';
 import {
     Renderer,
@@ -69,11 +69,11 @@ interface LevelView {
  */
 export function mount(
     el: HTMLElement,
-    ctx: GameContext<MazeChaseOptions>,
+    ctx: GameContext<MazeQuizOptions>,
 ): GameInstance {
     const doc = el.ownerDocument;
     const win = doc.defaultView;
-    if (win === null) throw new Error('迷宮追逐：掛載點不在任何視窗裡');
+    if (win === null) throw new Error('迷宮問答：掛載點不在任何視窗裡');
 
     const scope = createScope(win);
     const dom = createDom(doc, scope);

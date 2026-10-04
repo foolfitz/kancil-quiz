@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vite-plus/test';
-import mazeChase, { mazeChase as named } from '../src';
+import mazeQuiz, { mazeQuiz as named } from '../src';
 import metaSource from '../src/meta.ts?raw';
 import {
     DIFFICULTIES,
     meta,
     OPTION_LIMITS,
     TIMER_MODES,
-    type MazeChaseOptions,
+    type MazeQuizOptions,
 } from '../src/meta';
 import { normalizeOptions } from '../src/options';
 
 describe('模組的中繼資料', () => {
     it('預設匯出與具名匯出是同一個模組，內容來自 meta', () => {
-        expect(named).toBe(mazeChase);
-        expect(mazeChase).toMatchObject({
-            id: 'maze-chase',
+        expect(named).toBe(mazeQuiz);
+        expect(mazeQuiz).toMatchObject({
+            id: 'maze-quiz',
             version: '0.1.0',
-            title: { 'zh-TW': '迷宮追逐' },
+            title: { 'zh-TW': '迷宮問答' },
             requires: {
                 shape: 'mcq',
                 minRounds: 1,
@@ -28,8 +28,8 @@ describe('模組的中繼資料', () => {
                 scored: true,
             },
         });
-        expect(mazeChase.optionsSchema).toBe(meta.optionsSchema);
-        expect(typeof mazeChase.mount).toBe('function');
+        expect(mazeQuiz.optionsSchema).toBe(meta.optionsSchema);
+        expect(typeof mazeQuiz.mount).toBe('function');
     });
 
     it('預設值沿用原本的遊戲：正計時、300 秒、3 條命、難度 2', () => {
@@ -66,7 +66,7 @@ describe('optionsSchema', () => {
     it('預設值與 defaultOptions 相同', () => {
         for (const [key, property] of Object.entries(properties)) {
             expect(property.default).toBe(
-                meta.defaultOptions[key as keyof MazeChaseOptions],
+                meta.defaultOptions[key as keyof MazeQuizOptions],
             );
         }
     });
@@ -104,7 +104,7 @@ describe('optionsSchema', () => {
 
 describe('normalizeOptions', () => {
     it('合法的設定原樣保留', () => {
-        const options: MazeChaseOptions = {
+        const options: MazeQuizOptions = {
             timerMode: 'countDown',
             countDownSeconds: 30,
             lives: 9,

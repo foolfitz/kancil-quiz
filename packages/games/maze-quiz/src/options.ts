@@ -3,11 +3,11 @@ import {
     meta,
     OPTION_LIMITS,
     TIMER_MODES,
-    type MazeChaseOptions,
+    type MazeQuizOptions,
 } from './meta';
 
 /** 宿主傳來的設定；每一欄都可能缺少或型別不對 */
-export type RawOptions = Partial<Record<keyof MazeChaseOptions, unknown>>;
+export type RawOptions = Partial<Record<keyof MazeQuizOptions, unknown>>;
 
 /**
  * 宿主傳來的設定照理已經依 optionsSchema 驗證過；萬一缺了欄位或值不合法，
@@ -15,7 +15,7 @@ export type RawOptions = Partial<Record<keyof MazeChaseOptions, unknown>>;
  */
 export function normalizeOptions(
     raw: RawOptions | null | undefined,
-): MazeChaseOptions {
+): MazeQuizOptions {
     const defaults = meta.defaultOptions;
     const timerMode = TIMER_MODES.find((mode) => mode === raw?.timerMode);
     const difficulty = DIFFICULTIES.find((level) => level === raw?.difficulty);

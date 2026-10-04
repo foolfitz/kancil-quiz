@@ -9,7 +9,7 @@ import type { HostWindow } from '../scope';
 export const DPAD_SIDES = ['left', 'right', 'off'] as const;
 export type DpadSide = (typeof DPAD_SIDES)[number];
 
-const DPAD_KEY = 'kancil-quiz:maze-chase:dpad';
+const DPAD_KEY = 'kancil-quiz:maze-quiz:dpad';
 
 /** 讀寫偏好設定只需要這兩個方法；測試時可以傳入簡單的替身物件 */
 export type PreferenceStorage = Pick<Storage, 'getItem' | 'setItem'>;

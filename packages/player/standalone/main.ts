@@ -1,7 +1,7 @@
 import { check } from '@kancil-quiz/deck';
 import flashCards from '@kancil-quiz/game-flash-cards';
 import matchUp from '@kancil-quiz/game-match-up';
-import mazeChase from '@kancil-quiz/game-maze-chase';
+import mazeQuiz from '@kancil-quiz/game-maze-quiz';
 import quiz from '@kancil-quiz/game-quiz';
 import type { GameModule } from '@kancil-quiz/games-sdk';
 import type { KancilActivity } from '@kancil-quiz/schema';
@@ -16,7 +16,7 @@ import './standalone.css';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyGame = GameModule<any>;
 
-const GAMES: AnyGame[] = [quiz, mazeChase, flashCards, matchUp];
+const GAMES: AnyGame[] = [quiz, mazeQuiz, flashCards, matchUp];
 
 const LANGUAGE_NAMES: Record<string, string> = {
     id: '印尼語',

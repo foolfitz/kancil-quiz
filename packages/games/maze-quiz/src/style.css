@@ -1,4 +1,4 @@
-/* 迷宮追逐的樣式。所有規則都限定在遊戲建立的根元素 .kq-maze 底下，不影響宿主頁面；
+/* 迷宮問答的樣式。所有規則都限定在遊戲建立的根元素 .kq-maze 底下，不影響宿主頁面；
    @font-face 與 @keyframes 的名稱也加上 KQ／kq-maze 前綴。tests/theme.test.ts 會檢查這件事。 */
 
 /* 題目與選項文字的字型 Andika：SIL Open Font License 1.1，授權檔是套件的 fonts/OFL.txt。

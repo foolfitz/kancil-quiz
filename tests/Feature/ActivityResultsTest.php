@@ -33,7 +33,7 @@ class ActivityResultsTest extends TestCase
 
         $this->activity = Activity::create([
             'set_id' => $this->set->id,
-            'game_id' => 'maze-chase',
+            'game_id' => 'maze-quiz',
             'game_version' => '0.1.0',
             'options' => [],
             'owner_id' => $this->teacher->id,
@@ -339,7 +339,7 @@ class ActivityResultsTest extends TestCase
         $attempt = $this->play([[$banana, $banana]]);
 
         $this->actingAs($this->teacher);
-        $activity = Activity::where('game_id', 'maze-chase')->firstOrFail();
+        $activity = Activity::where('game_id', 'maze-quiz')->firstOrFail();
         $this->get("/activities/{$activity->id}/results?attempt={$attempt}")
             ->assertInertia(fn (Assert $page) => $page
                 ->where('summary.attempts', 0)

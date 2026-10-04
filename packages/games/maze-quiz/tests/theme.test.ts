@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import mazeChase from '../src';
+import mazeQuiz from '../src';
 import { meta } from '../src/meta';
 import { themeCssVariables, ZOO_THEME } from '../src/render/theme';
 import rawCss from '../src/style.css?raw';
@@ -34,7 +34,7 @@ describe('視覺主題', () => {
     it('canvas 與 DOM 共用的顏色只寫在 theme.ts，掛載時設成根元素的 CSS 變數', () => {
         const env = createFakeEnvironment();
         const host = env.createHost();
-        const instance = mazeChase.mount(host, {
+        const instance = mazeQuiz.mount(host, {
             rounds: [],
             options: meta.defaultOptions,
             language: 'vi',

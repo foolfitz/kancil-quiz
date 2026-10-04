@@ -34,7 +34,7 @@ export interface GameRequirements {
 }
 
 export interface GameModule<Options = Record<string, unknown>> {
-    id: string; // 例：'maze-chase'
+    id: string; // 例：'maze-quiz'
     version: string; // semver
     title: { 'zh-TW': string };
     requires: GameRequirements;

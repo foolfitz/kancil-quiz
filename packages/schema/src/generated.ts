@@ -47,7 +47,7 @@ export interface KancilActivity {
 }
 export interface GameRef {
   /**
-   * 遊戲 ID，例：maze-chase
+   * 遊戲 ID，例：maze-quiz
    */
   id: string;
   /**

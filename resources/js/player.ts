@@ -16,8 +16,8 @@ if (root?.dataset.activity) {
         apiBase: '/api/v1',
         preview: root.dataset.preview === '1',
         games: {
-            'maze-chase': () =>
-                import('@kancil-quiz/game-maze-chase').then((m) => m.default),
+            'maze-quiz': () =>
+                import('@kancil-quiz/game-maze-quiz').then((m) => m.default),
             quiz: () => import('@kancil-quiz/game-quiz').then((m) => m.default),
             'flash-cards': () =>
                 import('@kancil-quiz/game-flash-cards').then((m) => m.default),

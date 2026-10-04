@@ -225,7 +225,7 @@ class TeacherFlowTest extends TestCase
             ->where('qrSvg', fn (string $svg) => str_contains($svg, '<svg')));
 
         // T-10：同一題組一鍵換成其他遊戲
-        $this->post("/sets/{$set->id}/activities", ['game_id' => 'maze-chase'])->assertRedirect();
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'maze-quiz'])->assertRedirect();
         $this->assertSame(2, $set->activities()->count());
 
         $this->get("/p/{$quiz->id}")->assertOk()->assertSee("data-activity=\"{$quiz->id}\"", false);

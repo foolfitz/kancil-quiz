@@ -111,10 +111,10 @@
             }
         },
         {
-            "id": "maze-chase",
+            "id": "maze-quiz",
             "version": "0.1.0",
             "title": {
-                "zh-TW": "迷宮追逐"
+                "zh-TW": "迷宮問答"
             },
             "requires": {
                 "shape": "mcq",
@@ -138,7 +138,7 @@
             },
             "optionsSchema": {
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "title": "迷宮追逐的設定",
+                "title": "迷宮問答的設定",
                 "type": "object",
                 "additionalProperties": false,
                 "required": [

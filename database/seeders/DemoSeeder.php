@@ -21,7 +21,7 @@ use RuntimeException;
  * - 教材：匯入 database/curriculum/id/1，印尼語第 1 冊第 1 到 4 課的課名與詞彙（docs/SPEC.md 3.6）。
  * - 示範老師：用教材第 1、3 課直接建立的活動，以及從第 1、2 課挑詞組成的題組。
  *   越南語還沒有教材資料，沿用 packages/schema/fixtures 中的越南語題組（E2E 用來檢查聲調符號），
- *   各有選擇題與迷宮追逐兩個活動，不對應冊課。
+ *   各有選擇題與迷宮問答兩個活動，不對應冊課。
  * - 示範同事：在共備庫有兩個由教材改編的公開題組，另有一個等待審核（M2）。
  * - 審核者：負責印尼語與越南語。
  *
@@ -52,7 +52,7 @@ class DemoSeeder extends Seeder
         foreach (self::FIXTURES as $name) {
             $set = $this->fixtureSet($writer, $name, $teacher);
 
-            foreach (['quiz', 'maze-chase'] as $game) {
+            foreach (['quiz', 'maze-quiz'] as $game) {
                 $this->activity($set, $game, $teacher);
             }
         }
@@ -60,7 +60,7 @@ class DemoSeeder extends Seeder
         // 示範老師：直接用教材建立活動，並從第 1、2 課挑詞組成自己的題組（T-18）
         $this->activity($this->lesson(1), 'quiz', $teacher);
         $this->activity($this->lesson(2), 'match-up', $teacher);
-        $this->activity($this->lesson(3), 'maze-chase', $teacher);
+        $this->activity($this->lesson(3), 'maze-quiz', $teacher);
         $this->activity($this->lesson(4), 'flash-cards', $teacher);
         $review = $teacher->sets()->create(['kind' => 'vocab', 'title' => '第 1 冊第 1、2 課複習', 'language_code' => 'id', 'license' => 'CC-BY-4.0']);
         $copier->compose($review, $this->words([1 => null, 2 => null]), $teacher);

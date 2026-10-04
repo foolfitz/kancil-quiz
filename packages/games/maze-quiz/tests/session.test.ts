@@ -7,7 +7,7 @@ import {
     type GameConfig,
 } from '../src/core/game';
 import { opposite } from '../src/core/grid';
-import { meta, type MazeChaseOptions } from '../src/meta';
+import { meta, type MazeQuizOptions } from '../src/meta';
 import { roundsToLevels } from '../src/rounds';
 import { createSession, type Session } from '../src/session';
 
@@ -49,7 +49,7 @@ const rounds: Round[] = [
 ];
 
 function play(
-    options: Partial<MazeChaseOptions> = {},
+    options: Partial<MazeQuizOptions> = {},
     config: GameConfig = NO_ENEMIES,
     gameRounds: readonly Round[] = rounds,
 ): { session: Session; events: GameEvent[] } {

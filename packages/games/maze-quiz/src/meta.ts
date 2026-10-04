@@ -1,4 +1,4 @@
-// 迷宮追逐的中繼資料：老師端的設定表單與伺服器端的清單只需要這些，不必載入整個遊戲。
+// 迷宮問答的中繼資料：老師端的設定表單與伺服器端的清單只需要這些，不必載入整個遊戲。
 // 這個檔案不可以 import 遊戲本體、CSS 或字型，只能 import 型別。
 
 import type { GameModule } from '@kancil-quiz/games-sdk';
@@ -18,7 +18,7 @@ export const OPTION_LIMITS = {
 } as const;
 
 /** 老師可以調整的遊戲設定 */
-export interface MazeChaseOptions {
+export interface MazeQuizOptions {
     readonly timerMode: TimerMode;
     /** 只在 timerMode 為 countDown 時使用 */
     readonly countDownSeconds: number;
@@ -26,7 +26,7 @@ export interface MazeChaseOptions {
     readonly difficulty: Difficulty;
 }
 
-const defaultOptions: MazeChaseOptions = {
+const defaultOptions: MazeQuizOptions = {
     timerMode: 'countUp',
     countDownSeconds: 300,
     lives: 3,
@@ -51,7 +51,7 @@ const DIFFICULTY_TITLES: Readonly<Record<Difficulty, string>> = {
  */
 const optionsSchema = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    title: '迷宮追逐的設定',
+    title: '迷宮問答的設定',
     type: 'object',
     additionalProperties: false,
     required: ['timerMode', 'countDownSeconds', 'lives', 'difficulty'],
@@ -95,9 +95,9 @@ const optionsSchema = {
 };
 
 export const meta = {
-    id: 'maze-chase',
+    id: 'maze-quiz',
     version: '0.1.0',
-    title: { 'zh-TW': '迷宮追逐' },
+    title: { 'zh-TW': '迷宮問答' },
     requires: {
         shape: 'mcq',
         minRounds: 1,
@@ -110,4 +110,4 @@ export const meta = {
     },
     optionsSchema,
     defaultOptions,
-} satisfies Omit<GameModule<MazeChaseOptions>, 'mount'>;
+} satisfies Omit<GameModule<MazeQuizOptions>, 'mount'>;

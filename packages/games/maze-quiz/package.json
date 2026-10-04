@@ -1,8 +1,8 @@
 {
-    "name": "@kancil-quiz/game-maze-chase",
+    "name": "@kancil-quiz/game-maze-quiz",
     "version": "0.0.0",
     "private": true,
-    "description": "迷宮追逐（docs/SPEC.md 7.5）",
+    "description": "迷宮問答（docs/SPEC.md 7.5）",
     "type": "module",
     "exports": {
         ".": "./src/index.ts",
