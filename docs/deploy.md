@@ -50,6 +50,7 @@ docker compose run --rm app php artisan key:generate --show
 - `APP_KEY`：貼上剛才的金鑰。
 - `APP_URL`：`https://` 加上你的網域。
 - `SERVER_NAME`：你的網域，不加 `https://`。
+- `KANCIL_INDEXING`：用暫用網域時設成 `false`，所有頁面都不讓搜尋引擎收錄（見下方「換網域」）。用正式網域就不必設定。
 - `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`：見下方「Google 登入」。
 - `KANCIL_OPERATOR`、`KANCIL_CONTACT_EMAIL`：顯示在隱私權政策與使用條款（`/privacy`、`/terms`）上的營運者與聯絡信箱。上線前請讀過這兩頁，確認內容符合你的情況。
 - 有 SMTP 帳號的話，填寫 `MAIL_` 開頭的設定。
@@ -157,7 +158,24 @@ docker compose exec scheduler php artisan kancil:prune
 | 頁面顯示 500 錯誤 | `docker compose logs app`。不要在正式環境打開 `APP_DEBUG` |
 | 容器一直重新啟動 | `docker compose logs app`；最常見的是 `.env.production` 沒有填 `APP_KEY` |
 | 上傳失敗 | 單檔上限 5 MB；PHP 的上限設定在 `docker/php.ini` |
-| 要換網域 | 修改 `.env.production` 的 `SERVER_NAME` 與 `APP_URL`，執行 `docker compose up -d` |
+| 要換網域 | 見下方「換網域」 |
+
+## 換網域
+
+先用暫用網域上線時，在 `.env.production` 設定 `KANCIL_INDEXING=false`：Caddy 會在所有回應加上 `X-Robots-Tag: noindex`，搜尋引擎不會收錄這個網域，日後換網域時不會留下重複的內容。`robots.txt` 照常開放，搜尋引擎要讀得到頁面才看得到 `noindex`。分享的連結與 LINE、Facebook 的連結預覽不受影響。
+
+換到正式網域時：
+
+1. 新網域的 DNS 指向這台 VM。
+2. 修改 `.env.production`：
+   - `SERVER_NAME`、`APP_URL` 改成新網域。
+   - 拿掉 `KANCIL_INDEXING=false`。
+   - `MAIL_FROM_ADDRESS` 如果用到舊網域，也一起改。
+3. 執行 `docker compose up -d`。
+4. Google Cloud Console：
+   - OAuth 用戶端的「已授權的重新導向 URI」加上 `https://新網域/auth/google/callback`。
+   - 同意畫面的授權網域、隱私權政策與服務條款的網址改成新網域。
+5. 已經發出去的活動連結與 QR code 都是舊網域。要讓它們繼續有效，`SERVER_NAME` 可以同時寫兩個網域（例如 `new.example.org, quiz.katasumi.asia`）。舊網域要改成轉址的話，在 `docker/Caddyfile` 另外加一段 `redir`。
 
 ## 尚未包含
 

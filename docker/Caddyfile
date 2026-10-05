@@ -21,6 +21,11 @@
 		X-Content-Type-Options "nosniff"
 	}
 
+	# 暫用網域：KANCIL_INDEXING=false 時所有回應都不讓搜尋引擎收錄（docs/deploy.md）。
+	# robots.txt 照常開放，搜尋引擎要讀得到頁面才看得到 noindex。
+	@noindex expression `{env.KANCIL_INDEXING} == "false"`
+	header @noindex X-Robots-Tag "noindex"
+
 	# 上傳的媒體：不讓搜尋引擎收錄；檔名隨機且內容不可變，可以長期快取（docs/SPEC.md 第 9 節）。
 	# file_server 預設不列出目錄內容。
 	header /storage/* {
