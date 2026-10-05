@@ -55,6 +55,14 @@ class Activity extends Model
     }
 
     /**
+     * @return HasMany<Report, $this>
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    /**
      * @return HasMany<Attempt, $this>
      */
     public function attempts(): HasMany

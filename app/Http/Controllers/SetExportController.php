@@ -25,7 +25,7 @@ class SetExportController extends Controller
      */
     public function shared(string $token): BinaryFileResponse
     {
-        return $this->download(Set::where('share_token', $token)->where('visibility', 'unlisted')->firstOrFail());
+        return $this->download(Set::sharedBy($token));
     }
 
     /**
@@ -33,7 +33,7 @@ class SetExportController extends Controller
      */
     public function openData(Set $set): BinaryFileResponse
     {
-        abort_unless($set->isPublic(), 404);
+        abort_unless($set->isListed(), 404);
 
         return $this->download($set);
     }

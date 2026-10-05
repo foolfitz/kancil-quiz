@@ -14,7 +14,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 /**
- * 使用者與角色（docs/SPEC.md A-01）。帳號一律透過邀請建立，這裡只調整姓名與角色。
+ * 使用者與角色（docs/SPEC.md A-01、A-05）。老師的帳號在第一次用 Google 登入時建立；這裡調整姓名與角色、停用或刪除帳號。
  */
 class UserResource extends Resource
 {

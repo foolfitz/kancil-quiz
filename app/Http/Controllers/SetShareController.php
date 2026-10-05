@@ -47,7 +47,7 @@ class SetShareController extends Controller
      */
     public function show(Request $request, string $token): Response
     {
-        $set = Set::where('share_token', $token)->where('visibility', 'unlisted')->firstOrFail();
+        $set = Set::sharedBy($token);
 
         return Inertia::render('sets/Show', SetViewData::props($set, $request->user(), $token));
     }

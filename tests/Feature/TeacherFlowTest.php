@@ -182,6 +182,28 @@ class TeacherFlowTest extends TestCase
         $this->assertSame([['name' => $this->teacher->name]], $media->authors);
     }
 
+    public function test_each_teacher_has_an_upload_quota(): void
+    {
+        Storage::fake('public');
+        config(['kancil.upload_quota_mb' => 1]);
+        $upload = fn (User $user) => $this->actingAs($user)->post('/media', [
+            'kind' => 'image',
+            'file' => UploadedFile::fake()->image('banana.png', 40, 40),
+            'rights' => '1',
+        ], ['Accept' => 'application/json']);
+
+        // 以轉檔後的大小計算，到達上限之後就不能再上傳
+        Media::create(['kind' => 'image', 'path' => 'media/a.webp', 'mime' => 'image/webp', 'bytes' => 1024 * 1024 - 1, 'uploaded_by' => $this->teacher->id]);
+        $upload($this->teacher)->assertCreated();
+        $upload($this->teacher)->assertUnprocessable()->assertJsonValidationErrors(['file' => '你上傳的檔案已經到達上限（1 MB），請聯絡網站管理員。']);
+
+        // 管理員不受限制
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        Media::create(['kind' => 'image', 'path' => 'media/b.webp', 'mime' => 'image/webp', 'bytes' => 2 * 1024 * 1024, 'uploaded_by' => $admin->id]);
+        $upload($admin)->assertCreated();
+    }
+
     public function test_uploaded_audio_is_converted_to_mono_aac(): void
     {
         Storage::fake('public');

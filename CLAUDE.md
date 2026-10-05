@@ -28,6 +28,9 @@
   - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組，`preview()` 在交易中匯入後還原；`VolumeFile` 讀取資料檔（repo 的 `volume.json`，或後台上傳的「課文與詞彙.json」）；`CurriculumImages` 依檔名把插圖對應到一冊的詞；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。repo 的 `database/curriculum/` 只放印尼語第 1 冊（示範資料與 E2E），格式見該目錄的 README；其他冊在後台匯入。
   - 人氣統計（SPEC A-04）：`App\Curriculum\PlayCounts` 把試玩的計次累加到 `curriculum_plays`（一課、一個遊戲、台灣時間的一天一列，只有次數），並和課堂的作答數（直接用教材題組建立的活動）一起彙總；後台頁面是 `app/Filament/Pages/PlayStats.php`，管理員與審核者都能看。
   - `app/Filament/Pages/ImportCurriculum.php`：後台的「匯入教材」頁，只有管理員能用：上傳詞彙的 JSON、批次上傳插圖，都先預覽再寫入。審核者修正過的課以 `CurriculumImporter::editedOnSite()` 判斷（最近一次匯入詞彙之後有沒有教材帳號以外的版本，`curriculum_refs.imported_revision`）；寫入教材題組的程式要以教材帳號產生版本，否則會被當成修正。
+  - 帳號（SPEC T-01、T-03、第 5 節、A-05）：老師用 Google 登入（Socialite，`App\Http\Controllers\Auth\GoogleLoginController`），帳號的對應與建立在 `App\Auth\GoogleAccounts`：同一個 Google 帳號 → 同一個 email 且還沒連結 Google 的帳號 → 建立新的老師。Fortify 只留密碼登入、雙重驗證與 passkey，給有密碼的帳號（管理員、示範帳號），沒有註冊、重設密碼與驗證信；Filament 沒有自己的登入頁，沒登入時導到 `/login`。設定頁的「安全性」只給有密碼的帳號（`EnsureUserHasPassword`）。刪除帳號是匿名化（`App\Auth\AccountDeletion`），不真的刪除使用者；管理員停用的帳號（`users.disabled_at`）由 `EnsureAccountIsActive` 登出，他的活動、分享連結與開放資料都回 404，公開題組不列在共備庫（`Set::listed()`、`Set::isListed()`、`Set::sharedBy()`）。新增列出公開題組或播放活動的地方時，要一併排除停用的擁有者。
+  - 播放頁的檢舉（SPEC S-07）：`POST /api/v1/activities/{activity}/reports` 存進 `reports`，寄信給管理員（`ActivityReported`，寄不出去不影響），後台的「檢舉」（`app/Filament/Resources/Reports`）處理。
+  - 工作階段存在資料庫，但不記錄 IP 與瀏覽器（`App\Support\SessionHandler` 取代 `database` driver）。
   - 老師端側邊欄的「後台」連結只給能進 Filament 的人（`auth.adminUrl`）；`NavItem.external` 的項目用一般連結整頁載入，不走 Inertia。
   - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
@@ -89,9 +92,9 @@
 | `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `../maze-quiz` 的最新 commit，之後要 commit 新的指標 |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查 |
-| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password |
+| `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password（在登入頁下方的「管理員：用 email 與密碼登入」）。本機沒有設定 `GOOGLE_CLIENT_ID` 時不顯示 Google 登入 |
 | `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
-| `php artisan kancil:invite --role=admin` | 建立註冊邀請連結（註冊一律需要邀請） |
+| `php artisan kancil:create-admin <email>` | 建立管理員（會要求設定密碼），或把既有的帳號設為管理員。老師不需要邀請，用 Google 登入就會建立帳號 |
 | `php artisan kancil:prune --dry-run` | 列出排程會清除的資料筆數，不刪除；拿掉 `--dry-run` 就會真的刪除 |
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
 | `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |

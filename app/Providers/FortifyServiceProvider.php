@@ -2,17 +2,16 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
-use App\Models\Invitation;
+use App\Auth\GoogleAccounts;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -36,12 +35,21 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure Fortify actions.
+     * 密碼登入只給有密碼的帳號（管理員，docs/SPEC.md T-01）；停用的帳號不能登入（A-05）。
      */
     private function configureActions(): void
     {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        Fortify::createUsersUsing(CreateNewUser::class);
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $user = User::where('email', Str::lower((string) $request->input(Fortify::username())))->first();
+            if ($user === null || ! $user->hasPassword() || ! Hash::check((string) $request->input('password'), (string) $user->password)) {
+                return null;
+            }
+            if ($user->isDisabled()) {
+                throw ValidationException::withMessages([Fortify::username() => '這個帳號已經停用。']);
+            }
+
+            return $user;
+        });
     }
 
     /**
@@ -50,33 +58,9 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureViews(): void
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
+            'googleLogin' => GoogleAccounts::configured(),
             'status' => $request->session()->get('status'),
         ]));
-
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/ForgotPassword', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/VerifyEmail', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::registerView(function (Request $request) {
-            $invitation = Invitation::findUsable($request->query('invitation'));
-
-            return Inertia::render('auth/Register', [
-                'passwordRules' => Password::defaults()->toPasswordRulesString(),
-                'invitation' => $invitation ? $request->query('invitation') : null,
-                'invitationEmail' => $invitation?->email,
-            ]);
-        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
 

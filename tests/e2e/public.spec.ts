@@ -87,3 +87,34 @@ test('訪客從首頁找到一課，直接玩選擇題', async ({ page }, testIn
 
     expect(errors).toEqual([]);
 });
+
+test('老師登入頁、隱私權政策與使用條款', async ({ page }, testInfo) => {
+    const errors = collectErrors(page);
+
+    await page.goto('/');
+    await page.getByRole('link', { name: '老師登入' }).first().click();
+    await page.waitForURL('**/login');
+    // E2E 沒有設定 Google 的 OAuth 用戶端；密碼登入收在下面，預設不展開
+    await expect(
+        page.getByText('這個網站還沒有設定 Google 登入'),
+    ).toBeVisible();
+    await expect(page.locator('input[name=password]')).toBeHidden();
+    await page.screenshot({ path: testInfo.outputPath('login.png') });
+
+    await page.getByRole('link', { name: '隱私權政策' }).click();
+    await page.waitForURL('**/privacy');
+    await expect(
+        page.getByRole('heading', { name: '隱私權政策', level: 1 }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: '使用條款' }).first().click();
+    await page.waitForURL('**/terms');
+    await expect(
+        page.getByRole('heading', { name: '使用條款', level: 1 }),
+    ).toBeVisible();
+    await page.screenshot({
+        path: testInfo.outputPath('terms.png'),
+        fullPage: true,
+    });
+
+    expect(errors).toEqual([]);
+});

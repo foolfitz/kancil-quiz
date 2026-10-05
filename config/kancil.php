@@ -15,6 +15,17 @@ return [
     'vite_hot_file' => env('VITE_HOT_FILE'),
 
     /*
+    | 隱私權政策與使用條款上的營運者與聯絡方式（docs/SPEC.md 第 11 節）。架站的人要填自己的資料。
+    */
+    'operator' => env('KANCIL_OPERATOR'),
+    'contact_email' => env('KANCIL_CONTACT_EMAIL'),
+
+    /*
+    | 每位老師上傳的媒體總量上限（MB，以轉檔後的大小計算，docs/SPEC.md 第 9 節）。管理員不受限制。
+    */
+    'upload_quota_mb' => (int) env('KANCIL_UPLOAD_QUOTA_MB', 200),
+
+    /*
     | 資料的保存期限（docs/SPEC.md 第 5、9 節）。每天由排程 kancil:prune 清除（App\Support\Pruner）。
     */
     'retention' => [

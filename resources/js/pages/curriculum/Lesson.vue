@@ -280,7 +280,9 @@ function play(url: string): void {
                 >
                     <h2 class="font-semibold">老師：用這一課出作業</h2>
                     <p class="text-sm text-muted-foreground">
-                        登入後可以用這一課建立活動，取得給學生的連結與 QR
+                        用 Google
+                        帳號登入（第一次登入就建立帳號）後，可以用這一課建立活動，取得給學生的連結與
+                        QR
                         code，設定開放與截止時間，看每位學生的成績；也能複製或挑詞做成自己的題組。
                         <template v-if="sharedCount > 0"
                             >共備庫中還有

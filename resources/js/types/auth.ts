@@ -16,6 +16,8 @@ export type Auth = {
     canReview: boolean;
     // Filament 後台的網址，只給管理員與審核者
     adminUrl: string | null;
+    // 有密碼的帳號（管理員）才有設定頁的「安全性」；老師用 Google 登入
+    hasPassword: boolean;
 };
 
 export type Passkey = {

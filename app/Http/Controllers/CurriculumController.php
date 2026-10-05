@@ -74,7 +74,7 @@ class CurriculumController extends Controller
         $words = $set === null ? [] : SetEditorData::entries($set);
         // 共備庫中對應這一課的題組：共備庫要登入（docs/SPEC.md 3.2），訪客只看得到數量
         $shared = Set::query()
-            ->where('visibility', 'public')
+            ->listed()
             ->whereHas('curriculumRefs', fn ($query) => $query->whereKey($ref->id))
             ->when($set, fn ($query) => $query->whereKeyNot($set->id));
 

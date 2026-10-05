@@ -246,8 +246,86 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 el('p', 'kq-player__note', '預覽模式：不會留下作答紀錄'),
             );
         }
+        appendReportLink(box, () => startScreen());
         show(box);
     };
+
+    // 檢舉（docs/SPEC.md S-07）：只有老師建立的活動有。預覽、試玩與獨立播放器沒有對外的活動連結。
+    function appendReportLink(box: HTMLElement, back: () => void): void {
+        if (!offline) {
+            box.append(
+                button('kq-player__report-link', '檢舉這個活動', () =>
+                    reportScreen(back),
+                ),
+            );
+        }
+    }
+
+    function reportScreen(back: () => void): void {
+        const box = el('div', 'kq-player__screen');
+        const form = el('form', 'kq-player__report');
+        const label = el(
+            'label',
+            'kq-player__label-text',
+            '這個活動有什麼問題？',
+        );
+        const input = el('textarea', 'kq-player__report-input');
+        input.id = 'kq-player-report';
+        label.htmlFor = input.id;
+        input.maxLength = 1000;
+        const error = el('p', 'kq-player__error');
+        error.hidden = true;
+        const submit = el(
+            'button',
+            'kq-player__button kq-player__start',
+            '送出',
+        );
+        submit.type = 'submit';
+        form.append(
+            label,
+            el(
+                'p',
+                'kq-player__note',
+                '例如內容不適合學生、侵犯他人權利。只會送給網站管理員，不會記錄你是誰。',
+            ),
+            input,
+            error,
+            submit,
+            button('kq-player__secondary', '取消', back),
+        );
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (input.value.trim() === '' || submit.disabled) {
+                input.focus();
+                return;
+            }
+            submit.disabled = true;
+            api.report(activity.id, input.value.trim()).then(
+                (result) => {
+                    const done = el('div', 'kq-player__screen');
+                    done.append(
+                        el('h1', 'kq-player__title', result.message),
+                        button('kq-player__start', '返回', back),
+                    );
+                    show(done);
+                },
+                (failure: unknown) => {
+                    submit.disabled = false;
+                    error.hidden = false;
+                    error.textContent =
+                        failure instanceof ApiError && failure.status === 422
+                            ? failure.message
+                            : failure instanceof ApiError &&
+                                failure.status === 429
+                              ? '送出太多次了，請稍後再試。'
+                              : '沒有送出，請檢查網路後再試一次。';
+                },
+            );
+        });
+        box.append(el('h1', 'kq-player__title', '檢舉這個活動'), form);
+        show(box);
+        input.focus();
+    }
 
     // 要記名的活動沒有連上伺服器時不讓學生玩：學生會以為交了作業，其實沒有紀錄。
     const failedToStart = () => {
@@ -555,6 +633,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 }),
             );
         }
+        appendReportLink(box, () => show(box));
         show(box);
     }
 

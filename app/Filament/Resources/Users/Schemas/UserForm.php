@@ -25,7 +25,7 @@ class UserForm
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload()
-                    ->helperText('teacher：老師；curator：審核者，可以發邀請；admin：管理員'),
+                    ->helperText('teacher：老師；curator：審核者；admin：管理員。新的審核者請對方先用 Google 登入一次，再在這裡指定'),
                 Select::make('reviewLanguages')
                     ->label('負責審核的語言')
                     ->relationship('reviewLanguages', 'name_zh')

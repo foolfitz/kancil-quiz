@@ -13,7 +13,8 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name, page) => {
         switch (true) {
-            case name === 'Welcome':
+            // 首頁、隱私權政策與使用條款不論登入與否都用簡單的頁首
+            case name === 'Welcome' || name.startsWith('legal/'):
                 return GuestLayout;
             // 教材不需登入（docs/SPEC.md S-06）：訪客用簡單的頁首，老師照舊用側邊欄
             case name.startsWith('curriculum/') &&

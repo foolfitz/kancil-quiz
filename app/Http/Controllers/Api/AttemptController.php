@@ -25,6 +25,7 @@ class AttemptController extends Controller
 
     public function store(Request $request, Activity $activity): JsonResponse
     {
+        abort_if($activity->owner->isDisabled(), 404);
         // 截止前開始的作答，截止後仍可以送完（responses、complete 不檢查時間）
         abort_if($activity->status() === 'scheduled', 403, '這個活動還沒開放');
         abort_if($activity->status() === 'closed', 403, '這個活動已經截止');

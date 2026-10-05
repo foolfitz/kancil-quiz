@@ -22,11 +22,11 @@ class AdminPanelTest extends TestCase
         return $user;
     }
 
-    public function test_admins_can_manage_users_languages_and_invitations(): void
+    public function test_admins_can_manage_users_languages_and_reports(): void
     {
         $admin = $this->userWithRole('admin');
 
-        foreach (['/admin', '/admin/users', '/admin/languages', '/admin/curriculum-refs', '/admin/invitations', '/admin/invitations/create'] as $url) {
+        foreach (['/admin', '/admin/users', '/admin/languages', '/admin/curriculum-refs', '/admin/reports', '/admin/play-stats'] as $url) {
             $this->actingAs($admin)->get($url)->assertOk();
         }
 
@@ -37,13 +37,20 @@ class AdminPanelTest extends TestCase
         $this->get("/admin/users/{$admin->id}/edit")->assertOk()->assertSee('負責審核的語言');
     }
 
-    public function test_curators_can_only_invite(): void
+    public function test_curators_only_see_the_popularity_of_lessons(): void
     {
         $curator = $this->userWithRole('curator');
 
-        $this->actingAs($curator)->get('/admin/invitations')->assertOk()->assertSee('回到首頁');
-        $this->actingAs($curator)->get('/admin/users')->assertForbidden();
-        $this->actingAs($curator)->get('/admin/languages')->assertForbidden();
+        $this->actingAs($curator)->get('/admin/play-stats')->assertOk()->assertSee('回到首頁');
+        foreach (['/admin/users', '/admin/languages', '/admin/reports', '/admin/curriculum-refs'] as $url) {
+            $this->actingAs($curator)->get($url)->assertForbidden();
+        }
+    }
+
+    public function test_guests_are_sent_to_the_site_login(): void
+    {
+        // 後台沒有自己的登入頁：審核者用 Google 登入（docs/SPEC.md T-03）
+        $this->get('/admin')->assertRedirect(route('login'));
     }
 
     public function test_teachers_cannot_use_the_admin_panel(): void

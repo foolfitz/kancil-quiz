@@ -160,10 +160,9 @@ return [
     |
     */
 
+    // 老師一律用 Google 登入（App\Http\Controllers\Auth\GoogleLoginController，docs/SPEC.md T-03）：
+    // 不開放註冊、不寄重設密碼與驗證信。密碼登入、雙重驗證與 passkey 留給有密碼的帳號（管理員）。
     'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
-        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

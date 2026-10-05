@@ -46,18 +46,18 @@ class SetPolicy
     public function view(User $user, Set $set): bool
     {
         return $this->manage($user, $set)
-            || $set->isPublic()
-            || ($set->review_status === 'pending' && $user->canReview($set->language_code));
+            || $set->isListed()
+            || (($set->isPublic() || $set->review_status === 'pending') && $user->canReview($set->language_code));
     }
 
     public function copy(User $user, Set $set): bool
     {
-        return $this->manage($user, $set) || $set->isPublic();
+        return $this->manage($user, $set) || $set->isListed();
     }
 
     public function export(User $user, Set $set): bool
     {
-        return $this->manage($user, $set) || $set->isPublic();
+        return $this->manage($user, $set) || $set->isListed();
     }
 
     public function review(User $user, Set $set): bool

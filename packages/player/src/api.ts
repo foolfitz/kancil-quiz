@@ -80,6 +80,18 @@ export class PlayerApi {
         );
     }
 
+    // 檢舉活動（docs/SPEC.md S-07），回傳給玩的人看的訊息
+    report(activityId: string, reason: string): Promise<{ message: string }> {
+        return request(
+            this.fetcher,
+            `${this.base}/activities/${activityId}/reports`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ reason }),
+            },
+        );
+    }
+
     attempt(attemptId: string, token: string): AttemptSession {
         return new AttemptSession(this.base, attemptId, token, this.fetcher);
     }

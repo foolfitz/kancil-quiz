@@ -15,6 +15,8 @@ class PlaybackController extends Controller
 {
     public function show(Activity $activity): JsonResponse
     {
+        // 管理員停用的老師，活動連結也失效（docs/SPEC.md A-05）
+        abort_if($activity->owner->isDisabled(), 404);
         $revision = $activity->set->currentRevision;
         abort_if($revision === null, 404, '這個活動還沒有內容');
 

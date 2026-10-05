@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
-import { dashboard, home, login } from '@/routes';
+import { dashboard, home, login, privacy, terms } from '@/routes';
 import type { BreadcrumbItem, User } from '@/types';
 
 // 不需登入的頁面（docs/SPEC.md S-06）：首頁與教材。已登入的老師看教材時改用側邊欄的 AppLayout（resources/js/app.ts）。
@@ -53,13 +53,23 @@ const user = computed(() => page.props.auth.user as User | null);
             <slot />
         </main>
         <footer class="border-t">
-            <p
-                class="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground"
+            <div
+                class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground"
             >
-                Kancil
-                Quiz：給新住民語文老師的互動練習平台，同一份題組可以切換成多種遊戲。程式碼以
-                AGPL-3.0 開放原始碼。
-            </p>
+                <p>
+                    Kancil
+                    Quiz：給新住民語文老師的互動練習平台，同一份題組可以切換成多種遊戲。程式碼以
+                    AGPL-3.0 開放原始碼。
+                </p>
+                <nav class="flex gap-4">
+                    <Link :href="privacy()" class="hover:text-foreground"
+                        >隱私權政策</Link
+                    >
+                    <Link :href="terms()" class="hover:text-foreground"
+                        >使用條款</Link
+                    >
+                </nav>
+            </div>
         </footer>
     </div>
 </template>

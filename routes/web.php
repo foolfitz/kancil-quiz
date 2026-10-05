@@ -3,8 +3,10 @@
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityResultsController;
 use App\Http\Controllers\ActivityResultsCsvController;
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlayerController;
@@ -17,6 +19,14 @@ use App\Http\Controllers\SetShareController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CurriculumController::class, 'home'])->name('home');
+Route::get('privacy', [LegalController::class, 'privacy'])->name('privacy');
+Route::get('terms', [LegalController::class, 'terms'])->name('terms');
+
+// 老師用 Google 帳號登入，第一次登入就建立帳號（docs/SPEC.md T-03）；管理員另外可以用密碼（Fortify 的 /login）
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
+});
 
 // 學生端播放頁，不需登入
 Route::get('p/{activity}', [PlayerController::class, 'show'])->name('play');
@@ -31,7 +41,7 @@ Route::get('curriculum/{language}/{volume}/{lesson}/play/{game}', [CurriculumCon
     ->name('curriculum.play');
 
 // 老師端（docs/SPEC.md 10.3）
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::resource('sets', SetController::class);

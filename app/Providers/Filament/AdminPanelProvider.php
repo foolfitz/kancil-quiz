@@ -28,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            // 沒有自己的登入頁：沒登入時導到網站的 /login，審核者用 Google、管理員用 Google 或密碼登入（docs/SPEC.md T-03）
             ->brandName('Kancil Quiz 後台')
             ->colors([
                 'primary' => Color::Amber,

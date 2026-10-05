@@ -86,7 +86,7 @@ class LibraryController extends Controller
     private function publicSets(array $languages): Builder
     {
         return Set::query()
-            ->where('visibility', 'public')
+            ->listed()
             ->whereIn('language_code', $languages);
     }
 

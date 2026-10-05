@@ -109,4 +109,27 @@ test.describe.serial('選擇題', () => {
 
         expect(errors).toEqual([]);
     });
+
+    test('學生可以檢舉活動', async ({ page }) => {
+        const errors = collectErrors(page);
+        await page.context().clearCookies(); // 學生不登入
+
+        // 檢舉（SPEC S-07）：開始畫面最下面的小連結，送給網站管理員
+        await page.goto(playPath);
+        await page.getByRole('button', { name: '檢舉這個活動' }).click();
+        await expect(
+            page.getByRole('heading', { name: '檢舉這個活動' }),
+        ).toBeVisible();
+        await page.getByLabel('這個活動有什麼問題？').fill('測試：檢舉的流程');
+        await page.getByRole('button', { name: '送出' }).click();
+        await expect(
+            page.getByRole('heading', {
+                name: '已經送出，謝謝你。管理員會盡快處理。',
+            }),
+        ).toBeVisible();
+        await page.getByRole('button', { name: '返回' }).click();
+        await expect(page.getByRole('button', { name: '開始' })).toBeVisible();
+
+        expect(errors).toEqual([]);
+    });
 });

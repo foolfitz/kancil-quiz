@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,20 +11,21 @@ import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+const page = usePage();
+// 「安全性」（密碼、雙重驗證、passkey）只給有密碼的帳號；老師用 Google 登入
+const sidebarNavItems = computed<NavItem[]>(() => [
     {
         title: '個人資料',
         href: editProfile(),
     },
-    {
-        title: '安全性',
-        href: editSecurity(),
-    },
+    ...(page.props.auth.hasPassword
+        ? [{ title: '安全性', href: editSecurity() }]
+        : []),
     {
         title: '外觀',
         href: editAppearance(),
     },
-];
+]);
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 </script>

@@ -65,6 +65,30 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_only_active_accounts_with_a_password_can_use_the_password_form()
+    {
+        // 用 Google 登入建立的老師沒有密碼
+        $teacher = User::factory()->create(['password' => null, 'google_id' => '1001']);
+        $this->post(route('login.store'), ['email' => $teacher->email, 'password' => ''])->assertSessionHasErrors('password');
+        $this->post(route('login.store'), ['email' => $teacher->email, 'password' => 'password'])->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        $disabled = User::factory()->create(['disabled_at' => now()]);
+        $this->post(route('login.store'), ['email' => $disabled->email, 'password' => 'password'])
+            ->assertSessionHasErrors(['email' => '這個帳號已經停用。']);
+        $this->assertGuest();
+    }
+
+    public function test_there_is_no_registration_or_password_reset()
+    {
+        // 老師一律用 Google 登入（docs/SPEC.md T-02、T-03）
+        foreach (['/register', '/forgot-password', '/reset-password/token', '/email/verify'] as $url) {
+            $this->get($url)->assertNotFound();
+        }
+        $this->post('/register', ['name' => 'x', 'email' => 'x@example.com', 'password' => 'password', 'password_confirmation' => 'password'])->assertNotFound();
+        $this->assertSame(0, User::count());
+    }
+
     public function test_users_can_logout()
     {
         $user = User::factory()->create();

@@ -38,8 +38,9 @@ function languageHref(code: string): string {
                 新住民語文教材的每一課，都能直接變成遊戲
             </h1>
             <p class="text-base leading-relaxed text-muted-foreground">
-                國教署《新住民語文學習教材》的課名與詞彙，配上自製的插圖，選一課就能玩。老師登入後可以用同一課建立活動，取得給學生的連結與
-                QR code、看每位學生的成績，也能挑詞做成自己的題組。
+                國教署《新住民語文學習教材》的課名與詞彙，配上自製的插圖，選一課就能玩。老師用
+                Google 帳號登入後，可以用同一課建立活動，取得給學生的連結與 QR
+                code、看每位學生的成績，也能挑詞做成自己的題組。
             </p>
             <div class="flex flex-wrap items-center gap-3">
                 <Button as-child size="lg">

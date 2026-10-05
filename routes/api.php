@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AttemptController;
 use App\Http\Controllers\Api\CurriculumPlayController;
 use App\Http\Controllers\Api\PlaybackController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\SetExportController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,8 @@ Route::prefix('v1')->middleware('throttle:student-api')->name('api.')->group(fun
     Route::post('activities/{activity}/attempts', [AttemptController::class, 'store'])->name('attempts.store');
     Route::post('attempts/{attempt}/responses', [AttemptController::class, 'responses'])->name('attempts.responses');
     Route::post('attempts/{attempt}/complete', [AttemptController::class, 'complete'])->name('attempts.complete');
+    // 檢舉活動（S-07）
+    Route::post('activities/{activity}/reports', [ReportController::class, 'store'])->middleware('throttle:reports')->name('reports.store');
     // 教材試玩的計次（S-06、A-04）：只累計次數
     Route::post('curriculum/{language}/{volume}/{lesson}/plays', [CurriculumPlayController::class, 'store'])
         ->whereNumber(['volume', 'lesson'])

@@ -47,6 +47,8 @@ class HandleInertiaRequests extends Middleware
                 'canReview' => (bool) $request->user()?->hasAnyRole(['admin', 'curator']),
                 // 側邊欄的「後台」：管理員與審核者（App\Models\User::canAccessPanel()）
                 'adminUrl' => $request->user()?->canAccessPanel($admin) ? url($admin->getPath()) : null,
+                // 設定頁的「安全性」只給有密碼的帳號（管理員）；老師用 Google 登入
+                'hasPassword' => (bool) $request->user()?->hasPassword(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

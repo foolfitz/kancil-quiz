@@ -6,6 +6,7 @@ use App\Models\Concerns\HasUlids;
 use Carbon\CarbonImmutable;
 use Database\Factories\SetFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -62,6 +63,34 @@ class Set extends Model
     }
 
     /**
+     * 公開而且擁有者沒有被停用：列在共備庫、任何老師都能檢視、複製與匯出（docs/SPEC.md 3.2、A-05）。
+     * 擁有者被停用時，審核者與管理員仍可以看到並下架它（isPublic()）。
+     */
+    public function isListed(): bool
+    {
+        return $this->isPublic() && ! $this->owner->isDisabled();
+    }
+
+    /**
+     * 同事的分享連結（docs/SPEC.md T-17）：擁有者被停用時一樣失效。
+     */
+    public static function sharedBy(string $token): self
+    {
+        return self::where('share_token', $token)
+            ->where('visibility', 'unlisted')
+            ->whereHas('owner', fn (Builder $owner) => $owner->whereNull('disabled_at'))
+            ->firstOrFail();
+    }
+
+    /**
+     * @param  Builder<Set>  $query
+     */
+    public function scopeListed(Builder $query): void
+    {
+        $query->where('visibility', 'public')->whereHas('owner', fn (Builder $owner) => $owner->whereNull('disabled_at'));
+    }
+
+    /**
      * 教材題組：由某一課的詞彙匯入，所有老師都能直接用來建立活動（docs/SPEC.md 3.6）。
      */
     public function isTextbook(): bool
@@ -81,7 +110,8 @@ class Set extends Model
         if ($authors !== [] && $this->isTextbook()) {
             return $authors;
         }
-        if (! in_array($this->owner->name, array_column($authors, 'name'), true)) {
+        // 刪除帳號的老師：刪除時已經把名字寫進 authors（App\Auth\AccountDeletion），不再加上「已刪除的使用者」
+        if (! $this->owner->isAnonymized() && ! in_array($this->owner->name, array_column($authors, 'name'), true)) {
             $authors[] = ['name' => $this->owner->name];
         }
 

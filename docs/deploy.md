@@ -18,7 +18,8 @@ Kancil Quiz 以 Docker Compose 部署在一台雲端 VM 上（規格第 11 節�
 | VM | Ubuntu 24.04 LTS；1 vCPU、2 GB 記憶體、20 GB 硬碟就夠。映像檔在 VM 上建置，打包前端時比較吃記憶體，1 GB 的機器建議先加 swap |
 | 網路 | 防火牆或雲端的安全群組開放 TCP 80、443，以及 UDP 443（HTTP/3，選用） |
 | 網域 | 一個網域或子網域，DNS 的 A 記錄指向 VM 的 IP。Caddy 用它申請憑證 |
-| 寄信（選用） | SMTP 帳號，忘記密碼與修改 email 時寄信用。沒有的話這兩個功能暫時無法使用，邀請註冊不受影響 |
+| Google 帳號 | 在 Google Cloud Console 建立 OAuth 用戶端，老師用 Google 登入（見下方「Google 登入」） |
+| 寄信（選用） | SMTP 帳號，有人檢舉活動時寄信通知管理員。沒有的話信只會寫進記錄，檢舉照樣出現在後台 |
 
 ### 安裝 Docker（要 root，只做一次）
 
@@ -49,6 +50,8 @@ docker compose run --rm app php artisan key:generate --show
 - `APP_KEY`：貼上剛才的金鑰。
 - `APP_URL`：`https://` 加上你的網域。
 - `SERVER_NAME`：你的網域，不加 `https://`。
+- `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`：見下方「Google 登入」。
+- `KANCIL_OPERATOR`、`KANCIL_CONTACT_EMAIL`：顯示在隱私權政策與使用條款（`/privacy`、`/terms`）上的營運者與聯絡信箱。上線前請讀過這兩頁，確認內容符合你的情況。
 - 有 SMTP 帳號的話，填寫 `MAIL_` 開頭的設定。
 
 啟動：
@@ -58,14 +61,21 @@ docker compose up -d
 docker compose logs -f app
 ```
 
-記錄中出現 `certificate obtained successfully` 就表示 HTTPS 憑證已經取得，按 Ctrl+C 離開記錄。接著匯入教材，並建立管理員的邀請連結：
+記錄中出現 `certificate obtained successfully` 就表示 HTTPS 憑證已經取得，按 Ctrl+C 離開記錄。接著匯入教材，並建立管理員（會要求輸入兩次密碼）：
 
 ```sh
 docker compose exec app php artisan kancil:import-curriculum database/curriculum/id/1
-docker compose exec app php artisan kancil:invite --role=admin
+docker compose exec -it app php artisan kancil:create-admin you@example.org
 ```
 
-用瀏覽器打開邀請連結註冊管理員帳號。之後的老師帳號在後台（`/admin`）或用 `kancil:invite` 邀請。
+管理員在 `/login` 下方的「管理員：用 email 與密碼登入」登入，也可以用同一個 email 的 Google 帳號登入。老師不需要邀請，用 Google 登入就會建立帳號。審核者請對方先用 Google 登入一次，再由管理員在後台的「使用者」指定角色與負責的語言。
+
+### Google 登入
+
+1. 到 [Google Cloud Console](https://console.cloud.google.com/) 建立專案，在「API 和服務」→「OAuth 同意畫面」設定應用程式名稱、支援信箱，以及隱私權政策（`https://你的網域/privacy`）與服務條款（`https://你的網域/terms`）的網址。使用者類型選「外部」。只用 `openid`、`email`、`profile` 這三個基本範圍，通常不必經過 Google 的應用程式驗證（上傳應用程式標誌時則要）。
+2. 在「憑證」→「建立憑證」→「OAuth 用戶端 ID」，類型選「網頁應用程式」，「已授權的重新導向 URI」填 `https://你的網域/auth/google/callback`。
+3. 把用戶端 ID 與密鑰填進 `.env.production` 的 `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`，執行 `docker compose up -d`。
+4. 發布狀態要改成「正式版」，否則只有測試使用者能登入。
 
 repo 中只有印尼語第 1 冊。其他冊用管理員帳號在後台的「匯入教材」頁匯入：先上傳詞彙的 JSON，再依檔名批次上傳插圖（`docs/SPEC.md` 3.6）。
 
@@ -89,7 +99,8 @@ docker compose up -d --build
 | 指令 | 用途 |
 |---|---|
 | `docker compose logs -f app` | 看記錄（PHP 的錯誤也在這裡） |
-| `docker compose exec app php artisan <指令>` | 執行 artisan，例如 `kancil:invite` |
+| `docker compose exec app php artisan <指令>` | 執行 artisan，例如 `kancil:prune --dry-run` |
+| `docker compose exec -it app php artisan kancil:create-admin <email>` | 建立管理員，或把既有的帳號設為管理員 |
 | `docker compose up -d` | 改了 `.env.production` 之後套用新設定（會重建兩個容器）。`docker compose restart` 不會讀入新的設定 |
 | `docker compose logs scheduler` | 看排程的記錄 |
 | `docker compose ps` | 查看容器狀態 |

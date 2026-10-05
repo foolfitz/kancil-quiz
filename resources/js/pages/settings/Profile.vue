@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Form, Head, usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
 
 defineOptions({
     layout: {
@@ -22,6 +20,13 @@ defineOptions({
         ],
     },
 });
+
+defineProps<{
+    // 已經連結 Google 帳號
+    google: boolean;
+    // 管理員不能刪除自己的帳號
+    canDelete: boolean;
+}>();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -36,7 +41,7 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="個人資料"
-            description="更新你的姓名與 Email"
+            description="姓名會顯示在你公開的題組與上傳的檔案上"
         />
 
         <Form
@@ -64,33 +69,17 @@ const user = computed(() => page.props.auth.user);
                     id="email"
                     type="email"
                     class="mt-1 block w-full"
-                    name="email"
                     :default-value="user.email"
-                    required
-                    autocomplete="username"
-                    placeholder="Email"
+                    readonly
+                    disabled
                 />
-                <InputError class="mt-2" :message="errors.email" />
-            </div>
-
-            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
-                <p class="-mt-4 text-sm text-muted-foreground">
-                    你的 Email 尚未驗證。
-                    <Link
-                        :href="send()"
-                        as="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                    >
-                        點這裡重新寄送驗證信。
-                    </Link>
+                <p class="text-sm text-muted-foreground">
+                    {{
+                        google
+                            ? '用 Google 帳號登入，email 來自你的 Google 帳號，不能在這裡修改。'
+                            : 'email 不能在這裡修改。'
+                    }}
                 </p>
-
-                <div
-                    v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
-                >
-                    新的驗證連結已寄到你的 Email。
-                </div>
             </div>
 
             <div class="flex items-center gap-4">
@@ -101,5 +90,5 @@ const user = computed(() => page.props.auth.user);
         </Form>
     </div>
 
-    <DeleteUser />
+    <DeleteUser v-if="canDelete" :email="user.email" />
 </template>
