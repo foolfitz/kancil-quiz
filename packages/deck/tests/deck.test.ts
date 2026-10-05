@@ -7,6 +7,7 @@ import {
     check,
     countCorrect,
     createRng,
+    duplicateFaces,
     groupGames,
     IncompatibleSetError,
     judge,
@@ -159,6 +160,116 @@ describe('check()', () => {
         set.entries[1].item.text = set.entries[0].item.text;
         expect(codes(set, pair)).toEqual(['duplicate-answer']);
     });
+
+    it('題目相同的兩題只是提醒，選擇題與配對都列出', () => {
+        const set = vocab();
+        set.entries[2].item.translation_zh = ' 香蕉';
+        for (const requires of [mcq, pair]) {
+            const report = check(set, requires);
+            expect(report.ok).toBe(true);
+            expect(report.issues).toEqual([
+                {
+                    severity: 'warning',
+                    code: 'duplicate-prompt',
+                    entryId: set.entries[2].id,
+                    message:
+                        '第 3 題的題目與第 1 題相同（香蕉），學生分不出哪一個是正解',
+                },
+            ]);
+        }
+        expect(codes(set, card)).toEqual([]);
+    });
+
+    it('扣掉題目相同的詞條之後，干擾選項還是要湊得滿', () => {
+        const set = vocab();
+        set.entries = set.entries.slice(0, 3);
+        set.entries[1].item.translation_zh = set.entries[0].item.translation_zh;
+        // 第 1、2 題只剩第 3 題能當干擾選項，最少 3 個選項就不夠
+        const report = check(set, { ...mcq, optionCount: { min: 3, max: 6 } });
+        expect(report.ok).toBe(false);
+        expect(
+            report.issues
+                .filter((issue) => issue.code === 'too-few-answers')
+                .map((issue) => issue.entryId),
+        ).toEqual([set.entries[0].id, set.entries[1].id]);
+        expect(check(set, mcq).ok).toBe(true);
+    });
+
+    it('問答組同一題的選項相同只是提醒', () => {
+        const set = quiz();
+        set.entries[0].question.options[2].text =
+            set.entries[0].question.options[1].text?.toUpperCase();
+        const report = check(set, mcq);
+        expect(report.ok).toBe(true);
+        expect(report.issues.map((issue) => issue.code)).toEqual([
+            'duplicate-option',
+        ]);
+        expect(codes(set, pair)).toEqual([]);
+    });
+});
+
+describe('duplicateFaces()', () => {
+    it('fixture 沒有重複', () => {
+        for (const set of Object.values(fixtures)) {
+            expect(duplicateFaces(set)).toEqual([]);
+        }
+    });
+
+    it('詞彙組依 faces 比對題目與答案，忽略大小寫、空白與 NFC', () => {
+        const set = vocab();
+        set.entries[3].item.translation_zh = '香蕉';
+        set.entries[4].item.text =
+            ` ${set.entries[1].item.text.toUpperCase()}`.normalize('NFD');
+        expect(duplicateFaces(set)).toEqual([
+            {
+                slot: 'prompt',
+                entryId: set.entries[3].id,
+                position: 4,
+                duplicateOf: { entryId: set.entries[0].id, position: 1 },
+                message:
+                    '第 4 題的題目與第 1 題相同（香蕉），學生分不出哪一個是正解',
+            },
+            {
+                slot: 'answer',
+                entryId: set.entries[4].id,
+                position: 5,
+                duplicateOf: { entryId: set.entries[1].id, position: 2 },
+                message: `第 5 題的答案與第 2 題相同（${set.entries[4].item.text.trim()}），配對會沒有唯一解`,
+            },
+        ]);
+
+        // 換成看圖片出題：圖片不同就不算相同；還沒填的那一面不算
+        set.faces.prompt = ['image'];
+        set.entries[0].item.image = { src: 'media/a.webp' };
+        set.entries[3].item.image = { src: 'media/b.webp' };
+        expect(duplicateFaces(set).map((d) => d.slot)).toEqual(['answer']);
+        set.entries[3].item.image = { src: 'media/a.webp' };
+        expect(duplicateFaces(set)[0]).toMatchObject({
+            slot: 'prompt',
+            message:
+                '第 4 題的題目與第 1 題相同（圖片），學生分不出哪一個是正解',
+        });
+    });
+
+    it('問答組列出同一題相同的選項，題幹相同也提醒', () => {
+        const set = quiz();
+        set.entries[0].question.options[2].text =
+            set.entries[0].question.options[0].text;
+        set.entries[1].question.stem.text = set.entries[0].question.stem.text;
+        expect(duplicateFaces(set)).toMatchObject([
+            {
+                slot: 'prompt',
+                entryId: set.entries[1].id,
+                duplicateOf: { position: 1 },
+            },
+            {
+                slot: 'option',
+                entryId: set.entries[0].id,
+                optionIds: ['a', 'c'],
+                message: `第 1 題的選項 A、C 相同（${set.entries[0].question.options[0].text}）`,
+            },
+        ]);
+    });
 });
 
 describe('buildRounds()', () => {
@@ -195,6 +306,38 @@ describe('buildRounds()', () => {
             }
         },
     );
+
+    it('題目相同的詞條不互為干擾選項，判定規則也不受影響', () => {
+        const set = vocab();
+        // 第 1、2 題的中文意思相同：兩個詞對同一個題目都算對
+        set.entries[1].item.translation_zh = set.entries[0].item.translation_zh;
+        const twins = new Set([set.entries[0].id, set.entries[1].id]);
+        for (let seed = 1; seed <= 20; seed++) {
+            for (const round of buildRounds(set, mcq, {
+                rng: createRng(seed),
+            })) {
+                if (round.shape !== 'mcq') {
+                    throw new Error('應該是選擇題');
+                }
+                expect(round.options).toHaveLength(4);
+                const ids = round.options.map((o) => o.id);
+                if (twins.has(round.entryId)) {
+                    expect(ids.filter((id) => twins.has(id))).toEqual([
+                        round.entryId,
+                    ]);
+                }
+                for (const option of round.options) {
+                    expect(
+                        judge(set, 'mcq', {
+                            entryId: round.entryId,
+                            presented: ids,
+                            selected: [option.id],
+                        }),
+                    ).toBe(option.correct);
+                }
+            }
+        }
+    });
 
     it('判定規則能正確判定 buildRounds() 產生的正解', () => {
         for (const set of [vocab(), quiz()]) {

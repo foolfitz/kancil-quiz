@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Plus, Trash2, X } from '@lucide/vue';
+import { ArrowDown, ArrowUp, CircleAlert, Plus, Trash2, X } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
 import MediaCredits from '@/components/kancil/MediaCredits.vue';
 import MediaSlot from '@/components/kancil/MediaSlot.vue';
@@ -10,6 +10,8 @@ import type { MediaRef, QuizEntryInput } from '@/types/kancil';
 // 問答組編輯：題幹加 2 到 6 個選項，標示一個正解（docs/SPEC.md T-07）。
 defineProps<{
     errors: Partial<Record<string, string>>;
+    // 不擋下儲存的提醒（例如題目相同），依題目的 ID 或 new-<序號>分組（docs/SPEC.md 7.3）
+    warnings: Partial<Record<string, string[]>>;
     rightsConfirmed: boolean;
 }>();
 
@@ -222,6 +224,20 @@ function mediaOf(entry: QuizEntryInput): { label: string; ref: MediaRef }[] {
                         :message="errors[`entries.${i}.question.options.${j}`]"
                     />
                 </fieldset>
+                <ul
+                    v-if="warnings[entry.id ?? `new-${i}`]"
+                    class="space-y-1 pl-14 text-sm text-amber-700 dark:text-amber-400"
+                    data-test="entry-warning"
+                >
+                    <li
+                        v-for="warning in warnings[entry.id ?? `new-${i}`]"
+                        :key="warning"
+                        class="flex items-start gap-1"
+                    >
+                        <CircleAlert class="mt-0.5 size-4 shrink-0" />
+                        {{ warning }}
+                    </li>
+                </ul>
                 <MediaCredits
                     v-if="mediaOf(entry).length > 0"
                     class="pl-14"

@@ -544,14 +544,15 @@ export type GameEvent =
 
 | 題組 | `mcq` | `pair` | `card` |
 |---|---|---|---|
-| `vocab` | 題目為 `faces.prompt`，正解為該詞條的 `faces.answer`，干擾選項從同題組其他詞條的 `faces.answer` 抽出 | 左為 `faces.prompt`，右為 `faces.answer` | 正面為 `faces.prompt`，背面為 `faces.answer` |
+| `vocab` | 題目為 `faces.prompt`，正解為該詞條的 `faces.answer`，干擾選項從同題組其他詞條的 `faces.answer` 抽出；題目面與這一題相同的詞條不抽（它的答案對這個題目也算對） | 左為 `faces.prompt`，右為 `faces.answer` | 正面為 `faces.prompt`，背面為 `faces.answer` |
 | `quiz` | 直接使用題幹與選項 | 左為題幹，右為正解選項 | 正面為題幹，背面為正解選項 |
 
 `deck.check(set, requires)` 依下列條件判斷題組能不能套用某個遊戲，不相容時回傳是哪幾題、缺少什麼：
 
 - 題數不少於 `minRounds`。
 - 每個面至少要有一個欄位是遊戲在該位置能呈現的（`renders`）。例如迷宮的選項只能呈現文字或圖片，答案面只有音檔的詞彙組就不相容。
-- `vocab` 轉 `mcq`：干擾選項的答案面不可與正解相同（文字以 `isMatch()` 比對），所以題組中互不相同的答案面要夠多，才湊得滿 `optionCount.min`。
+- `vocab` 轉 `mcq`：干擾選項的答案面不可與正解相同（文字以 `isMatch()` 比對），題目面相同的詞條也不互為干擾選項（例如兩個詞的中文意思都是「爸爸」，學生選哪一個都該算對），所以扣掉這些之後，互不相同的答案面要夠多，才湊得滿 `optionCount.min`。
+- 題目面看起來一樣的兩題（`mcq`、`pair`），以及問答組同一題相同的選項（`mcq`），`check()` 回傳警告而不是錯誤：選擇題已經避免把它們放在同一題，配對則沒有唯一解，由老師決定要不要改。題組編輯頁用同一套比對（`duplicateFaces()`）在題目下方提醒題目、答案或選項相同的詞條，不擋下儲存；還沒填的欄位不算。
 - `quiz` 轉 `mcq`：選項少於 `optionCount.min` 時不相容；多於 `optionCount.max` 時，保留正解並隨機抽出干擾選項到上限，建立活動時提示老師。
 - 轉 `pair`：右側的內容不可重複，否則配對沒有唯一解。
 

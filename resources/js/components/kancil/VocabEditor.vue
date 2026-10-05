@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Mic, Plus, Trash2 } from '@lucide/vue';
+import {
+    ArrowDown,
+    ArrowUp,
+    CircleAlert,
+    Mic,
+    Plus,
+    Trash2,
+} from '@lucide/vue';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import MediaCredits from '@/components/kancil/MediaCredits.vue';
@@ -12,6 +19,8 @@ import type { MediaRef, VocabEntryInput } from '@/types/kancil';
 // 詞彙組編輯：逐列輸入，或一次貼上多行「目標語<Tab>中文」（docs/SPEC.md T-04）。
 const props = defineProps<{
     errors: Partial<Record<string, string>>;
+    // 不擋下儲存的提醒（例如題目相同），依題目的 ID 或 new-<序號>分組（docs/SPEC.md 7.3）
+    warnings: Partial<Record<string, string[]>>;
     rightsConfirmed: boolean;
     showRomanization: boolean;
 }>();
@@ -253,6 +262,20 @@ function recordAll(): void {
                         </button>
                     </div>
                 </div>
+                <ul
+                    v-if="warnings[entry.id ?? `new-${i}`]"
+                    class="mt-2 space-y-1 pl-8 text-sm text-amber-700 dark:text-amber-400"
+                    data-test="entry-warning"
+                >
+                    <li
+                        v-for="warning in warnings[entry.id ?? `new-${i}`]"
+                        :key="warning"
+                        class="flex items-start gap-1"
+                    >
+                        <CircleAlert class="mt-0.5 size-4 shrink-0" />
+                        {{ warning }}
+                    </li>
+                </ul>
                 <MediaCredits
                     v-if="mediaOf(entry).length > 0"
                     class="mt-2 pl-8"

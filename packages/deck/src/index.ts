@@ -5,6 +5,8 @@ export type {
     CompatibilityIssue,
     CompatibilityReport,
 } from './rounds';
+export { duplicateFaces } from './duplicates';
+export type { DuplicateFace } from './duplicates';
 export { GAME_CATEGORIES, gameCategory, groupGames } from './categories';
 export type { GameCategory } from './categories';
 export { countCorrect, judge } from './judge';

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { duplicateFaces } from '@kancil-quiz/deck';
+import type { KancilSet } from '@kancil-quiz/schema';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Download, Gamepad2 } from '@lucide/vue';
 import { computed, provide, ref, watch } from 'vue';
@@ -148,6 +150,67 @@ watch(
         );
     },
 );
+
+// 正在編輯的內容組成交換格式，給 @kancil-quiz/deck 檢查看起來一樣的題目、答案與選項（docs/SPEC.md 7.3）。
+// 還沒儲存的新詞條以 new-<序號> 當 ID，與畫面上的 key 相同。
+function currentContent(): KancilSet {
+    const media = (ref: MediaRef | null) => (ref ? { src: ref.url } : null);
+    const base = {
+        format: 'kancil-set' as const,
+        version: 1 as const,
+        id: props.set.id,
+        language: form.language_code as KancilSet['language'],
+        title: form.title,
+        license: form.license,
+        authors: [{ name: props.set.owner }],
+    };
+    if (props.set.kind === 'vocab') {
+        return {
+            ...base,
+            kind: 'vocab',
+            faces: form.faces,
+            entries: vocabEntries.value.map((entry, i) => ({
+                id: entry.id ?? `new-${i}`,
+                item: {
+                    text: entry.item.text,
+                    romanization: entry.item.romanization,
+                    translation_zh: entry.item.translation_zh,
+                    audio: entry.item.audio.map((ref) => ({ src: ref.url })),
+                    image: media(entry.item.image),
+                },
+            })),
+        };
+    }
+    return {
+        ...base,
+        kind: 'quiz',
+        entries: quizEntries.value.map((entry, i) => ({
+            id: entry.id ?? `new-${i}`,
+            question: {
+                stem: {
+                    text: entry.question.stem.text,
+                    audio: media(entry.question.stem.audio),
+                    image: media(entry.question.stem.image),
+                },
+                options: entry.question.options.map((option) => ({
+                    id: option.id,
+                    text: option.text,
+                    image: media(option.image),
+                    correct: option.correct,
+                })),
+            },
+        })),
+    };
+}
+
+// 不擋下儲存的提醒，依題目（entry ID）分組
+const warnings = computed(() => {
+    const result: Partial<Record<string, string[]>> = {};
+    for (const duplicate of duplicateFaces(currentContent())) {
+        (result[duplicate.entryId] ??= []).push(duplicate.message);
+    }
+    return result;
+});
 
 const errorCount = computed(() => Object.keys(form.errors).length);
 const firstError = (prefix: string) =>
@@ -432,6 +495,7 @@ function destroy(): void {
             v-if="set.kind === 'vocab'"
             v-model="vocabEntries"
             :errors="form.errors"
+            :warnings="warnings"
             :rights-confirmed="rightsConfirmed"
             :show-romanization="showRomanization"
             @error="uploadError = $event"
@@ -440,6 +504,7 @@ function destroy(): void {
             v-else
             v-model="quizEntries"
             :errors="form.errors"
+            :warnings="warnings"
             :rights-confirmed="rightsConfirmed"
             @error="uploadError = $event"
         />

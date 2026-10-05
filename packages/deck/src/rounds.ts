@@ -6,15 +6,10 @@ import type {
     Round,
 } from '@kancil-quiz/games-sdk';
 import type { KancilSet } from '@kancil-quiz/schema';
-import {
-    SLOTS,
-    faceKey,
-    isEmptyFace,
-    isRenderable,
-    optionFace,
-    stemFace,
-    vocabFace,
-} from './faces';
+import { cardsOf } from './cards';
+import type { Card, Option } from './cards';
+import { duplicateFaces } from './duplicates';
+import { SLOTS, faceKey, isEmptyFace, isRenderable } from './faces';
 import { shuffle } from './rng';
 
 // 題組轉成遊戲需要的形狀，規則見 docs/SPEC.md 7.3。
@@ -32,7 +27,9 @@ export interface CompatibilityIssue {
         | 'too-few-answers'
         | 'too-few-options'
         | 'too-many-options'
-        | 'duplicate-answer';
+        | 'duplicate-answer'
+        | 'duplicate-prompt'
+        | 'duplicate-option';
     entryId?: string;
     message: string; // 給老師看的說明
 }
@@ -47,47 +44,6 @@ export class IncompatibleSetError extends Error {
         super(report.issues.map((issue) => issue.message).join('\n'));
         this.name = 'IncompatibleSetError';
     }
-}
-
-interface Option {
-    id: string;
-    face: Face;
-    correct: boolean;
-}
-
-// 不論題組種類，每一題都整理成「題目一面、答案一面」；問答組另外保留全部選項。
-interface Card {
-    entryId: string;
-    position: number; // 第幾題，從 1 開始，用在給老師看的說明
-    question: Face;
-    answer: Face;
-    options?: Option[];
-}
-
-function cardsOf(set: KancilSet): Card[] {
-    if (set.kind === 'vocab') {
-        return set.entries.map((entry, i) => ({
-            entryId: entry.id,
-            position: i + 1,
-            question: vocabFace(entry.item, set.faces.prompt, set.language),
-            answer: vocabFace(entry.item, set.faces.answer, set.language),
-        }));
-    }
-
-    return set.entries.map((entry, i) => {
-        const options = entry.question.options.map((option) => ({
-            id: option.id,
-            face: optionFace(option),
-            correct: option.correct,
-        }));
-        return {
-            entryId: entry.id,
-            position: i + 1,
-            question: stemFace(entry.question.stem),
-            answer: options.find((option) => option.correct)?.face ?? {},
-            options,
-        };
-    });
 }
 
 const SLOT_NAMES: Record<FaceSlot, string> = {
@@ -196,6 +152,19 @@ export function check(
                     'too-few-answers',
                     `答案互不相同的詞條只有 ${distinct} 個，這個遊戲每題至少需要 ${min} 個選項`,
                 );
+            } else {
+                // 題目相同的詞條不互為干擾選項（答案對這個題目也算對），扣掉之後也要湊得滿
+                for (const card of cards) {
+                    const available = distractorsFor(card, cards, set.language);
+                    if (available.length < min - 1) {
+                        add(
+                            'error',
+                            'too-few-answers',
+                            `第 ${card.position} 題的題目與其他詞條相同，扣掉它們之後只剩 ${available.length} 個可以當選項的答案，這個遊戲每題至少需要 ${min} 個選項`,
+                            card.entryId,
+                        );
+                    }
+                }
             }
         }
 
@@ -214,6 +183,30 @@ export function check(
                     'too-many-options',
                     `第 ${card.position} 題有 ${count} 個選項，這個遊戲最多顯示 ${max} 個；會保留正解，其餘隨機抽出`,
                     card.entryId,
+                );
+            }
+        }
+    }
+
+    // 題目看起來一樣的兩題，學生分不出哪一個是正解；問答組同一題的選項相同也一樣（不擋下，只提醒）
+    if (requires.shape === 'mcq' || requires.shape === 'pair') {
+        for (const duplicate of duplicateFaces(set)) {
+            if (duplicate.slot === 'prompt') {
+                add(
+                    'warning',
+                    'duplicate-prompt',
+                    duplicate.message,
+                    duplicate.entryId,
+                );
+            } else if (
+                duplicate.slot === 'option' &&
+                requires.shape === 'mcq'
+            ) {
+                add(
+                    'warning',
+                    'duplicate-option',
+                    duplicate.message,
+                    duplicate.entryId,
                 );
             }
         }
@@ -318,30 +311,40 @@ function limitOptions(
     return [...correct, ...others.slice(0, max - correct.length)];
 }
 
-// 詞彙組的選項：正解加上從同題組其他詞條抽出的干擾選項，答案看起來一樣的不會同時出現。
+// 能當這一題干擾選項的其他詞條：答案看起來一樣的不能同時出現；題目看起來一樣的也不行，
+// 因為那個詞條的答案對這個題目來說也算對（例如兩個詞的中文意思都是「爸爸」）。
+function distractorsFor(card: Card, cards: Card[], language: string): Card[] {
+    const prompt = faceKey(card.question, language);
+    const used = new Set([faceKey(card.answer, language)]);
+    const result: Card[] = [];
+    for (const other of cards) {
+        const key = faceKey(other.answer, language);
+        if (
+            other !== card &&
+            !used.has(key) &&
+            faceKey(other.question, language) !== prompt
+        ) {
+            used.add(key);
+            result.push(other);
+        }
+    }
+    return result;
+}
+
+// 詞彙組的選項：正解加上從同題組其他詞條隨機抽出的干擾選項。
 function vocabOptions(
     card: Card,
     cards: Card[],
     language: string,
     { count, rng }: { count: number; rng: () => number },
 ): Option[] {
-    const used = new Set([faceKey(card.answer, language)]);
-    const distractors: Option[] = [];
-
-    for (const other of shuffle(cards, rng)) {
-        if (distractors.length >= count - 1) {
-            break;
-        }
-        const key = faceKey(other.answer, language);
-        if (!used.has(key)) {
-            used.add(key);
-            distractors.push({
-                id: other.entryId,
-                face: other.answer,
-                correct: false,
-            });
-        }
-    }
+    const distractors = distractorsFor(card, shuffle(cards, rng), language)
+        .slice(0, count - 1)
+        .map((other) => ({
+            id: other.entryId,
+            face: other.answer,
+            correct: false,
+        }));
 
     return [
         { id: card.entryId, face: card.answer, correct: true },
