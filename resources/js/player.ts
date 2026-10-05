@@ -3,7 +3,7 @@ import type { KancilActivity } from '@kancil-quiz/schema';
 
 // 學生端播放頁的獨立 Vite 入口（docs/SPEC.md 10.2）。遊戲以動態載入，只下載用到的那一個。
 const root = document.getElementById('player');
-// 老師的「建立前預覽」直接帶入播放格式（resources/views/player.blade.php）
+// 老師的「建立前預覽」與訪客的教材試玩直接帶入播放格式（resources/views/player.blade.php）
 const playback = document.getElementById('kq-playback')?.textContent;
 
 if (root?.dataset.activity) {
@@ -15,6 +15,8 @@ if (root?.dataset.activity) {
             : undefined,
         apiBase: '/api/v1',
         preview: root.dataset.preview === '1',
+        // 訪客從教材的一課直接試玩（docs/SPEC.md S-06）
+        trial: root.dataset.trial === '1',
         games: {
             'maze-quiz': () =>
                 import('@kancil-quiz/game-maze-quiz').then((m) => m.default),

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { check, groupGames } from '@kancil-quiz/deck';
+import type { KancilSet } from '@kancil-quiz/schema';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Copy,
     Download,
@@ -7,21 +9,30 @@ import {
     ListChecks,
     MonitorPlay,
     Pencil,
+    Play,
     Volume2,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetCopyController from '@/actions/App/Http/Controllers/SetCopyController';
 import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
+import PageMeta from '@/components/kancil/PageMeta.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { login } from '@/routes';
+import type { User } from '@/types';
 import { KIND_NAMES, standaloneUrl } from '@/types/kancil';
-import type { SetKind, VocabEntryInput } from '@/types/kancil';
+import type {
+    GameInfo,
+    PageMeta as PageMetaData,
+    SetKind,
+    VocabEntryInput,
+} from '@/types/kancil';
 
-// 教材的一課（docs/SPEC.md T-18）：教材題組的詞彙，直接建立活動、複製或挑詞，
-// 以及老師自己與共備庫中對應這一課的題組。
+// 教材的一課（docs/SPEC.md T-18、S-06）：教材題組的詞彙與試玩。不需登入；
+// 老師登入後另外可以直接建立活動、複製或挑詞，也看得到自己與共備庫中對應這一課的題組。
 const props = defineProps<{
     lesson: {
         language: { code: string; name_zh: string };
@@ -44,6 +55,9 @@ const props = defineProps<{
         };
     } | null;
     words: VocabEntryInput[];
+    // 教材題組最新版本的內容，用來判斷哪些遊戲能玩（docs/SPEC.md 7.3）
+    content: KancilSet | null;
+    games: GameInfo[];
     imageCredits: string[];
     activities: {
         id: string;
@@ -59,8 +73,10 @@ const props = defineProps<{
         owner: string;
         entries_count: number;
     }[];
+    // 共備庫中對應這一課的公開題組數；訪客只看得到數量
+    sharedCount: number;
     libraryUrl: string;
-    title: string;
+    meta: PageMetaData;
 }>();
 
 defineOptions({
@@ -68,6 +84,29 @@ defineOptions({
         breadcrumbs: [{ title: '教材', href: CurriculumController.index() }],
     },
 });
+
+const page = usePage();
+const user = computed(() => page.props.auth.user as User | null);
+
+// 只列出這一課能玩的遊戲，分成「遊戲」與「互動教材」（docs/SPEC.md 7.5）
+const playable = computed(() => {
+    const content = props.content;
+    if (!content) {
+        return [];
+    }
+    return groupGames(
+        props.games.filter((game) => check(content, game.requires).ok),
+    );
+});
+
+function playUrl(game: string): string {
+    return CurriculumController.play.url({
+        language: props.lesson.language.code,
+        volume: props.lesson.volume,
+        lesson: props.lesson.lesson,
+        game,
+    });
+}
 
 const copying = ref(false);
 function copy(): void {
@@ -92,7 +131,7 @@ function play(url: string): void {
 </script>
 
 <template>
-    <Head :title="title" />
+    <PageMeta :meta="meta" />
 
     <div class="flex max-w-5xl flex-col gap-6 p-4">
         <div>
@@ -129,7 +168,8 @@ function play(url: string): void {
         </div>
 
         <template v-if="set">
-            <div class="flex flex-wrap gap-2">
+            <!-- 老師的功能；訪客看到的是下面「老師：用這一課出作業」的說明 -->
+            <div v-if="user" class="flex flex-wrap gap-2">
                 <Button v-if="set.can.activity" as-child>
                     <Link
                         :href="ActivityController.create(set.id)"
@@ -182,9 +222,66 @@ function play(url: string): void {
                     >
                 </Button>
             </div>
-            <p class="text-sm text-muted-foreground">
+            <p v-if="user" class="text-sm text-muted-foreground">
                 直接建立的活動會一直使用這一課最新的詞彙。想增減詞、換題目的呈現方式，請先複製成自己的題組。
             </p>
+
+            <section
+                v-if="playable.length > 0"
+                class="space-y-3"
+                data-test="lesson-games"
+            >
+                <div>
+                    <h2 class="font-semibold">直接玩這一課</h2>
+                    <p class="text-sm text-muted-foreground">
+                        {{
+                            user
+                                ? '試玩不會留下作答紀錄。要發給學生、看成績，請用上面的「選遊戲、建立活動」。'
+                                : '不必登入，也不會留下作答紀錄。'
+                        }}
+                    </p>
+                </div>
+                <div
+                    v-for="group in playable"
+                    :key="group.category.id"
+                    class="space-y-2"
+                >
+                    <h3 class="text-sm text-muted-foreground">
+                        {{ group.category.title }}
+                    </h3>
+                    <ul class="flex flex-wrap gap-2">
+                        <li v-for="game in group.games" :key="game.id">
+                            <Button as-child variant="outline">
+                                <a
+                                    :href="playUrl(game.id)"
+                                    data-test="lesson-play"
+                                    ><Play class="size-4" />
+                                    {{ game.title['zh-TW'] }}</a
+                                >
+                            </Button>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <aside
+                v-if="!user"
+                class="space-y-2 rounded-xl border bg-muted/30 p-4"
+                data-test="lesson-teacher"
+            >
+                <h2 class="font-semibold">老師：用這一課出作業</h2>
+                <p class="text-sm text-muted-foreground">
+                    登入後可以用這一課建立活動，取得給學生的連結與 QR
+                    code，設定開放與截止時間，看每位學生的成績；也能複製或挑詞做成自己的題組。
+                    <template v-if="sharedCount > 0"
+                        >共備庫中還有
+                        {{ sharedCount }} 個其他老師對應這一課的題組。</template
+                    >
+                </p>
+                <Button as-child size="sm">
+                    <Link :href="login()">老師登入</Link>
+                </Button>
+            </aside>
 
             <section class="space-y-3">
                 <h2 class="font-semibold">詞彙（{{ words.length }} 個）</h2>
@@ -233,12 +330,20 @@ function play(url: string): void {
                     <template v-if="imageCredits.length > 0"
                         >插圖：{{ imageCredits.join('；') }}。</template
                     >
-                    授權：{{ set.license }}。
+                    授權：{{ set.license }}。教材來源：國教署<a
+                        href="https://mkm.k12ea.gov.tw/textbook"
+                        target="_blank"
+                        rel="noopener"
+                        class="underline underline-offset-4"
+                        >新住民子女教育資訊網</a
+                    >。
                 </p>
             </section>
         </template>
-        <p v-else class="text-muted-foreground">
-            這一課還沒有匯入詞彙。你仍然可以在下面找到其他老師對應這一課的題組。
+        <p v-else class="text-muted-foreground" data-test="lesson-empty">
+            這一課還沒有匯入詞彙。<template v-if="user"
+                >你仍然可以在下面找到其他老師對應這一課的題組。</template
+            >
         </p>
 
         <section v-if="activities.length > 0" class="space-y-2">
@@ -270,7 +375,7 @@ function play(url: string): void {
             </ul>
         </section>
 
-        <section class="space-y-3">
+        <section v-if="user" class="space-y-3">
             <div class="flex items-baseline justify-between gap-2">
                 <h2 class="font-semibold">共備庫中對應這一課的題組</h2>
                 <Link

@@ -206,6 +206,15 @@ export interface TextbookLesson {
     }[];
 }
 
+// 公開頁面的標題、描述與連結預覽（app/Support/PageMeta.php）。伺服器也把同樣的內容寫在 <head>，
+// 讓搜尋引擎與 LINE 等的連結預覽不必執行 JS 就讀得到。
+export interface PageMeta {
+    title: string;
+    description: string;
+    url: string;
+    image: string | null;
+}
+
 // 冊課選單中的一課，例：第 3 課 Keluarga Saya 我的家人
 export function lessonLabel(ref: {
     lesson: number;

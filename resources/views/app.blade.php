@@ -7,6 +7,9 @@
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
             (function() {
+                // 有 JS 時藏起伺服器輸出的骨架（resources/views/skeletons/），等 Vue 掛上
+                document.documentElement.classList.add('js');
+
                 const appearance = '{{ $appearance ?? "system" }}';
 
                 if (appearance === 'system') {
@@ -28,6 +31,10 @@
             html.dark {
                 background-color: oklch(0.145 0 0);
             }
+
+            .js .kq-skeleton {
+                display: none;
+            }
         </style>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
@@ -38,10 +45,17 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            @include('partials.page-meta', ['meta' => $page['props']['meta'] ?? null])
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
-        <x-inertia::app />
+        @isset($skeleton)
+            {{-- 公開頁面（docs/SPEC.md S-06）：與 <x-inertia::app /> 相同，只是在 #app 中先放骨架，給不執行 JS 的程式看。
+                 Vue 掛上時會清空 #app（沒有 data-server-rendered，不做 hydration）。 --}}
+            <script data-page="app" type="application/json">{!! json_encode($page, JSON_HEX_TAG) !!}</script>
+            <div id="app">@include($skeleton)</div>
+        @else
+            <x-inertia::app />
+        @endisset
     </body>
 </html>

@@ -30,6 +30,8 @@ test('老師用教材的一課直接建立活動，學生看圖選詞', async ({
                 .evaluate((img: HTMLImageElement) => img.naturalWidth),
         )
         .toBeGreaterThan(0);
+    // 老師也能先直接試玩（docs/SPEC.md S-06）
+    await expect(page.locator('[data-test="lesson-games"]')).toBeVisible();
     await page.screenshot({
         path: testInfo.outputPath('lesson.png'),
         fullPage: true,

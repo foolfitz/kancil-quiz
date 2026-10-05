@@ -16,19 +16,23 @@ use App\Http\Controllers\SetReviewController;
 use App\Http\Controllers\SetShareController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', [CurriculumController::class, 'home'])->name('home');
 
 // 學生端播放頁，不需登入
 Route::get('p/{activity}', [PlayerController::class, 'show'])->name('play');
 
+// 教材不需登入，訪客可以直接玩一課（docs/SPEC.md S-06）；老師登入後在同一頁建立活動（T-18）
+Route::get('curriculum', [CurriculumController::class, 'index'])->name('curriculum.index');
+Route::get('curriculum/{language}/{volume}/{lesson}', [CurriculumController::class, 'show'])
+    ->whereNumber(['volume', 'lesson'])
+    ->name('curriculum.lesson');
+Route::get('curriculum/{language}/{volume}/{lesson}/play/{game}', [CurriculumController::class, 'play'])
+    ->whereNumber(['volume', 'lesson'])
+    ->name('curriculum.play');
+
 // 老師端（docs/SPEC.md 10.3）
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
-
-    Route::get('curriculum', [CurriculumController::class, 'index'])->name('curriculum.index');
-    Route::get('curriculum/{language}/{volume}/{lesson}', [CurriculumController::class, 'show'])
-        ->whereNumber(['volume', 'lesson'])
-        ->name('curriculum.lesson');
 
     Route::resource('sets', SetController::class);
     Route::post('sets/{set}/copy', SetCopyController::class)->name('sets.copy');

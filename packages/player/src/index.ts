@@ -46,6 +46,8 @@ export interface PlayerConfig {
     preview?: boolean;
     // 獨立播放器（O-02）：沒有伺服器，不建立作答紀錄，成績在本機判定
     standalone?: boolean;
+    // 教材試玩：不經過活動直接玩教材的一課，不建立作答紀錄，成績在本機判定
+    trial?: boolean;
     // 已經取得的播放格式，有的話就不向 API 取得（老師在建立活動之前預覽）
     activity?: KancilActivity;
 }
@@ -96,7 +98,10 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
     const audio = new AudioHost();
     const root = el('div', 'kq-player');
     config.root.replaceChildren(root);
-    const offline = config.preview === true || config.standalone === true;
+    const offline =
+        config.preview === true ||
+        config.standalone === true ||
+        config.trial === true;
     // 正在進行的遊戲；結束或換遊戲時清理
     let stopGame: (() => void) | null = null;
     const handle: PlayerHandle = {
@@ -264,6 +269,11 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 rng: createRng(seed),
             });
         } catch (error) {
+            if (config.trial) {
+                // 試玩沒有老師可以通知；課頁只列出相容的遊戲，會到這裡通常是改了網址
+                message('這一課不能用這個遊戲', '請回到這一課，換一個遊戲。');
+                return;
+            }
             message(
                 '此活動暫時無法遊玩',
                 error instanceof IncompatibleSetError
@@ -394,7 +404,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
         ): Promise<void> {
             message('計算成績中…');
             let serverResults;
-            // 預覽與獨立播放器本來就不上傳，不必提示
+            // 預覽、獨立播放器與教材試玩本來就不上傳，不必提示
             let uploaded = attempt === null && offline;
             if (attempt) {
                 try {

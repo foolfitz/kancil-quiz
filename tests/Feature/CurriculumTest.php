@@ -399,6 +399,110 @@ class CurriculumTest extends TestCase
         $this->actingAs($this->teacher)->get('/curriculum/id/1/3')->assertNotFound();
     }
 
+    public function test_guests_browse_the_textbook_without_teacher_features(): void
+    {
+        $this->import();
+        $colleague = User::factory()->create(['name' => '李老師']);
+        $copy = Set::factory()->for($colleague, 'owner')->create(['language_code' => 'id', 'title' => '家人改編', 'visibility' => 'public', 'review_status' => 'approved']);
+        $copy->curriculumRefs()->attach(CurriculumRef::where('lesson', 3)->value('id'));
+        $lessonUrl = route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3]);
+
+        $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Welcome')
+            ->where('language', 'id')
+            ->has('lessons', 2)
+            ->where('lessons.0.url', $lessonUrl)
+            ->where('meta.url', route('home')));
+
+        // 首頁預設的語言不帶參數，其他語言帶 ?language=
+        $this->get('/?language=vi')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('language', 'vi')
+            ->has('lessons', 0)
+            ->where('meta.url', route('home', ['language' => 'vi'])));
+
+        $this->get('/curriculum?language=id')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('curriculum/Index')
+            ->has('lessons', 2)
+            ->where('meta.title', '印尼語教材'));
+
+        $this->get('/curriculum/id/1/3')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('curriculum/Lesson')
+            ->has('words', 3)
+            ->where('content.entries.0.item.text', 'ayah')
+            ->has('games', 6)
+            ->where('set.can', ['activity' => false, 'copy' => false, 'edit' => false, 'export' => false])
+            ->where('activities', [])
+            ->where('mySets', [])
+            ->where('shared', [])
+            ->where('sharedCount', 1)
+            ->where('meta.title', '印尼語第 1 冊第 3 課：Keluarga Saya 我的家人')
+            ->where('meta.url', $lessonUrl)
+            ->where('meta.image', fn (?string $url) => str_starts_with((string) $url, 'http')));
+
+        // 老師登入後看到的同一課照舊（test_teachers_browse_the_textbook_by_language_volume_and_lesson）
+        $this->actingAs($this->teacher)->get('/curriculum/id/1/3')->assertInertia(fn (Assert $page) => $page
+            ->where('set.can.activity', true)
+            ->has('shared', 1)
+            ->where('sharedCount', 1));
+    }
+
+    public function test_public_pages_render_a_skeleton_and_meta_for_crawlers(): void
+    {
+        $this->import();
+
+        // 不執行 JS 的程式（搜尋引擎、LINE 的連結預覽）也看得到課名、詞彙與連結預覽的資料
+        $html = $this->get('/curriculum/id/1/3')->assertOk()->getContent();
+        $this->assertStringContainsString('<title>印尼語第 1 冊第 3 課：Keluarga Saya 我的家人 - ', $html);
+        $this->assertStringContainsString('<meta data-inertia="og:title" property="og:title" content="印尼語第 1 冊第 3 課：Keluarga Saya 我的家人">', $html);
+        $this->assertMatchesRegularExpression('#<meta data-inertia="og:image" property="og:image" content="http[^"]+">#', $html);
+        $this->assertMatchesRegularExpression('#<div id="app"><div class="kq-skeleton">.*<span lang="id">ayah</span>：爸爸#s', $html);
+
+        // Inertia 的頁面資料照常輸出，Vue 掛上後換掉骨架
+        $this->assertSame(1, preg_match('#<script data-page="app" type="application/json">(.*?)</script>#s', $html, $match));
+        $this->assertSame('curriculum/Lesson', json_decode($match[1], true)['component']);
+
+        $home = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('<a href="'.route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3]).'">', $home);
+
+        // 老師端的其他頁面沒有骨架
+        $dashboard = $this->actingAs($this->teacher)->get('/dashboard')->getContent();
+        $this->assertStringNotContainsString('<div class="kq-skeleton">', $dashboard);
+        $this->assertStringContainsString('<div id="app"></div>', $dashboard);
+    }
+
+    public function test_guests_play_a_lesson_without_records(): void
+    {
+        $this->import();
+        $set = $this->lesson(3);
+
+        $response = $this->get('/curriculum/id/1/3/play/maze-quiz')->assertOk()
+            ->assertSee('<meta name="robots" content="noindex">', false)
+            ->assertSee('data-trial="1"', false)
+            ->assertSee('href="'.route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3]).'"', false);
+        $this->assertSame(1, preg_match('#<script type="application/json" id="kq-playback">(.*?)</script>#s', (string) $response->getContent(), $match));
+        $playback = json_decode($match[1], true);
+        $this->assertSame('maze-quiz', $playback['game']['id']);
+        $this->assertSame('practice', $playback['mode']);
+        $this->assertSame($set->current_revision_id, $playback['set_revision_id']);
+        $this->assertSame('ayah', $playback['set']['entries'][0]['item']['text']);
+
+        $this->get('/curriculum/id/1/3/play/no-such-game')->assertNotFound();
+        $this->get('/curriculum/id/1/9/play/quiz')->assertNotFound();
+        $this->assertSame(0, Activity::count());
+
+        // 有課名、還沒匯入詞彙的課：課頁說明還沒有詞彙，不能玩
+        CurriculumRef::create(['language_code' => 'id', 'volume' => 2, 'lesson' => 1, 'title_zh' => '我的學校']);
+        $this->get('/curriculum/id/2/1')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('set', null)
+            ->where('content', null)
+            ->where('meta.image', null));
+        $this->get('/curriculum/id/2/1/play/quiz')->assertNotFound();
+
+        Language::whereKey('id')->update(['enabled' => false]);
+        $this->get('/curriculum/id/1/3')->assertNotFound();
+        $this->get('/curriculum/id/1/3/play/quiz')->assertNotFound();
+    }
+
     public function test_the_library_marks_textbook_sets(): void
     {
         $this->import();
