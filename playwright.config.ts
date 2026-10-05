@@ -5,7 +5,8 @@ import { defineConfig, devices } from '@playwright/test';
 //
 // iPad 的 Safari 要用 WebKit；Linux 上需要先安裝系統套件：npx playwright install-deps webkit
 // （不要加 sudo，它會自己切換成 root）。安裝後設定 E2E_WEBKIT=1 就會一併執行。
-const port = 8124;
+// 同一台機器上同時跑兩份（例如兩個 git worktree）時，用 E2E_PORT 錯開
+const port = Number(process.env.E2E_PORT ?? 8124);
 const database = `${process.cwd()}/database/e2e.sqlite`;
 // 示範資料會匯入教材插圖；媒體另外放，每次執行前清空，不留在開發用的 storage
 const media = `${process.cwd()}/public/e2e-media`;
