@@ -13,6 +13,9 @@
     --kq-match-wrong-bg: #fee2e2;
 
     box-sizing: border-box;
+    /* 版面依遊戲自己的大小決定（手機、平板、投影），不看視窗：下面的 @container 都以它為準 */
+    container-type: size;
+    container-name: kq-match;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -81,7 +84,7 @@
     gap: 1.25rem;
 }
 
-@media (orientation: landscape) {
+@container kq-match (orientation: landscape) {
     .kq-match__board {
         grid-template-columns: minmax(0, 1fr) minmax(12rem, 30%);
         align-items: center;
@@ -226,7 +229,7 @@
     gap: 0.6rem;
 }
 
-@media (orientation: landscape) {
+@container kq-match (orientation: landscape) {
     .kq-match__pool {
         flex-direction: column;
         flex-wrap: nowrap;
@@ -297,6 +300,110 @@
 
 .kq-match__card:disabled {
     color: inherit;
+}
+
+/* 平板橫放（畫面不高）：題目列矮一些，預設的 6 組才放得下 */
+@container kq-match (height < 800px) {
+    .kq-match__rows {
+        gap: 0.5rem;
+    }
+
+    .kq-match__row {
+        min-height: 3.75rem;
+        padding: 0.25rem;
+    }
+
+    .kq-match__prompt {
+        padding: 0.3rem 0.6rem;
+        font-size: clamp(1.1rem, 2.2vw, 1.75rem);
+    }
+
+    .kq-match__prompt .kq-match__image {
+        height: 3rem;
+    }
+
+    .kq-match__drop {
+        min-height: 3rem;
+    }
+
+    .kq-match__card {
+        min-height: 3rem;
+        font-size: clamp(1.1rem, 2.2vw, 1.75rem);
+    }
+}
+
+/* 手機（窄或矮的畫面）：題目列與卡片都縮小，一頁的題目與卡片才能同時在畫面內，拖曳時不必捲動。
+   還是放不下時，index.ts 會減少每頁的組數。寫在平板的規則後面，兩者都符合時以這裡為準 */
+@container kq-match ((width < 600px) or (height < 480px)) {
+    .kq-match {
+        gap: 0.4rem;
+        padding: 0.5rem 0.75rem 0.75rem;
+    }
+
+    .kq-match__status {
+        font-size: 0.95rem;
+    }
+
+    .kq-match__board {
+        gap: 0.75rem;
+    }
+
+    .kq-match__rows {
+        gap: 0.4rem;
+    }
+
+    .kq-match__row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.4rem;
+        min-height: 3.25rem;
+        padding: 0.2rem;
+        border-width: 2px;
+        border-radius: 0.9rem;
+    }
+
+    .kq-match__prompt {
+        gap: 0.4rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.7rem;
+        font-size: clamp(1rem, 4.5cqw, 1.25rem);
+    }
+
+    .kq-match__prompt .kq-match__image {
+        height: 2.5rem;
+    }
+
+    .kq-match__audio {
+        font-size: 1rem;
+    }
+
+    .kq-match__drop {
+        min-height: 44px;
+        border-width: 2px;
+        border-radius: 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .kq-match__mark {
+        right: 0.4rem;
+        font-size: 1.1rem;
+    }
+
+    .kq-match__pool {
+        gap: 0.4rem;
+    }
+
+    .kq-match__card {
+        min-width: 5.5rem;
+        min-height: 44px;
+        padding: 0.3rem 0.75rem;
+        border-width: 2px;
+        border-radius: 0.7rem;
+        font-size: clamp(1rem, 4.5cqw, 1.25rem);
+    }
+
+    .kq-match__card.is-placed {
+        padding-right: 1.75rem;
+    }
 }
 
 @keyframes kq-match-shake {

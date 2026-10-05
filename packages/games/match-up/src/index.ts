@@ -6,7 +6,7 @@ import type {
 } from '@kancil-quiz/games-sdk';
 import { meta } from './meta';
 import type { MatchUpOptions } from './meta';
-import { MatchSession, pairRounds } from './session';
+import { MatchSession, fitPairsPerPage, pairRounds } from './session';
 import './style.css';
 
 export type { MatchUpOptions } from './meta';
@@ -66,11 +66,9 @@ function mount(
     ctx: GameContext<MatchUpOptions>,
 ): GameInstance {
     const options = { ...meta.defaultOptions, ...ctx.options };
-    const session = new MatchSession(
-        pairRounds(ctx.rounds),
-        options.pairsPerPage,
-        ctx.rng,
-    );
+    const rounds = pairRounds(ctx.rounds);
+    // 每頁幾組要等畫面建好、量過放不放得下才確定（見下方 fitPairsPerPage）
+    let session = new MatchSession(rounds, options.pairsPerPage, ctx.rng);
     const startedAt = performance.now();
     let lastAnswerAt = startedAt;
     let paused = false;
@@ -406,6 +404,14 @@ function mount(
         lastAnswerAt = performance.now();
     }
 
+    // 這一頁的題目與卡片是不是都在畫面內（沒有掛在版面上時量不到，就當作放得下）
+    function fitsScreen(): boolean {
+        return (
+            root.clientHeight === 0 ||
+            root.scrollHeight <= root.clientHeight + 1
+        );
+    }
+
     function onKey(event: KeyboardEvent): void {
         if (event.key === 'Escape' && selected) {
             select(null);
@@ -417,7 +423,13 @@ function mount(
     if (session.finished) {
         finish();
     } else {
-        renderPage();
+        // 老師設定的是每頁「最多」幾組：手機等小畫面放不下時減少組數，讓同一頁的題目與卡片
+        // 都在畫面內，拖曳時不必捲動（docs/SPEC.md 7.5）。組數一旦決定就不再隨轉向改變
+        fitPairsPerPage(options.pairsPerPage, (perPage) => {
+            session = new MatchSession(rounds, perPage, ctx.rng);
+            renderPage();
+            return fitsScreen();
+        });
     }
 
     return {

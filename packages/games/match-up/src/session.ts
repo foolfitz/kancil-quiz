@@ -18,6 +18,23 @@ export interface PlaceResult {
     pageComplete: boolean;
 }
 
+// 畫面放不下老師設定的組數時，每頁最少還是這麼多組（老師能設定的下限也是 3）
+export const MIN_PAIRS_PER_PAGE = 3;
+
+// 老師設定的是每頁「最多」幾組（docs/SPEC.md 7.5）。從上限往下找第一個放得下的組數：
+// fits 由畫面實際量測；都放不下就用下限，剩下的交給捲動。最後一次呼叫 fits 的參數就是回傳值。
+export function fitPairsPerPage(
+    max: number,
+    fits: (perPage: number) => boolean,
+): number {
+    for (let perPage = max; ; perPage--) {
+        const ok = fits(perPage);
+        if (ok || perPage <= MIN_PAIRS_PER_PAGE) {
+            return perPage;
+        }
+    }
+}
+
 // 把 count 題分成每頁不超過 perPage 題，各頁題數盡量平均（例如 7 題、每頁 6 題 → 4、3）。
 export function pageSizes(count: number, perPage: number): number[] {
     if (count <= 0) {

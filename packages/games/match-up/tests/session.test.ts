@@ -3,7 +3,13 @@ import type { Round } from '@kancil-quiz/games-sdk';
 import type { KancilSet } from '@kancil-quiz/schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { meta } from '../src/meta';
-import { MatchSession, pageSizes, pairRounds } from '../src/session';
+import {
+    MIN_PAIRS_PER_PAGE,
+    MatchSession,
+    fitPairsPerPage,
+    pageSizes,
+    pairRounds,
+} from '../src/session';
 
 const fixtures = import.meta.glob<KancilSet>(
     '../../../schema/fixtures/sets/*/set.json',
@@ -32,6 +38,46 @@ describe('pageSizes()', () => {
         [0, 6, []],
     ])('%i 題、每頁最多 %i 組', (count, perPage, expected) => {
         expect(pageSizes(count, perPage)).toEqual(expected);
+    });
+});
+
+describe('fitPairsPerPage()', () => {
+    it('畫面放得下就用老師設定的組數', () => {
+        const tried: number[] = [];
+        expect(
+            fitPairsPerPage(6, (perPage) => {
+                tried.push(perPage);
+                return true;
+            }),
+        ).toBe(6);
+        expect(tried).toEqual([6]);
+    });
+
+    it('放不下就逐步減少，最後一次量的就是採用的組數', () => {
+        const tried: number[] = [];
+        expect(
+            fitPairsPerPage(6, (perPage) => {
+                tried.push(perPage);
+                return perPage <= 4;
+            }),
+        ).toBe(4);
+        expect(tried).toEqual([6, 5, 4]);
+    });
+
+    it('都放不下時用下限，不再往下減', () => {
+        const tried: number[] = [];
+        expect(
+            fitPairsPerPage(5, (perPage) => (tried.push(perPage), false)),
+        ).toBe(MIN_PAIRS_PER_PAGE);
+        expect(tried).toEqual([5, 4, 3]);
+    });
+
+    it('上限本來就不超過下限時只量一次', () => {
+        const tried: number[] = [];
+        expect(
+            fitPairsPerPage(3, (perPage) => (tried.push(perPage), false)),
+        ).toBe(3);
+        expect(tried).toEqual([3]);
     });
 });
 
