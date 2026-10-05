@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Corpus\SetCopier;
+use App\Corpus\SetWriter;
 use App\Models\Activity;
 use App\Models\CurriculumRef;
 use App\Models\Media;
@@ -285,6 +287,88 @@ class TeacherFlowTest extends TestCase
             $this->assertSame('audio/mp4', $media->mime, $extension);
             $this->assertEqualsWithDelta(1500, $media->duration_ms, 150, $extension);
         }
+    }
+
+    /**
+     * 媒體的署名（docs/SPEC.md 第 9 節）：上傳時作者是老師、授權由編輯頁帶入題組的授權；
+     * 編輯頁和內容一起儲存修改後的署名，只能改自己上傳的。
+     */
+    public function test_media_credits_are_saved_with_the_set_and_only_for_own_uploads(): void
+    {
+        Storage::fake('public');
+
+        // 複製來的題組：詞條引用同事上傳的音檔，署名只能看不能改（例如教材的插圖也是這樣）
+        $other = User::factory()->create(['name' => '李老師']);
+        $theirs = Media::create([
+            'kind' => 'audio', 'path' => 'media/x.m4a', 'mime' => 'audio/mp4', 'bytes' => 1, 'uploaded_by' => $other->id,
+            'authors' => [['name' => 'Kancil Quiz']], 'license' => 'CC-BY-4.0', 'source' => 'AI 生成',
+        ]);
+        $source = Set::factory()->for($other, 'owner')->create(['language_code' => 'vi']);
+        app(SetWriter::class)->write($source, [
+            'faces' => ['prompt' => ['translation_zh'], 'answer' => ['text']],
+            'entries' => [['item' => ['text' => 'quả chuối', 'translation_zh' => '香蕉', 'audio_ids' => [$theirs->id]]]],
+        ], $other);
+        $set = app(SetCopier::class)->copy($source, $this->teacher);
+        $entryId = $set->entries()->firstOrFail()->id;
+
+        $response = $this->actingAs($this->teacher)->post('/media', [
+            'kind' => 'image',
+            'file' => UploadedFile::fake()->image('banana.png', 40, 40),
+            'rights' => '1',
+            'license' => 'CC-BY-SA-4.0',
+        ], ['Accept' => 'application/json'])->assertCreated()
+            ->assertJson(['author' => $this->teacher->name, 'license' => 'CC-BY-SA-4.0', 'source' => null, 'editable' => true]);
+        $image = Media::findOrFail($response->json('id'));
+
+        $this->post('/media', [
+            'kind' => 'image',
+            'file' => UploadedFile::fake()->image('banana.png', 40, 40),
+            'rights' => '1',
+            'license' => 'WTFPL',
+        ], ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('license');
+
+        $payload = $this->vocabPayload([['quả chuối', '香蕉']]);
+        $payload['entries'][0]['id'] = $entryId;
+        $payload['entries'][0]['item']['image_id'] = $image->id;
+        $payload['entries'][0]['item']['audio_ids'] = [$theirs->id];
+        $payload['media_credits'] = [['id' => $image->id, 'author' => '王老師、陳同學 ', 'source' => '自行拍攝', 'license' => 'CC0-1.0']];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasNoErrors();
+
+        $image->refresh();
+        $this->assertSame([['name' => '王老師'], ['name' => '陳同學']], $image->authors);
+        $this->assertSame('自行拍攝', $image->source);
+        $this->assertSame('CC0-1.0', $image->license);
+
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('entries.0.item.image.author', '王老師、陳同學')
+            ->where('entries.0.item.image.source', '自行拍攝')
+            ->where('entries.0.item.image.license', 'CC0-1.0')
+            ->where('entries.0.item.image.editable', true)
+            ->where('entries.0.item.audio.0.author', 'Kancil Quiz')
+            ->where('entries.0.item.audio.0.editable', false));
+
+        // 版本的內容（交換格式）是新的署名
+        $content = $set->fresh()?->currentRevision?->content();
+        $this->assertNotNull($content);
+        $this->assertEquals([(object) ['name' => '王老師'], (object) ['name' => '陳同學']], $content->entries[0]->item->image->authors);
+        $this->assertSame('CC0-1.0', $content->entries[0]->item->image->license);
+
+        // 只有署名變了：修訂紀錄說明是署名
+        $payload['media_credits'][0]['source'] = '自行拍攝，2026 年';
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasNoErrors();
+        $this->get("/sets/{$set->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('revisions.0.changes.0.label', '修改署名'));
+
+        // 別人的媒體不能改署名；空白的作者退回上傳的老師，授權可以改回沿用題組
+        $payload['media_credits'] = [['id' => $theirs->id, 'author' => '我', 'source' => null, 'license' => 'CC-BY-4.0']];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasErrors('media_credits');
+        $this->assertSame([['name' => 'Kancil Quiz']], $theirs->fresh()?->authors);
+
+        $payload['media_credits'] = [['id' => $image->id, 'author' => '  ', 'source' => '', 'license' => null]];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasNoErrors();
+        $this->assertSame([['name' => $this->teacher->name]], $image->fresh()?->authors);
+        $this->assertNull($image->fresh()?->license);
+        $this->assertNull($image->fresh()?->source);
     }
 
     public function test_uploads_require_the_rights_confirmation(): void

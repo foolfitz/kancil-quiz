@@ -11,12 +11,30 @@ export type FaceField =
     | 'audio'
     | 'image';
 
+// 媒體與它的署名（docs/SPEC.md 第 9 節）。author 是作者名字以「、」連起來；license、source 為 null 表示
+// 沿用詞條與題組（6.5）。editable：是自己上傳的，可以在編輯頁修改署名；別人的（例如教材的插圖）只能看。
 export interface MediaRef {
     id: string;
     kind: 'audio' | 'image';
     url: string;
     thumbnail_url: string | null;
     duration_ms: number | null;
+    author: string;
+    source: string | null;
+    license: string | null;
+    editable: boolean;
+}
+
+// 授權的顯示名稱，與 app/Support/Licenses.php 相同；不認得的識別碼原樣顯示
+const LICENSE_NAMES: Record<string, string> = {
+    'CC-BY-4.0': 'CC BY 4.0',
+    'CC-BY-SA-4.0': 'CC BY-SA 4.0',
+    'CC-BY-NC-ND-4.0': 'CC BY-NC-ND 4.0',
+    'CC0-1.0': 'CC0 1.0',
+};
+
+export function licenseName(license: string): string {
+    return LICENSE_NAMES[license] ?? license;
 }
 
 export interface VocabEntryInput {

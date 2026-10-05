@@ -2,6 +2,7 @@
 import { ArrowDown, ArrowUp, Mic, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
+import MediaCredits from '@/components/kancil/MediaCredits.vue';
 import MediaSlot from '@/components/kancil/MediaSlot.vue';
 import SequentialRecorder from '@/components/kancil/SequentialRecorder.vue';
 import { Button } from '@/components/ui/button';
@@ -93,6 +94,17 @@ function audioOf(entry: VocabEntryInput): MediaRef | null {
 
 function setAudio(entry: VocabEntryInput, media: MediaRef | null): void {
     entry.item.audio = media ? [media] : [];
+}
+
+// 這個詞的媒體與署名（docs/SPEC.md 第 9 節）
+function mediaOf(entry: VocabEntryInput): { label: string; ref: MediaRef }[] {
+    const audio = entry.item.audio.map((ref, i) => ({
+        label: entry.item.audio.length > 1 ? `發音 ${i + 1}` : '發音',
+        ref,
+    }));
+    return entry.item.image
+        ? [...audio, { label: '圖片', ref: entry.item.image }]
+        : audio;
 }
 
 // 逐詞錄音（docs/SPEC.md T-06）
@@ -241,6 +253,12 @@ function recordAll(): void {
                         </button>
                     </div>
                 </div>
+                <MediaCredits
+                    v-if="mediaOf(entry).length > 0"
+                    class="mt-2 pl-8"
+                    :media="mediaOf(entry)"
+                    @update="(media, patch) => Object.assign(media, patch)"
+                />
             </li>
         </ol>
 

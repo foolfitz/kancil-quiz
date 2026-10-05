@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Check, Loader2, Mic, RotateCcw, Square } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
-import { uploadMedia } from '@/lib/media';
+import { MEDIA_CONTEXT, uploadMedia } from '@/lib/media';
 import {
     MAX_SECONDS,
     Recording,
@@ -22,6 +22,8 @@ const state = ref<State>('idle');
 const error = ref('');
 const support = recordingSupport();
 const unsupported = support === 'ok' ? null : SUPPORT_MESSAGES[support];
+// 錄音的署名與上傳相同（docs/SPEC.md 第 9 節）：作者是老師自己，授權是題組的授權
+const mediaContext = inject(MEDIA_CONTEXT, null);
 
 let recording: Recording | null = null;
 const file = ref<File | null>(null);
@@ -90,7 +92,11 @@ async function accept(): Promise<void> {
     state.value = 'uploading';
     error.value = '';
     try {
-        const media = await uploadMedia(file.value, 'audio');
+        const media = await uploadMedia(
+            file.value,
+            'audio',
+            mediaContext?.value,
+        );
         clearPreview();
         state.value = 'idle';
         emit('uploaded', media);

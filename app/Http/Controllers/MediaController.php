@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Corpus\MediaCredits;
 use App\Corpus\SetEditorData;
 use App\Media\MediaProcessor;
 use App\Media\UploadQuota;
+use App\Support\Licenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * 上傳音檔與圖片（docs/SPEC.md T-05、第 9 節）。轉檔後回傳媒體資料，由編輯畫面放進題組內容。
@@ -18,6 +21,7 @@ class MediaController extends Controller
         $request->validate(['kind' => ['required', 'in:audio,image']]);
         $audio = $request->input('kind') === 'audio';
 
+        // 署名（docs/SPEC.md 第 9 節）：作者預設是上傳的老師，授權由編輯頁帶入題組的授權；之後都能在編輯頁修改
         $data = $request->validate([
             'file' => ['required', 'file', 'max:5120', $audio
                 ? 'mimes:mp3,m4a,mp4,aac,wav,ogg,oga,webm'
@@ -25,7 +29,7 @@ class MediaController extends Controller
             'rights' => ['accepted'],
             'author' => ['nullable', 'string', 'max:100'],
             'source' => ['nullable', 'string', 'max:300'],
-            'license' => ['nullable', 'string', 'max:40'],
+            'license' => ['nullable', Rule::in(Licenses::all())],
         ], [
             'rights.accepted' => '請確認你有權分享這個檔案。',
             'file.max' => '檔案不可超過 5 MB。',
@@ -36,7 +40,7 @@ class MediaController extends Controller
         UploadQuota::of($request->user())->ensureNotFull();
 
         $attribution = [
-            'authors' => [['name' => $data['author'] ?? $request->user()->name]],
+            'authors' => MediaCredits::authors($data['author'] ?? null, $request->user()),
             'license' => $data['license'] ?? null,
             'source' => $data['source'] ?? null,
         ];
@@ -46,7 +50,7 @@ class MediaController extends Controller
             : $processor->image($request->file('file'), $request->user(), $attribution);
 
         return response()->json([
-            ...SetEditorData::media($media),
+            ...SetEditorData::media($media, $request->user()),
             // 編輯頁用這個更新「已上傳多少／上限」，不必重新載入（resources/js/lib/uploadQuota.ts）
             'quota' => UploadQuota::of($request->user())->toArray(),
         ], 201);

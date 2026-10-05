@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ImagePlus, Loader2, Mic, Play, Upload, X } from '@lucide/vue';
-import { ref } from 'vue';
+import { inject, ref } from 'vue';
 import AudioRecorder from '@/components/kancil/AudioRecorder.vue';
 import {
     Dialog,
@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { uploadMedia } from '@/lib/media';
+import { MEDIA_CONTEXT, uploadMedia } from '@/lib/media';
 import type { MediaRef } from '@/types/kancil';
 
 // 一個音檔或圖片欄位：上傳、預覽、移除（docs/SPEC.md T-05）；音檔也可以直接錄音（T-06）。
@@ -24,6 +24,7 @@ const props = defineProps<{
 const model = defineModel<MediaRef | null>({ required: true });
 const emit = defineEmits<{ error: [message: string] }>();
 
+const mediaContext = inject(MEDIA_CONTEXT, null);
 const input = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
 let player: HTMLAudioElement | null = null;
@@ -60,7 +61,7 @@ async function upload(event: Event): Promise<void> {
     }
     uploading.value = true;
     try {
-        model.value = await uploadMedia(file, props.kind);
+        model.value = await uploadMedia(file, props.kind, mediaContext?.value);
     } catch (error) {
         emit('error', error instanceof Error ? error.message : '上傳失敗');
     } finally {

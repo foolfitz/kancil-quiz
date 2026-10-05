@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Download, Gamepad2 } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, provide, ref, watch } from 'vue';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import SetController from '@/actions/App/Http/Controllers/SetController';
 import SetExportController from '@/actions/App/Http/Controllers/SetExportController';
@@ -17,12 +17,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MEDIA_CONTEXT } from '@/lib/media';
 import type { UploadQuota } from '@/lib/uploadQuota';
 import { KIND_NAMES } from '@/types/kancil';
 import type {
     CurriculumRef,
     FaceField,
     Language,
+    MediaRef,
     QuizEntryInput,
     SetSharing,
     SetKind,
@@ -97,6 +99,11 @@ function initial() {
 
 const form = useForm(initial());
 const rightsConfirmed = ref(false);
+// 新上傳的媒體以題組的授權為預設，署名的選單列出老師能選的授權（docs/SPEC.md 第 9 節）
+provide(
+    MEDIA_CONTEXT,
+    computed(() => ({ license: form.license, licenses: props.licenses })),
+);
 const showRomanization = ref(
     props.set.kind === 'vocab' &&
         (props.entries as VocabEntryInput[]).some((e) => e.item.romanization),
@@ -177,11 +184,35 @@ function toServer(entry: VocabEntryInput | QuizEntryInput) {
     };
 }
 
+// 自己上傳的媒體的署名，和內容一起儲存（App\Corpus\MediaCredits）；同一個媒體用在好幾題只送一次
+function mediaCredits(entries: (VocabEntryInput | QuizEntryInput)[]) {
+    const all = entries.flatMap((entry): (MediaRef | null)[] =>
+        'item' in entry
+            ? [...entry.item.audio, entry.item.image]
+            : [
+                  entry.question.stem.audio,
+                  entry.question.stem.image,
+                  ...entry.question.options.map((o) => o.image),
+              ],
+    );
+    const seen = new Set<string>();
+    return all
+        .filter((media): media is MediaRef => media !== null && media.editable)
+        .filter((media) => !seen.has(media.id) && seen.add(media.id))
+        .map(({ id, author, source, license }) => ({
+            id,
+            author,
+            source,
+            license,
+        }));
+}
+
 function save(): void {
     form.transform((data) => ({
         ...data,
         faces: props.set.kind === 'vocab' ? data.faces : undefined,
         entries: data.entries.map(toServer),
+        media_credits: mediaCredits(data.entries),
     })).submit(SetController.update(props.set.id), {
         preserveScroll: true,
         // 儲存後以伺服器回傳的內容（新詞條有了 ID）重設表單

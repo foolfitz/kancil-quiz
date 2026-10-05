@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, Plus, Trash2, X } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
+import MediaCredits from '@/components/kancil/MediaCredits.vue';
 import MediaSlot from '@/components/kancil/MediaSlot.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { QuizEntryInput } from '@/types/kancil';
+import type { MediaRef, QuizEntryInput } from '@/types/kancil';
 
 // 問答組編輯：題幹加 2 到 6 個選項，標示一個正解（docs/SPEC.md T-07）。
 defineProps<{
@@ -65,6 +66,20 @@ function markCorrect(entry: QuizEntryInput, index: number): void {
     entry.question.options.forEach((o, i) => {
         o.correct = i === index;
     });
+}
+
+// 這一題的媒體與署名（docs/SPEC.md 第 9 節）
+function mediaOf(entry: QuizEntryInput): { label: string; ref: MediaRef }[] {
+    const { stem, options } = entry.question;
+    return [
+        stem.audio ? { label: '題幹音檔', ref: stem.audio } : null,
+        stem.image ? { label: '題幹圖片', ref: stem.image } : null,
+        ...options.map((o, j) =>
+            o.image
+                ? { label: `選項 ${LETTERS[j]} 的圖片`, ref: o.image }
+                : null,
+        ),
+    ].filter((item) => item !== null);
 }
 </script>
 
@@ -207,6 +222,12 @@ function markCorrect(entry: QuizEntryInput, index: number): void {
                         :message="errors[`entries.${i}.question.options.${j}`]"
                     />
                 </fieldset>
+                <MediaCredits
+                    v-if="mediaOf(entry).length > 0"
+                    class="pl-14"
+                    :media="mediaOf(entry)"
+                    @update="(media, patch) => Object.assign(media, patch)"
+                />
             </li>
         </ol>
 

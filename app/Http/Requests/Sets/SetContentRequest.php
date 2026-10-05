@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sets;
 
 use App\Models\Set;
+use App\Support\Licenses;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -50,6 +51,15 @@ class SetContentRequest extends SetDetailsRequest
             'entries.*.question.options.*.correct' => ['required', 'boolean'],
         ];
 
+        // 媒體的署名（docs/SPEC.md 第 9 節），只送自己上傳的媒體，由 App\Corpus\MediaCredits 寫回
+        $credits = [
+            'media_credits' => ['nullable', 'array', 'max:600'],
+            'media_credits.*.id' => ['required', Rule::exists('media', 'id')],
+            'media_credits.*.author' => ['nullable', 'string', 'max:100'],
+            'media_credits.*.source' => ['nullable', 'string', 'max:300'],
+            'media_credits.*.license' => ['nullable', Rule::in(Licenses::all())],
+        ];
+
         // 題組層級的冊課與標籤（docs/SPEC.md 3.6、6.3），共備庫依此搜尋（T-13）
         $meta = [
             'tags' => ['nullable', 'array', 'max:10'],
@@ -61,7 +71,7 @@ class SetContentRequest extends SetDetailsRequest
             ],
         ];
 
-        return [...parent::rules(), ...$meta, ...$content];
+        return [...parent::rules(), ...$meta, ...$credits, ...$content];
     }
 
     /**
@@ -124,6 +134,9 @@ class SetContentRequest extends SetDetailsRequest
             'entries.*.item.translation_zh' => '中文意思',
             'entries.*.item.romanization' => '羅馬拼寫',
             'entries.*.question.options' => '選項',
+            'media_credits.*.author' => '作者',
+            'media_credits.*.source' => '出處',
+            'media_credits.*.license' => '授權',
         ];
     }
 }

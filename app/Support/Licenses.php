@@ -16,6 +16,16 @@ final class Licenses
     ];
 
     /**
+     * 媒體的署名可以選的授權：老師能選的（App\Models\Set::LICENSES）加上教材的。
+     *
+     * @return list<string>
+     */
+    public static function all(): array
+    {
+        return array_keys(self::KNOWN);
+    }
+
+    /**
      * 例：CC BY 4.0。不認得的識別碼原樣傳回。
      */
     public static function name(string $license): string

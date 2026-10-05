@@ -150,7 +150,7 @@ class SetController extends Controller
                 // 教材題組（3.6）：審核者在這裡修正後，重新匯入時會略過這一課
                 'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
             ],
-            'entries' => SetEditorData::entries($set),
+            'entries' => SetEditorData::entries($set, $request->user()),
             'can' => [
                 'manage' => Gate::allows('manage', $set),
                 'export' => $set->current_revision_id !== null && Gate::allows('export', $set),

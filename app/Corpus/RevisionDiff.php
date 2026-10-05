@@ -46,7 +46,12 @@ class RevisionDiff
             if (! isset($oldEntries[$id])) {
                 $changes[] = self::change('added', '新增', null, self::entryText($new, $entry));
             } elseif (json_encode($oldEntries[$id]) !== json_encode($entry)) {
-                $changes[] = self::change('changed', '修改', self::entryText($old, $oldEntries[$id]), self::entryText($new, $entry));
+                $before = self::entryText($old, $oldEntries[$id]);
+                $after = self::entryText($new, $entry);
+                // 題目與媒體都沒變，變的是署名（媒體或詞條的作者、出處、授權）
+                $changes[] = $before === $after
+                    ? self::change('changed', '修改署名', null, $after)
+                    : self::change('changed', '修改', $before, $after);
             }
         }
         foreach ($oldEntries as $id => $entry) {

@@ -53,6 +53,18 @@ class RevisionDiffTest extends TestCase
         ], RevisionDiff::between($old, $new));
     }
 
+    public function test_a_credit_change_is_labelled_as_such(): void
+    {
+        $old = $this->set([['A', 'quả chuối', '香蕉']]);
+        $new = $this->set([['A', 'quả chuối', '香蕉']]);
+        $old->entries[0]->item->image = (object) ['src' => 'media/01M3ZYR27GF5QQW62SVZ5NA266.webp'];
+        $new->entries[0]->item->image = (object) ['src' => 'media/01M3ZYR27GF5QQW62SVZ5NA266.webp', 'authors' => [(object) ['name' => '李老師']]];
+
+        $this->assertSame([
+            ['kind' => 'changed', 'label' => '修改署名', 'before' => null, 'after' => 'quả chuối（香蕉） [圖片 #A266]'],
+        ], RevisionDiff::between($old, $new));
+    }
+
     public function test_curriculum_and_faces_are_described_in_words(): void
     {
         $old = $this->set([], ['curriculum' => [['volume' => 3, 'lesson' => 2]]]);

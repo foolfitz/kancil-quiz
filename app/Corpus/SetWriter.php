@@ -19,6 +19,8 @@ use Illuminate\Validation\ValidationException;
  *   entries: [{id?, item: {text, romanization?, translation_zh, audio_ids: [], image_id?, authors?, license?, source?}}]
  * 問答組的輸入：
  *   entries: [{id?, question: {stem: {text?, audio_id?, image_id?}, options: [{id, text?, image_id?, correct}]}}]
+ * 兩種都可以附上媒體的署名（App\Corpus\MediaCredits）：
+ *   media_credits: [{id, author?, source?, license?}]
  */
 class SetWriter
 {
@@ -32,6 +34,9 @@ class SetWriter
         $this->authorizeMedia($set, $content['entries'] ?? [], $by);
 
         $changedItems = DB::transaction(function () use ($set, $content, $by) {
+            // 署名先寫回媒體，產生的版本才會是新的署名
+            MediaCredits::apply($content['media_credits'] ?? [], $by);
+
             if ($set->kind === 'vocab') {
                 $set->update(['faces' => $content['faces']]);
 

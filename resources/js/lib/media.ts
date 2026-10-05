@@ -1,3 +1,4 @@
+import type { InjectionKey, Ref } from 'vue';
 import { setUploadQuota } from '@/lib/uploadQuota';
 import type { UploadQuota } from '@/lib/uploadQuota';
 import type { MediaRef } from '@/types/kancil';
@@ -9,15 +10,30 @@ function xsrfToken(): string {
 
 export class UploadError extends Error {}
 
-// 上傳音檔或圖片（docs/SPEC.md T-05），伺服器轉檔後回傳媒體資料。
+// 題組編輯頁提供給上傳與署名欄位的資料（docs/SPEC.md 第 9 節）：新上傳的媒體以題組的授權為預設，
+// 署名的授權選單列出老師能選的授權。
+export interface MediaContext {
+    license: string;
+    licenses: string[];
+}
+
+export const MEDIA_CONTEXT: InjectionKey<Ref<MediaContext>> =
+    Symbol('mediaContext');
+
+// 上傳音檔或圖片（docs/SPEC.md T-05），伺服器轉檔後回傳媒體資料。作者預設是上傳的老師，
+// 授權帶入題組的授權，之後都能在編輯頁的「署名」修改。
 export async function uploadMedia(
     file: File,
     kind: 'audio' | 'image',
+    context?: MediaContext | null,
 ): Promise<MediaRef> {
     const body = new FormData();
     body.append('file', file);
     body.append('kind', kind);
     body.append('rights', '1');
+    if (context?.license) {
+        body.append('license', context.license);
+    }
 
     const response = await fetch('/media', {
         method: 'POST',
