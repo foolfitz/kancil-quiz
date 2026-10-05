@@ -6,35 +6,43 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
+// Vitest 只測 packages/ 中不碰 Laravel 與 Vue 的套件，不需要這些外掛。laravel-vite-plugin 在 CI 環境
+// 會拒絕啟動開發伺服器（Vitest 也算），所以測試時整組不載入。
+const testing = process.env.VITEST !== undefined;
+
 export default defineConfig({
-    plugins: lazyPlugins(() => [
-        laravel({
-            input: [
-                'resources/css/app.css',
-                'resources/js/app.ts',
-                'resources/js/player.ts',
-            ],
-            refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
-        }),
-        inertia(),
-        tailwindcss(),
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
-        }),
-        wayfinder({
-            formVariants: true,
-        }),
-    ]),
+    plugins: lazyPlugins(() =>
+        testing
+            ? []
+            : [
+                  laravel({
+                      input: [
+                          'resources/css/app.css',
+                          'resources/js/app.ts',
+                          'resources/js/player.ts',
+                      ],
+                      refresh: true,
+                      fonts: [
+                          bunny('Instrument Sans', {
+                              weights: [400, 500, 600],
+                          }),
+                      ],
+                  }),
+                  inertia(),
+                  tailwindcss(),
+                  vue({
+                      template: {
+                          transformAssetUrls: {
+                              base: null,
+                              includeAbsolute: false,
+                          },
+                      },
+                  }),
+                  wayfinder({
+                      formVariants: true,
+                  }),
+              ],
+    ),
     test: {
         include: ['packages/**/*.test.ts'],
         // 遊戲套件的測試會檢查 CSS 是否都限定在自己的根元素之下
