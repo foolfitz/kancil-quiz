@@ -47,6 +47,84 @@ export async function createActivity(
     return new URL(url ?? '').pathname;
 }
 
+// 手機用：整頁沒有水平捲軸
+export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+}
+
+// 手機用：遊戲這一頁的內容都在遊戲區內，不必捲動（遊戲的根元素是 .kq-player__game-area 的第一個子元素）
+export async function expectGameFits(page: Page): Promise<void> {
+    const overflow = await page
+        .locator('.kq-player__game-area > *')
+        .first()
+        .evaluate((root) => root.scrollHeight - root.clientHeight);
+    expect(overflow).toBeLessThanOrEqual(1);
+}
+
+// 元素整個在畫面內（沒有被切到畫面外）
+export async function expectInViewport(
+    page: Page,
+    locator: Locator,
+): Promise<void> {
+    const viewport = page.viewportSize();
+    const box = await locator.boundingBox();
+    expect(box, '找不到元素的位置').not.toBeNull();
+    if (!box || !viewport) {
+        return;
+    }
+    expect(box.x).toBeGreaterThanOrEqual(-1);
+    expect(box.y).toBeGreaterThanOrEqual(-1);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+}
+
+// 配對（match-up）用：以手指拖曳。Chromium 透過 CDP 送出真正的觸控事件（pointerType 是 touch，
+// 會經過 touch-action 的判斷，和手機上一樣）；WebKit 沒有這個介面，退回滑鼠
+export async function touchDragTo(
+    page: Page,
+    from: Locator,
+    to: Locator,
+): Promise<void> {
+    if (page.context().browser()?.browserType().name() !== 'chromium') {
+        return dragTo(page, from, to);
+    }
+    const a = await from.boundingBox();
+    const b = await to.boundingBox();
+    if (!a || !b) {
+        throw new Error('找不到要拖曳的位置');
+    }
+    const start = { x: a.x + a.width / 2, y: a.y + a.height / 2 };
+    const end = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    const cdp = await page.context().newCDPSession(page);
+    try {
+        await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchStart',
+            touchPoints: [start],
+        });
+        const steps = 12;
+        for (let i = 1; i <= steps; i++) {
+            await cdp.send('Input.dispatchTouchEvent', {
+                type: 'touchMove',
+                touchPoints: [
+                    {
+                        x: start.x + ((end.x - start.x) * i) / steps,
+                        y: start.y + ((end.y - start.y) * i) / steps,
+                    },
+                ],
+            });
+        }
+        await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchEnd',
+            touchPoints: [],
+        });
+    } finally {
+        await cdp.detach();
+    }
+}
+
 // 配對（match-up）用：以滑鼠拖曳
 export async function dragTo(
     page: Page,

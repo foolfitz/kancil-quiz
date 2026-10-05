@@ -47,6 +47,7 @@
 - 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 與 `packages/player/standalone/main.ts` 登記，並執行 `npm run games:manifest`。
 - 遊戲分成計分的「遊戲」與不計分的「互動教材」（字卡、圖卡牆、轉盤），由 `requires.scored` 決定；老師端與獨立播放器用 `@kancil-quiz/deck` 的 `groupGames()` 分組（SPEC 7.5）。
 - 會翻面的卡片不要只靠 `backface-visibility`：Playwright 的 WebKit（Linux）不支援，背面會鏡像蓋在正面上。三個卡片類的遊戲都在翻到一半時用 `visibility` 藏起背面，E2E 以 `toBeHidden()` 檢查；翻面的那一層也不要加 `container-type` 或 `overflow`，縮放用的 container 放在裡面一層。
+- 畫面大小（SPEC S-02、7.1）：遊戲的版面以自己的根元素為 container（`container-type: size`），用 `@container` 區分手機（寬小於 600px 或高小於 480px）、平板與投影，不用視窗的 media query。宿主的 `.kq-player__stage` 固定為畫面的高度（`100dvh` 扣掉 safe area），不隨遊戲的內容撐高，放不下的由遊戲自己捲動；一頁的內容要盡量在畫面內，配對放不下時由 `fitPairsPerPage()` 減少每頁的組數（最少 3）。手機的 E2E 只用不必登入的教材試玩頁（`tests/e2e/phone.spec.ts`，`*-phone`、`*-phone-landscape` 兩個 project），手指拖曳用 `helpers.ts` 的 `touchDragTo()`（Chromium 以 CDP 送真正的觸控事件）。
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
 - `answered` 事件的 `presented`：`mcq` 由宿主補上；配對的右側卡片分頁出現，由遊戲提供同一頁的卡片（SPEC 7.2）。伺服器限制每筆最多 12 個。
 - 迷宮問答 `packages/games/maze-quiz` 是 git submodule，正本是獨立的 `maze-quiz` repo（MIT，SPEC 10.2），本機放在本 repo 旁邊的 `../maze-quiz`：
@@ -100,7 +101,7 @@
 | `php artisan kancil:create-admin <email>` | 建立管理員（會要求設定密碼），或把既有的帳號設為管理員。老師不需要邀請，用 Google 登入就會建立帳號 |
 | `php artisan kancil:prune --dry-run` | 列出排程會清除的資料筆數，不刪除；拿掉 `--dry-run` 就會真的刪除 |
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |
-| `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸） |
+| `npm run build && npx playwright test` | 端對端測試（獨立的 `database/e2e.sqlite`，媒體放在 `public/e2e-media`；iPad 直向、橫向與投影尺寸，加上手機直向與橫放，手機只跑 `tests/e2e/phone.spec.ts`） |
 | `node tests/Load/student-load.mjs --activity <ID>` | 學生端 API 壓力測試，用法見檔案開頭的說明 |
 | `docker compose up -d --build` | 正式環境（`docs/deploy.md`）；需要 `.env.production`，範本是 `.env.production.example` |
 

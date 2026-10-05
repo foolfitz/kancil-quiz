@@ -3,7 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 // 端對端測試（docs/SPEC.md 7.6、10.1）。使用獨立的 SQLite 檔與示範資料（DemoSeeder），
 // 執行前要先 npm run build。
 //
-// iPad 的 Safari 要用 WebKit；Linux 上需要先安裝系統套件：npx playwright install-deps webkit
+// 尺寸：iPad 直向、橫向、1920×1080 投影，加上手機直向與橫放（只跑學生端的 phone.spec.ts，
+// 老師端的頁面以平板與電腦為主）。
+// iPad 與 iPhone 的 Safari 要用 WebKit；Linux 上需要先安裝系統套件：npx playwright install-deps webkit
 // （不要加 sudo，它會自己切換成 root）。安裝後設定 E2E_WEBKIT=1 就會一併執行。
 // 同一台機器上同時跑兩份（例如兩個 git worktree）時，用 E2E_PORT 錯開
 const port = Number(process.env.E2E_PORT ?? 8124);
@@ -12,6 +14,9 @@ const database = `${process.cwd()}/database/e2e.sqlite`;
 const media = `${process.cwd()}/public/e2e-media`;
 
 const ipad = devices['iPad (gen 7)'];
+// 手機：iPhone 13 的尺寸；橫放時很矮，是遊戲版面最吃緊的情況。phone.spec.ts 只在手機的 project 跑
+const phone = { width: 390, height: 844 };
+const phoneOnly = /phone\.spec\.ts/;
 // 錄音（recording.spec.ts）：Chromium 用假的麥克風並自動允許；WebKit 沒有這個功能
 const fakeMicrophone = {
     launchOptions: {
@@ -43,6 +48,7 @@ export default defineConfig({
             {
                 name: `${browserName}-ipad-portrait`,
                 dependencies: ['setup'],
+                testIgnore: phoneOnly,
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
@@ -56,6 +62,7 @@ export default defineConfig({
             {
                 name: `${browserName}-ipad-landscape`,
                 dependencies: ['setup'],
+                testIgnore: phoneOnly,
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
@@ -71,6 +78,7 @@ export default defineConfig({
             {
                 name: `${browserName}-projector`,
                 dependencies: ['setup'],
+                testIgnore: phoneOnly,
                 use: {
                     storageState: 'test-results/.auth/teacher.json',
                     browserName,
@@ -78,6 +86,26 @@ export default defineConfig({
                     viewport: { width: 1920, height: 1080 },
                 },
             },
+            // 手機只跑學生端的教材試玩（不必登入），直向與橫放各一次
+            ...(
+                [
+                    ['phone', phone],
+                    [
+                        'phone-landscape',
+                        { width: phone.height, height: phone.width },
+                    ],
+                ] as const
+            ).map(([suffix, viewport]) => ({
+                name: `${browserName}-${suffix}`,
+                testMatch: phoneOnly,
+                use: {
+                    browserName,
+                    viewport,
+                    hasTouch: true,
+                    isMobile: browserName !== 'chromium' ? undefined : true,
+                    deviceScaleFactor: 3,
+                },
+            })),
         ]),
     ],
     webServer: {
