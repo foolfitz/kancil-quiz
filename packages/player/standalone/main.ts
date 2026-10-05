@@ -40,6 +40,8 @@ const LANGUAGE_NAMES: Record<string, string> = {
 const LICENSE_NAMES: Record<string, string> = {
     'CC-BY-4.0': 'CC BY 4.0',
     'CC-BY-SA-4.0': 'CC BY-SA 4.0',
+    // 教材的課名與詞彙照原教材標示（App\Support\Licenses）
+    'CC-BY-NC-ND-4.0': 'CC BY-NC-ND 4.0',
     'CC0-1.0': 'CC0 1.0',
 };
 
