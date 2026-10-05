@@ -14,6 +14,13 @@
 	root public/
 	encode zstd br gzip
 
+	# 瀏覽器記住這個網域只用 HTTPS；不依內容猜測檔案類型。
+	# 不讓其他網站嵌入頁面的設定在 Laravel（App\Http\Middleware\DenyFraming），播放頁要例外。
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+	}
+
 	# 上傳的媒體：不讓搜尋引擎收錄；檔名隨機且內容不可變，可以長期快取（docs/SPEC.md 第 9 節）。
 	# file_server 預設不列出目錄內容。
 	header /storage/* {

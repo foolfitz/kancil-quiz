@@ -483,7 +483,10 @@ class CurriculumTest extends TestCase
         $this->import();
         $set = $this->lesson(3);
 
+        // 試玩頁和活動一樣可以嵌進其他網站，課頁不行（DenyFraming）
+        $this->get('/curriculum/id/1/3')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response = $this->get('/curriculum/id/1/3/play/maze-quiz')->assertOk()
+            ->assertHeaderMissing('X-Frame-Options')
             ->assertSee('<meta name="robots" content="noindex">', false)
             ->assertSee('data-trial="1"', false)
             ->assertSee('href="'.route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3]).'"', false);

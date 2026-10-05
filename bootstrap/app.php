@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\DenyFraming;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -21,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->append(NormalizeUnicode::class);
+        // 全域：Filament 後台不經過 web 群組
+        $middleware->append(DenyFraming::class);
 
         $middleware->web(append: [
             EnsureAccountIsActive::class,

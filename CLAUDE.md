@@ -31,6 +31,7 @@
   - 帳號（SPEC T-01、T-03、第 5 節、A-05）：老師用 Google 登入（Socialite，`App\Http\Controllers\Auth\GoogleLoginController`），帳號的對應與建立在 `App\Auth\GoogleAccounts`：同一個 Google 帳號 → 同一個 email 且還沒連結 Google 的帳號 → 建立新的老師。Fortify 只留密碼登入、雙重驗證與 passkey，給有密碼的帳號（管理員、示範帳號），沒有註冊、重設密碼與驗證信；Filament 沒有自己的登入頁，沒登入時導到 `/login`。設定頁的「安全性」只給有密碼的帳號（`EnsureUserHasPassword`）。刪除帳號是匿名化（`App\Auth\AccountDeletion`），不真的刪除使用者；管理員停用的帳號（`users.disabled_at`）由 `EnsureAccountIsActive` 登出，他的活動、分享連結與開放資料都回 404，公開題組不列在共備庫（`Set::listed()`、`Set::isListed()`、`Set::sharedBy()`）。新增列出公開題組或播放活動的地方時，要一併排除停用的擁有者。
   - 播放頁的檢舉（SPEC S-07）：`POST /api/v1/activities/{activity}/reports` 存進 `reports`，寄信給管理員（`ActivityReported`，寄不出去不影響），後台的「檢舉」（`app/Filament/Resources/Reports`）處理。
   - 工作階段存在資料庫，但不記錄 IP 與瀏覽器（`App\Support\SessionHandler` 取代 `database` driver）。
+  - 播放頁以外的頁面都不能被其他網站放進 iframe（`App\Http\Middleware\DenyFraming`，全域，因為 Filament 不經過 web 群組）；活動與教材試玩的播放頁（路由 `play`、`curriculum.play`）例外，新增學生播放用的路由時要加進去。HSTS 與 `nosniff` 在 `docker/Caddyfile`。
   - 老師端側邊欄的「後台」連結只給能進 Filament 的人（`auth.adminUrl`）；`NavItem.external` 的項目用一般連結整頁載入，不走 Inertia。
   - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。
   - `app/Grading/Judge.php`：伺服器端判分，與 `@kancil-quiz/deck` 的 `judge()` 是同一套規則。
