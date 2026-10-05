@@ -107,6 +107,12 @@ test.describe.serial('選擇題', () => {
             fullPage: true,
         });
 
+        // 老師可以刪除一次作答（例如自己試玩留下的），先確認
+        page.once('dialog', (dialog) => void dialog.accept());
+        await page.locator('[data-test="attempt-delete"]').click();
+        await expect(row).toHaveCount(0);
+        await expect(page.getByText('已刪除這次作答')).toBeVisible();
+
         expect(errors).toEqual([]);
     });
 

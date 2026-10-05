@@ -349,6 +349,35 @@ class ActivityResultsTest extends TestCase
                 ->where('detail', null));
     }
 
+    public function test_the_owner_can_delete_an_attempt(): void
+    {
+        $banana = $this->set->entries()->value('id');
+        $mine = $this->play([[$banana, $banana]]);
+        $student = $this->play([[$banana, $banana]]);
+        $url = "/activities/{$this->activity->id}/attempts/{$mine}";
+
+        $this->delete($url)->assertRedirect('/login');
+        $this->actingAs(User::factory()->create())->delete($url)->assertForbidden();
+        $this->assertDatabaseHas('attempts', ['id' => $mine]);
+
+        // 只能刪除這個活動的作答
+        $other = Activity::create(['set_id' => $this->set->id, 'game_id' => 'quiz', 'game_version' => '0.1.0', 'options' => [], 'owner_id' => $this->teacher->id]);
+        $this->actingAs($this->teacher)->delete("/activities/{$other->id}/attempts/{$mine}")->assertNotFound();
+
+        $this->actingAs($this->teacher)
+            ->from("/activities/{$this->activity->id}/results")
+            ->delete($url)
+            ->assertRedirect("/activities/{$this->activity->id}/results");
+        $this->assertDatabaseMissing('attempts', ['id' => $mine]);
+        $this->assertDatabaseMissing('attempt_responses', ['attempt_id' => $mine]);
+        $this->assertDatabaseHas('attempt_responses', ['attempt_id' => $student]);
+
+        $this->get("/activities/{$this->activity->id}/results")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('summary.attempts', 1)
+                ->where('attempts.data.0.id', $student));
+    }
+
     public function test_students_are_listed_by_name_with_their_first_completed_attempt(): void
     {
         $this->activity->update(['mode' => 'assignment']);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityAttemptController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityResultsController;
 use App\Http\Controllers\ActivityResultsCsvController;
@@ -67,6 +68,9 @@ Route::middleware('auth')->group(function () {
     Route::get('activities/{activity}/results', ActivityResultsController::class)->name('activities.results');
     Route::get('activities/{activity}/results.csv', ActivityResultsCsvController::class)->name('activities.results.csv');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
+    Route::delete('activities/{activity}/attempts/{attempt}', [ActivityAttemptController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('activities.attempts.destroy');
 });
 
 require __DIR__.'/settings.php';

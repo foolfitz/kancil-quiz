@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ChevronDown, ChevronRight, Download } from '@lucide/vue';
+import { ChevronDown, ChevronRight, Download, Trash2 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import ActivityAttemptController from '@/actions/App/Http/Controllers/ActivityAttemptController';
 import ActivityController from '@/actions/App/Http/Controllers/ActivityController';
 import ActivityResultsController from '@/actions/App/Http/Controllers/ActivityResultsController';
 import ActivityResultsCsvController from '@/actions/App/Http/Controllers/ActivityResultsCsvController';
@@ -114,6 +115,29 @@ function loadDetail(id: string): void {
             },
         });
     }
+}
+
+// 刪除一次作答，例如老師自己用正式連結試玩留下的；成績與答錯率隨之重算
+function destroyAttempt(attempt: AttemptRow): void {
+    if (
+        !window.confirm(
+            '確定要刪除這次作答？刪除後無法復原，成績與答錯率會重新計算。',
+        )
+    ) {
+        return;
+    }
+    router.delete(
+        ActivityAttemptController.destroy({
+            activity: props.activity.id,
+            attempt: attempt.id,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                expanded.value = null;
+            },
+        },
+    );
 }
 
 function toggle(attempt: AttemptRow): void {
@@ -570,7 +594,7 @@ function duration(ms: number | null): string {
             <section class="space-y-3">
                 <h2 class="font-semibold">每次作答</h2>
                 <p class="text-sm text-muted-foreground">
-                    點一下可以看這次作答每一題選了什麼。題目依作答當時的題組版本顯示。
+                    點一下可以看這次作答每一題選了什麼。題目依作答當時的題組版本顯示。自己試玩留下的作答，可以在展開後刪除。
                 </p>
 
                 <div class="overflow-x-auto rounded-xl border">
@@ -684,6 +708,18 @@ function duration(ms: number | null): string {
                                             :scored="activity.scored"
                                             :lang="set.language"
                                         />
+                                        <div class="mt-3 flex justify-end">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                class="text-destructive"
+                                                data-test="attempt-delete"
+                                                @click="destroyAttempt(attempt)"
+                                            >
+                                                <Trash2 class="size-4" />
+                                                刪除這次作答
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             </template>

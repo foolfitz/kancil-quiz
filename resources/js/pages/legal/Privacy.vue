@@ -95,7 +95,8 @@ defineProps<{
         <ul>
             <li>
                 作答紀錄：從開始作答起保存
-                {{ retention.attempt_months }} 個月，之後自動刪除。
+                {{ retention.attempt_months }}
+                個月，之後自動刪除。老師也可以在成績頁刪除某一次作答，立即刪除。
             </li>
             <li>
                 老師刪除的題組與活動：{{ retention.trashed_days }}
