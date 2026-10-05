@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Corpus\SetEditorData;
 use App\Media\MediaProcessor;
-use App\Models\Media;
-use App\Models\User;
+use App\Media\UploadQuota;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 /**
  * 上傳音檔與圖片（docs/SPEC.md T-05、第 9 節）。轉檔後回傳媒體資料，由編輯畫面放進題組內容。
@@ -34,7 +32,8 @@ class MediaController extends Controller
             'file.mimes' => $audio ? '音檔格式必須是 mp3、m4a、aac、wav、ogg 或 webm。' : '圖片格式必須是 jpg、png 或 webp。',
         ]);
 
-        $this->ensureWithinQuota($request->user());
+        // 每位老師的總量上限（docs/SPEC.md A-05、第 9 節）：任何人都能用 Google 註冊，所以要限制
+        UploadQuota::of($request->user())->ensureNotFull();
 
         $attribution = [
             'authors' => [['name' => $data['author'] ?? $request->user()->name]],
@@ -46,24 +45,10 @@ class MediaController extends Controller
             ? $processor->audio($request->file('file'), $request->user(), $attribution)
             : $processor->image($request->file('file'), $request->user(), $attribution);
 
-        return response()->json(SetEditorData::media($media), 201);
-    }
-
-    /**
-     * 每位老師上傳的總量上限（config('kancil.upload_quota_mb')），以轉檔後的大小計算。任何人都能用 Google
-     * 註冊，所以要限制；管理員不受限制。沒有用到的媒體由 kancil:prune 清除後就不再計算（docs/SPEC.md 第 5、9 節）。
-     */
-    private function ensureWithinQuota(User $user): void
-    {
-        if ($user->hasRole('admin')) {
-            return;
-        }
-
-        $quota = (int) config('kancil.upload_quota_mb');
-        if (Media::where('uploaded_by', $user->id)->sum('bytes') >= $quota * 1024 * 1024) {
-            throw ValidationException::withMessages([
-                'file' => "你上傳的檔案已經到達上限（{$quota} MB），請聯絡網站管理員。",
-            ]);
-        }
+        return response()->json([
+            ...SetEditorData::media($media),
+            // 編輯頁用這個更新「已上傳多少／上限」，不必重新載入（resources/js/lib/uploadQuota.ts）
+            'quota' => UploadQuota::of($request->user())->toArray(),
+        ], 201);
     }
 }

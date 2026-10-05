@@ -27,6 +27,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $google_id Google 帳號的 ID（sub）
  * @property Carbon|null $disabled_at 管理員停用帳號的時間（docs/SPEC.md A-05）
  * @property Carbon|null $anonymized_at 老師刪除帳號的時間；帳號匿名化，不真的刪除（App\Auth\AccountDeletion）
+ * @property int|null $upload_quota_mb 個別調整的上傳上限（MB）；null 用預設值（App\Media\UploadQuota）
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -34,7 +35,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'google_id'])]
+#[Fillable(['name', 'email', 'password', 'google_id', 'upload_quota_mb'])]
 #[Hidden(['password', 'google_id', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, PasskeyUser
 {
@@ -100,6 +101,16 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class, 'owner_id');
+    }
+
+    /**
+     * 這個人上傳的媒體；上傳的總量上限以此計算（App\Media\UploadQuota）。
+     *
+     * @return HasMany<Media, $this>
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class, 'uploaded_by');
     }
 
     /**

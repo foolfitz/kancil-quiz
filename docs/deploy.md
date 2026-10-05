@@ -157,7 +157,7 @@ docker compose exec scheduler php artisan kancil:prune
 | 瀏覽器顯示憑證錯誤，或連不上 | DNS 是否已經指向這台 VM（`dig +short 你的網域`）；80、443 port 是否開放；`docker compose logs app` 中搜尋 `acme` 看 Caddy 的錯誤 |
 | 頁面顯示 500 錯誤 | `docker compose logs app`。不要在正式環境打開 `APP_DEBUG` |
 | 容器一直重新啟動 | `docker compose logs app`；最常見的是 `.env.production` 沒有填 `APP_KEY` |
-| 上傳失敗 | 單檔上限 5 MB；PHP 的上限設定在 `docker/php.ini` |
+| 上傳失敗 | 單檔上限 5 MB；PHP 的上限設定在 `docker/php.ini`。每位老師的總量上限預設 200 MB（`KANCIL_UPLOAD_QUOTA_MB`），需要更多空間的老師在後台「使用者」的編輯頁個別調整 |
 | 要換網域 | 見下方「換網域」 |
 
 ## 換網域

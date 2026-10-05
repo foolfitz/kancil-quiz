@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Auth\AccountDeletion;
+use App\Media\UploadQuota;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -35,6 +36,18 @@ class UsersTable
                     })
                     ->color(fn (?string $state): string => $state === '停用' ? 'danger' : 'gray'),
                 TextColumn::make('sets_count')->label('題組數')->counts('sets')->sortable(),
+                // 上傳的總量與上限（docs/SPEC.md A-05、第 9 節）：總量以 withSum 一次算完，不逐列查詢
+                TextColumn::make('media_sum_bytes')->label('上傳')
+                    ->sum('media', 'bytes')
+                    ->sortable()
+                    ->state(fn (User $record): ?string => $record->isAnonymized() ? null : self::quota($record)->label())
+                    ->color(fn (User $record): ?string => match (true) {
+                        $record->isAnonymized() => null,
+                        self::quota($record)->isFull() => 'danger',
+                        self::quota($record)->isNearlyFull() => 'warning',
+                        default => null,
+                    })
+                    ->placeholder('—'),
                 TextColumn::make('created_at')->label('註冊時間')->dateTime('Y-m-d H:i')->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
@@ -76,5 +89,10 @@ class UsersTable
                         Notification::make()->title('帳號已刪除')->success()->send();
                     }),
             ]);
+    }
+
+    private static function quota(User $record): UploadQuota
+    {
+        return UploadQuota::of($record, (int) $record->getAttribute('media_sum_bytes'));
     }
 }

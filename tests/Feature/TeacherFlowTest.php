@@ -192,16 +192,24 @@ class TeacherFlowTest extends TestCase
             'rights' => '1',
         ], ['Accept' => 'application/json']);
 
-        // 以轉檔後的大小計算，到達上限之後就不能再上傳
+        // 以轉檔後的大小計算，到達上限之後就不能再上傳；上傳的回應附上最新的用量，編輯頁用來更新顯示
         Media::create(['kind' => 'image', 'path' => 'media/a.webp', 'mime' => 'image/webp', 'bytes' => 1024 * 1024 - 1, 'uploaded_by' => $this->teacher->id]);
-        $upload($this->teacher)->assertCreated();
-        $upload($this->teacher)->assertUnprocessable()->assertJsonValidationErrors(['file' => '你上傳的檔案已經到達上限（1 MB），請聯絡網站管理員。']);
+        $response = $upload($this->teacher)->assertCreated()->assertJsonPath('quota.limit_bytes', 1024 * 1024);
+        $this->assertGreaterThanOrEqual(1024 * 1024, $response->json('quota.used_bytes'));
+        $this->assertSame(Media::where('uploaded_by', $this->teacher->id)->sum('bytes'), $response->json('quota.used_bytes'));
+        $upload($this->teacher)->assertUnprocessable()->assertJsonValidationErrors(['file' => '你上傳的檔案已經到達上限（已上傳 1 MB／1 MB），請聯絡網站管理員。']);
+
+        // 管理員可以為個別老師調整上限（users.upload_quota_mb）；0 表示不能再上傳
+        $this->teacher->forceFill(['upload_quota_mb' => 2])->save();
+        $upload($this->teacher)->assertCreated()->assertJsonPath('quota.limit_bytes', 2 * 1024 * 1024);
+        $this->teacher->forceFill(['upload_quota_mb' => 0])->save();
+        $upload($this->teacher)->assertUnprocessable()->assertJsonValidationErrors(['file' => '你上傳的檔案已經到達上限（已上傳 1 MB／0 MB），請聯絡網站管理員。']);
 
         // 管理員不受限制
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         Media::create(['kind' => 'image', 'path' => 'media/b.webp', 'mime' => 'image/webp', 'bytes' => 2 * 1024 * 1024, 'uploaded_by' => $admin->id]);
-        $upload($admin)->assertCreated();
+        $upload($admin)->assertCreated()->assertJsonPath('quota.limit_bytes', null);
     }
 
     public function test_uploaded_audio_is_converted_to_mono_aac(): void
