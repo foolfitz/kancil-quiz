@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ImagePlus, Loader2, Mic, Play, Upload, X } from '@lucide/vue';
+import { ImagePlus, Loader2, Mic, Play, Plus, Upload, X } from '@lucide/vue';
 import { inject, ref } from 'vue';
 import AudioRecorder from '@/components/kancil/AudioRecorder.vue';
 import {
@@ -13,12 +13,14 @@ import { MEDIA_CONTEXT, uploadMedia } from '@/lib/media';
 import type { MediaRef } from '@/types/kancil';
 
 // 一個音檔或圖片欄位：上傳、預覽、移除（docs/SPEC.md T-05）；音檔也可以直接錄音（T-06）。
+// compact：已經有媒體、要再加一個時用，先只顯示「+」，按下才展開上傳與錄音的按鈕。
 const props = defineProps<{
     kind: 'audio' | 'image';
     rightsConfirmed: boolean;
     label?: string;
     // 錄音時顯示的詞或題目，讓老師知道在錄哪一個
     context?: string;
+    compact?: boolean;
 }>();
 
 const model = defineModel<MediaRef | null>({ required: true });
@@ -27,6 +29,7 @@ const emit = defineEmits<{ error: [message: string] }>();
 const mediaContext = inject(MEDIA_CONTEXT, null);
 const input = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
+const expanded = ref(false);
 let player: HTMLAudioElement | null = null;
 
 function rightsGiven(): boolean {
@@ -42,6 +45,12 @@ function pick(): void {
     }
 }
 
+function expand(): void {
+    if (rightsGiven()) {
+        expanded.value = true;
+    }
+}
+
 const recording = ref(false);
 function record(): void {
     if (rightsGiven()) {
@@ -51,6 +60,7 @@ function record(): void {
 function recorded(media: MediaRef): void {
     model.value = media;
     recording.value = false;
+    expanded.value = false;
 }
 
 async function upload(event: Event): Promise<void> {
@@ -62,6 +72,7 @@ async function upload(event: Event): Promise<void> {
     uploading.value = true;
     try {
         model.value = await uploadMedia(file, props.kind, mediaContext?.value);
+        expanded.value = false;
     } catch (error) {
         emit('error', error instanceof Error ? error.message : '上傳失敗');
     } finally {
@@ -120,6 +131,16 @@ function play(): void {
                 <X class="size-4" />
             </button>
         </template>
+
+        <button
+            v-else-if="compact && !expanded"
+            type="button"
+            class="inline-flex size-9 items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent hover:text-foreground"
+            :title="label ? `再加一個${label}` : '再加一個'"
+            @click="expand"
+        >
+            <Plus class="size-4" />
+        </button>
 
         <template v-else>
             <button

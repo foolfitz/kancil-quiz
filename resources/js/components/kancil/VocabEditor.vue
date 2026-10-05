@@ -97,18 +97,36 @@ function addPasted(): void {
             : `已加入 ${added} 個詞條。`;
 }
 
-function audioOf(entry: VocabEntryInput): MediaRef | null {
-    return entry.item.audio[0] ?? null;
+// 一個詞可以有多個音檔（docs/SPEC.md 3.1，例如不同發音者），最多 3 個；遊戲播放第一個。
+// 每個都列出來、各自移除，再加一個不會蓋掉原本的。
+const MAX_AUDIO = 3;
+
+function audioLabel(entry: VocabEntryInput, index: number): string {
+    return entry.item.audio.length > 1 ? `發音 ${index + 1}` : '發音';
 }
 
-function setAudio(entry: VocabEntryInput, media: MediaRef | null): void {
-    entry.item.audio = media ? [media] : [];
+function addAudio(entry: VocabEntryInput, media: MediaRef | null): void {
+    if (media && entry.item.audio.length < MAX_AUDIO) {
+        entry.item.audio.push(media);
+    }
+}
+
+function replaceAudio(
+    entry: VocabEntryInput,
+    index: number,
+    media: MediaRef | null,
+): void {
+    if (media) {
+        entry.item.audio.splice(index, 1, media);
+    } else {
+        entry.item.audio.splice(index, 1);
+    }
 }
 
 // 這個詞的媒體與署名（docs/SPEC.md 第 9 節）
 function mediaOf(entry: VocabEntryInput): { label: string; ref: MediaRef }[] {
     const audio = entry.item.audio.map((ref, i) => ({
-        label: entry.item.audio.length > 1 ? `發音 ${i + 1}` : '發音',
+        label: audioLabel(entry, i),
         ref,
     }));
     return entry.item.image
@@ -170,7 +188,7 @@ function recordAll(): void {
         <SequentialRecorder
             v-model:open="recordingAll"
             :entries="entries"
-            @recorded="setAudio"
+            @recorded="addAudio"
         />
 
         <ol class="space-y-2">
@@ -218,12 +236,25 @@ function recordAll(): void {
                         />
                     </div>
                     <MediaSlot
+                        v-for="(audio, j) in entry.item.audio"
+                        :key="audio.id"
+                        kind="audio"
+                        :label="audioLabel(entry, j)"
+                        :context="entry.item.text"
+                        :rights-confirmed="rightsConfirmed"
+                        :model-value="audio"
+                        @update:model-value="replaceAudio(entry, j, $event)"
+                        @error="emit('error', $event)"
+                    />
+                    <MediaSlot
+                        v-if="entry.item.audio.length < MAX_AUDIO"
                         kind="audio"
                         label="發音"
                         :context="entry.item.text"
                         :rights-confirmed="rightsConfirmed"
-                        :model-value="audioOf(entry)"
-                        @update:model-value="setAudio(entry, $event)"
+                        :compact="entry.item.audio.length > 0"
+                        :model-value="null"
+                        @update:model-value="addAudio(entry, $event)"
                         @error="emit('error', $event)"
                     />
                     <MediaSlot

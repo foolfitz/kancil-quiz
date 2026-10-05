@@ -30,11 +30,30 @@ test('老師看到教材插圖的署名，為自己上傳的發音填署名', as
         '請先勾選上方的權利聲明',
     );
     await page.getByLabel(/我有權分享這次上傳的音檔與圖片/).check();
-    await page.locator('input[type=file]').first().setInputFiles(wavFile());
-    await expect(page.getByTitle('播放發音')).toHaveCount(1);
+    const fileInputs = page.locator('input[type=file]');
+    await fileInputs.first().setInputFiles(wavFile());
+    const plays = page.getByTitle('播放發音');
+    await expect(plays).toHaveCount(1);
     await expect(summary).toHaveText(
         '：示範老師・CC BY 4.0；Kancil Quiz・CC BY 4.0・AI 生成',
     );
+
+    // 一個詞可以有多個音檔（docs/SPEC.md 3.1）：再加一個不會蓋掉原本的，移除其中一個另一個還在
+    await page.getByTitle('再加一個發音').first().click();
+    await fileInputs.nth(1).setInputFiles(wavFile('second.wav', 0.8));
+    await expect(plays).toHaveCount(2);
+    await expect(plays.nth(1)).toContainText('0.8 秒');
+    await expect(first).toContainText('發音 1');
+    await expect(first).toContainText('發音 2');
+    await page
+        .locator('ol')
+        .filter({ has: first })
+        .locator('> li')
+        .first()
+        .screenshot({ path: testInfo.outputPath('two-audio.png') });
+    await page.getByTitle('移除發音 1').click();
+    await expect(plays).toHaveCount(1);
+    await expect(plays.first()).toContainText('0.8 秒');
 
     await first.getByLabel('發音的作者').fill('王老師');
     await first.getByLabel('發音的出處').fill('自行錄製');
@@ -55,7 +74,8 @@ test('老師看到教材插圖的署名，為自己上傳的發音填署名', as
     await expect(summary).toHaveText(
         '：王老師・CC0 1.0・自行錄製；Kancil Quiz・CC BY 4.0・AI 生成',
     );
-    await expect(page.getByTitle('播放發音')).toHaveCount(1);
+    await expect(plays).toHaveCount(1);
+    await expect(plays.first()).toContainText('0.8 秒');
 
     // 手機寬度也放得下
     await page.setViewportSize({ width: 390, height: 844 });

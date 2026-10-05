@@ -371,6 +371,37 @@ class TeacherFlowTest extends TestCase
         $this->assertNull($image->fresh()?->source);
     }
 
+    /**
+     * 一個詞可以有多個音檔（docs/SPEC.md 3.1）：依編輯頁的順序存，移除其中一個不影響其他的。
+     */
+    public function test_an_item_keeps_all_its_audio_files_in_order(): void
+    {
+        $set = $this->createSet();
+        $audio = fn (string $path) => Media::create([
+            'kind' => 'audio', 'path' => $path, 'mime' => 'audio/mp4', 'bytes' => 1, 'uploaded_by' => $this->teacher->id,
+        ]);
+        [$first, $second] = [$audio('media/a.m4a'), $audio('media/b.m4a')];
+
+        $payload = $this->vocabPayload([['quả chuối', '香蕉']]);
+        $payload['entries'][0]['item']['audio_ids'] = [$second->id, $first->id];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasNoErrors();
+
+        $content = $set->fresh()?->currentRevision?->content();
+        $this->assertSame(["media/{$second->id}.m4a", "media/{$first->id}.m4a"], array_column($content->entries[0]->item->audio, 'src'));
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->has('entries.0.item.audio', 2)
+            ->where('entries.0.item.audio.0.id', $second->id)
+            ->where('entries.0.item.audio.1.id', $first->id));
+
+        $payload['entries'][0]['id'] = $content->entries[0]->id;
+        $payload['entries'][0]['item']['audio_ids'] = [$first->id];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasNoErrors();
+        $this->assertSame(["media/{$first->id}.m4a"], array_column($set->fresh()?->currentRevision?->content()->entries[0]->item->audio, 'src'));
+
+        $payload['entries'][0]['item']['audio_ids'] = [$first->id, $second->id, $audio('media/c.m4a')->id, $audio('media/d.m4a')->id];
+        $this->put("/sets/{$set->id}", $payload)->assertSessionHasErrors('entries.0.item.audio_ids');
+    }
+
     public function test_uploads_require_the_rights_confirmation(): void
     {
         $this->actingAs($this->teacher)->post('/media', [
