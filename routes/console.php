@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SystemStatus;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,3 +16,8 @@ Schedule::command('kancil:prune')
     ->timezone(config('kancil.timezone'))
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/prune.log'));
+
+// 排程還活著的訊號：後台的「系統狀態」頁超過 1 小時沒有看到就警告（App\Support\SystemStatus）
+Schedule::call(fn () => app(SystemStatus::class)->recordHeartbeat())
+    ->name('kancil:heartbeat')
+    ->everyFifteenMinutes();

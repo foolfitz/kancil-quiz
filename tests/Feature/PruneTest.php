@@ -41,6 +41,8 @@ class PruneTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
+        // kancil:prune 會把結果記在 local disk（App\Support\SystemStatus）
+        Storage::fake('local');
         $this->now = CarbonImmutable::parse('2026-10-05 12:00:00', 'UTC');
         $this->travelTo($this->now);
         $this->teacher = User::factory()->create();

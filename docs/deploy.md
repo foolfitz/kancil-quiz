@@ -10,6 +10,7 @@ Kancil Quiz 以 Docker Compose 部署在一台雲端 VM 上（規格第 11 節�
 - 資料都在 volume `storage`（容器中的 `/app/storage`）：SQLite 資料庫 `database/kancil.sqlite` 與上傳的媒體 `app/public/`。備份這一個 volume 就夠了。
 - 容器啟動時會快取設定並套用 migration（`docker/entrypoint.sh`）。
 - 目前沒有佇列任務，不需要 queue worker。
+- 後台的「系統狀態」頁（`/admin/system-status`，只有管理員）顯示磁碟空間、上傳的媒體與資料庫的大小、最近一次備份與 `kancil:prune` 的結果，以及排程還在不在（排程每 15 分鐘留下一次心跳，超過 1 小時沒有就警告；備份與清除超過 26 小時沒有新的紀錄，或最近一次失敗，也會警告）。部署好之後固定看這一頁就夠，不必每次 `docker compose ps`。
 
 ## 需要準備的
 
@@ -104,7 +105,7 @@ docker compose up -d --build
 | `docker compose exec -it app php artisan kancil:create-admin <email>` | 建立管理員，或把既有的帳號設為管理員 |
 | `docker compose up -d` | 改了 `.env.production` 之後套用新設定（會重建兩個容器）。`docker compose restart` 不會讀入新的設定 |
 | `docker compose logs scheduler` | 看排程的記錄 |
-| `docker compose ps` | 查看容器狀態 |
+| `docker compose ps` | 查看容器狀態（後台的系統狀態頁也看得到排程還在不在） |
 
 ## 備份與還原
 
@@ -119,6 +120,8 @@ docker/backup.sh ~/backups
 ```
 0 3 * * * cd ~/kancil-quiz && docker/backup.sh ~/backups >> ~/backups/backup.log 2>&1
 ```
+
+每次備份的結果（成功或失敗、時間、檔案與大小）會寫進 volume 的 `storage/app/private/status/backup.json`，後台的「系統狀態」頁顯示最近一次備份；超過 26 小時沒有新的備份，或最近一次失敗，就會警告。失敗的原因看 `~/backups/backup.log`。
 
 規格要求備份放到異地。VM 上的 `~/backups` 只是第一份，還要再複製到別的地方，例如用 `rclone` 同步到雲端儲存空間，或使用雲端供應商的磁碟快照。`.env.production` 也要一起保存。
 
@@ -141,7 +144,7 @@ docker/restore.sh ~/backups/kancil-20261004-030000.tar.gz
 | 舊的題組版本 | 被新版本取代 30 天後，沒有作答或審核紀錄引用的 |
 | 媒體 | 沒有任何詞條、題目或版本用到，而且上傳超過 7 天的，連同檔案 |
 
-每次的結果附加在 volume 中的 `storage/logs/prune.log`。想先看看會刪除多少，或手動執行一次：
+每次的結果附加在 volume 中的 `storage/logs/prune.log`，最近一次的結果（刪除的筆數，或失敗的原因）也顯示在後台的「系統狀態」頁。想先看看會刪除多少，或手動執行一次：
 
 ```sh
 docker compose exec scheduler php artisan kancil:prune --dry-run
@@ -159,6 +162,9 @@ docker compose exec scheduler php artisan kancil:prune
 | 容器一直重新啟動 | `docker compose logs app`；最常見的是 `.env.production` 沒有填 `APP_KEY` |
 | 上傳失敗 | 單檔上限 5 MB；PHP 的上限設定在 `docker/php.ini`。每位老師的總量上限預設 200 MB（`KANCIL_UPLOAD_QUOTA_MB`），需要更多空間的老師在後台「使用者」的編輯頁個別調整 |
 | 要換網域 | 見下方「換網域」 |
+| 系統狀態頁說排程沒有回報 | `docker compose ps` 看 `scheduler` 容器是否在執行，`docker compose logs scheduler` 看原因；`docker compose up -d` 會把停掉的容器帶起來 |
+| 系統狀態頁說備份失敗或太久沒有備份 | 主機上的 `~/backups/backup.log`；`crontab -l` 確認那一行還在；手動執行 `docker/backup.sh ~/backups` 看錯誤 |
+| 系統狀態頁說資料的清除失敗 | `docker compose logs scheduler`，以及 `docker compose exec scheduler cat storage/logs/prune.log` |
 
 ## 換網域
 
@@ -179,4 +185,4 @@ docker compose exec scheduler php artisan kancil:prune
 
 ## 尚未包含
 
-- 監控與告警：可以先用外部的網站監測服務定時檢查 `https://你的網域/up`。
+- 監控與告警：後台的系統狀態頁要有人打開才看得到，沒有主動通知。可以先用外部的網站監測服務定時檢查 `https://你的網域/up`。
