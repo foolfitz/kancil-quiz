@@ -22,6 +22,11 @@ test('老師逐詞錄音，也可以只錄一個詞', async ({
     const playButtons = page.getByTitle('播放發音');
     await expect(playButtons).toHaveCount(0);
 
+    // 編輯頁顯示已上傳多少／上限（docs/SPEC.md 第 9 節），每次錄音後更新
+    const quota = page.locator('[data-test="upload-quota"]');
+    await expect(quota).toContainText('／200 MB');
+    const usedBefore = Number(await quota.getAttribute('data-used-bytes'));
+
     // 要先勾選權利聲明
     await page.getByRole('button', { name: '逐詞錄音' }).click();
     await expect(page.getByRole('alert')).toContainText(
@@ -50,6 +55,9 @@ test('老師逐詞錄音，也可以只錄一個詞', async ({
     await dialog.screenshot({ path: testInfo.outputPath('recorded.png') });
     await dialog.getByRole('button', { name: '採用' }).click();
     await expect(dialog).toContainText('第 2 / 6 個');
+    await expect
+        .poll(async () => Number(await quota.getAttribute('data-used-bytes')))
+        .toBeGreaterThan(usedBefore);
 
     // 用鍵盤：空白鍵開始、停止，Enter 採用
     await dialog.locator('[data-test="sequential-word"]').click();

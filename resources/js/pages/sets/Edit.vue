@@ -11,11 +11,13 @@ import CurriculumPicker from '@/components/kancil/CurriculumPicker.vue';
 import QuizEditor from '@/components/kancil/QuizEditor.vue';
 import SharingPanel from '@/components/kancil/SharingPanel.vue';
 import TagInput from '@/components/kancil/TagInput.vue';
+import UploadQuotaMeter from '@/components/kancil/UploadQuotaMeter.vue';
 import VocabEditor from '@/components/kancil/VocabEditor.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { UploadQuota } from '@/lib/uploadQuota';
 import { KIND_NAMES } from '@/types/kancil';
 import type {
     CurriculumRef,
@@ -49,6 +51,7 @@ const props = defineProps<{
     languages: Language[];
     licenses: string[];
     curriculumRefs: CurriculumRef[];
+    uploadQuota: UploadQuota;
 }>();
 
 defineOptions({
@@ -391,6 +394,7 @@ function destroy(): void {
             <p v-if="uploadError" class="text-sm text-destructive" role="alert">
                 {{ uploadError }}
             </p>
+            <UploadQuotaMeter :quota="uploadQuota" />
         </section>
 
         <VocabEditor

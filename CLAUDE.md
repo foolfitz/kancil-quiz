@@ -39,7 +39,7 @@
   - `app/Support/ActivitySettings.php`：活動的兩個設定（SPEC 3.4）：要不要輸入名字（存成 `mode = assignment`）與開放、截止時間。老師端以 `config('kancil.timezone')`（台灣時間）輸入與顯示，格式同 `datetime-local`，資料庫存 UTC；建立活動的預設是今天起一週。
   - `app/Grading/PlayerLabel.php`：學生輸入的名字或座號在存入前統一格式（NFKC、合併空白、數字去掉前導的 0）。
   - `app/Games/GameRegistry.php`：讀 `packages/games/manifest.json`（由各遊戲的 `src/meta.ts` 產生）。
-  - `app/Media/UploadQuota.php`：每位老師的上傳總量上限（SPEC A-05、第 9 節）：預設 `config('kancil.upload_quota_mb')`，後台的使用者表單可以為個別老師調整（`users.upload_quota_mb`，管理員不受限制）。上傳時的檢查與後台列表的用量都用它，不要另外加總 `media.bytes`。
+  - `app/Media/UploadQuota.php`：每位老師的上傳總量上限（SPEC A-05、第 9 節）：預設 `config('kancil.upload_quota_mb')`，後台的使用者表單可以為個別老師調整（`users.upload_quota_mb`，管理員不受限制）。上傳時的檢查、後台列表的用量與編輯頁的「已上傳多少／上限」（`sets/Edit` 的 `uploadQuota` prop、`resources/js/lib/uploadQuota.ts`、`components/kancil/UploadQuotaMeter.vue`；上傳的回應帶 `quota`，`uploadMedia()` 用它更新顯示）都用它，不要另外加總 `media.bytes`。
   - `app/Media/MediaProcessor.php`：ffmpeg 轉音檔、intervention/image 轉 WebP。瀏覽器錄音（T-06）也原樣上傳到這裡；前端的錄音在 `resources/js/lib/recorder.ts`、`components/kancil/AudioRecorder.vue`（單一欄位）與 `SequentialRecorder.vue`（逐詞錄音）。E2E 的 Chromium 用假的麥克風（`playwright.config.ts`），WebKit 不測錄音。
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
   - `app/Support/Pruner.php`：資料的保存期限（SPEC 第 5 節），由排程每天執行 `kancil:prune`（`routes/console.php`，正式環境是 `compose.yaml` 的 `scheduler` 服務）。期限在 `config/kancil.php` 的 `retention`。新增會引用媒體或題組版本的資料時，要把它加進 `Pruner` 的引用檢查，否則被引用的媒體或版本會被清掉。

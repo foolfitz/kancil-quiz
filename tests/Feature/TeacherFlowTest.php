@@ -212,6 +212,31 @@ class TeacherFlowTest extends TestCase
         $upload($admin)->assertCreated()->assertJsonPath('quota.limit_bytes', null);
     }
 
+    /**
+     * 編輯頁顯示「已上傳多少／上限」（docs/SPEC.md 第 9 節），算法與上傳時的檢查相同（App\Media\UploadQuota）。
+     */
+    public function test_the_editor_shows_how_much_the_teacher_has_uploaded(): void
+    {
+        config(['kancil.upload_quota_mb' => 200]);
+        $set = $this->createSet();
+        Media::create(['kind' => 'image', 'path' => 'media/a.webp', 'mime' => 'image/webp', 'bytes' => 37 * 1024 * 1024, 'uploaded_by' => $this->teacher->id]);
+
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('uploadQuota', ['used_bytes' => 37 * 1024 * 1024, 'limit_bytes' => 200 * 1024 * 1024]));
+
+        // 個別調整的上限
+        $this->teacher->forceFill(['upload_quota_mb' => 50])->save();
+        $this->get("/sets/{$set->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('uploadQuota.limit_bytes', 50 * 1024 * 1024));
+
+        // 管理員不限總量
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $this->actingAs($admin)->post('/sets', ['kind' => 'vocab', 'title' => '顏色', 'language_code' => 'vi', 'license' => 'CC-BY-4.0']);
+        $this->get('/sets/'.Set::latest('created_at')->firstOrFail()->id.'/edit')->assertInertia(fn (Assert $page) => $page
+            ->where('uploadQuota', ['used_bytes' => 0, 'limit_bytes' => null]));
+    }
+
     public function test_uploaded_audio_is_converted_to_mono_aac(): void
     {
         Storage::fake('public');

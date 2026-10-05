@@ -1,3 +1,5 @@
+import { setUploadQuota } from '@/lib/uploadQuota';
+import type { UploadQuota } from '@/lib/uploadQuota';
 import type { MediaRef } from '@/types/kancil';
 
 function xsrfToken(): string {
@@ -26,6 +28,8 @@ export async function uploadMedia(
     const data = (await response.json().catch(() => ({}))) as {
         message?: string;
         errors?: Record<string, string[]>;
+        // 上傳後的用量，編輯頁的「已上傳多少／上限」用它更新
+        quota?: UploadQuota;
     } & Partial<MediaRef>;
 
     if (!response.ok) {
@@ -33,5 +37,10 @@ export async function uploadMedia(
         throw new UploadError(first ?? data.message ?? '上傳失敗');
     }
 
-    return data as MediaRef;
+    const { quota, ...media } = data;
+    if (quota) {
+        setUploadQuota(quota);
+    }
+
+    return media as MediaRef;
 }

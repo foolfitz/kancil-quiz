@@ -12,6 +12,7 @@ use App\Curriculum\TextbookData;
 use App\Games\GameRegistry;
 use App\Http\Requests\Sets\SetContentRequest;
 use App\Http\Requests\Sets\SetDetailsRequest;
+use App\Media\UploadQuota;
 use App\Models\Activity;
 use App\Models\CurriculumRef;
 use App\Models\Language;
@@ -129,7 +130,7 @@ class SetController extends Controller
     /**
      * 擁有者編輯題組；負責該語言的審核者也可以修正已公開的題組（C-03），修改記在題組版本中。
      */
-    public function edit(Set $set, GameRegistry $games): Response
+    public function edit(Request $request, Set $set, GameRegistry $games): Response
     {
         Gate::authorize('edit', $set);
 
@@ -175,6 +176,8 @@ class SetController extends Controller
                 ->orderBy('volume')
                 ->orderBy('lesson')
                 ->get(['id', 'language_code', 'volume', 'lesson', 'title_zh', 'title_native']),
+            // 「已上傳多少／上限」（第 9 節）：算的是上傳的人，審核者修正別人的題組時也是自己的用量
+            'uploadQuota' => UploadQuota::of($request->user())->toArray(),
         ]);
     }
 
