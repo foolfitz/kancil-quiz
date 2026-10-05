@@ -10,8 +10,8 @@
         #player { min-height: 100%; display: flex; }
         /* 教材試玩：疊在播放器工具列的左邊（右邊是聲音開關），與獨立播放器的「換遊戲」相同 */
         .kq-trial-back {
-            position: fixed; top: 0.25rem; left: 0.5rem; z-index: 10;
-            display: inline-flex; align-items: center; min-height: 44px; padding: 0.25rem 0.75rem;
+            position: fixed; top: env(safe-area-inset-top, 0px); left: calc(0.5rem + env(safe-area-inset-left, 0px)); z-index: 10;
+            box-sizing: border-box; display: inline-flex; align-items: center; min-height: 44px; padding: 0.25rem 0.75rem;
             color: #61707d; font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
             font-size: 1rem; text-decoration: none;
         }

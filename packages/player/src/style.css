@@ -12,6 +12,9 @@
     flex-direction: column;
     width: 100%;
     min-height: 100%;
+    /* 手機的瀏海與圓角（viewport-fit=cover）：內容避開不能顯示的區域 */
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     background: var(--kq-player-bg);
     color: var(--kq-player-fg);
     font-family:
@@ -38,7 +41,8 @@
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    padding: 2rem 1rem;
+    /* 上面留給教材試玩固定在左上角的「回到這一課」，內容比畫面高時標題才不會被它蓋住 */
+    padding: 3.5rem 1rem 2rem;
     text-align: center;
 }
 
@@ -215,19 +219,23 @@
     outline: none;
 }
 
-/* 遊戲區要有明確的高度，迷宮的 canvas 依它決定大小 */
+/* 遊戲區要有明確的高度，迷宮的 canvas 依它決定大小。固定為畫面的高度、不隨遊戲的內容撐高：
+   放不下的由遊戲自己捲動，手機上才不會整頁捲動、拖曳時也不會跟捲動打架 */
 .kq-player__stage {
     display: flex;
-    flex: 1;
+    flex: none;
     flex-direction: column;
     height: 100vh;
-    height: 100dvh;
+    height: calc(
+        100dvh - env(safe-area-inset-top, 0px) -
+            env(safe-area-inset-bottom, 0px)
+    );
 }
 
 .kq-player__toolbar {
     display: flex;
     justify-content: flex-end;
-    padding: 0.25rem 0.5rem;
+    padding: 0 0.5rem;
 }
 
 .kq-player__mute {
@@ -297,4 +305,31 @@
     height: 3rem;
     background: #e8edf3;
     font-size: 1.5rem;
+}
+
+/* 手機橫放：畫面很矮，標題與間距縮小，「開始」才不會被擠到畫面外 */
+@media (height < 500px) {
+    .kq-player__screen {
+        gap: 0.5rem;
+        padding: 3rem 1rem 1rem;
+    }
+
+    .kq-player__title {
+        font-size: clamp(1.25rem, 5vh, 2rem);
+    }
+
+    .kq-player__subtitle {
+        margin-top: 0.5rem;
+        font-size: 1.25rem;
+    }
+
+    .kq-player__start {
+        padding: 0.5rem 2.5rem;
+        font-size: 1.5rem;
+    }
+
+    .kq-player__other-games,
+    .kq-player__report-link {
+        margin-top: 0.75rem;
+    }
 }
