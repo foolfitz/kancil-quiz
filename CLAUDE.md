@@ -16,7 +16,12 @@
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
 | `games/*` | 各個遊戲；`maze-quiz` 是 git submodule（見下方） | 7.5 |
 
-- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。
+- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API。
+- 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
+  - 訪客用 `resources/js/layouts/GuestLayout.vue`，已登入的老師看教材時照舊用側邊欄，在 `resources/js/app.ts` 的 `layout` 依登入與否選擇。首頁不論登入與否都用 `GuestLayout`。
+  - 給搜尋引擎與連結預覽：controller 以 `App\Support\PageMeta::make()` 產生 `meta` prop，`resources/views/partials/page-meta.blade.php` 寫進伺服器輸出的 `<head>`，Vue 端由 `components/kancil/PageMeta.vue` 以相同的 `head-key` 接手。
+  - controller 用 `->withViewData(['skeleton' => 'skeletons.xxx'])` 指定骨架，`resources/views/app.blade.php` 把它放進 `#app`（沒有骨架的頁面照舊 `<x-inertia::app />`）。骨架只有結構、沒有樣式，有 JS 時以 `.js .kq-skeleton` 藏起來，Vue 掛上時清空 `#app`。不用 Inertia SSR，正式環境不需要 Node。
+  - 公開頁面不能透露老師的資料：訪客拿到的 prop 要另外檢查（`CurriculumTest` 的訪客測試）。
 - 獨立播放器（O-02）在 `packages/player/standalone/`，有自己的 `vite.config.ts`，建置成單一個 HTML 檔 `public/standalone.html`（不進 git）。它打開匯出的 zip（`packages/player/src/zip.ts`、`setZip.ts`），以 `startPlayer({ standalone: true })` 播放，不連伺服器。新增遊戲時也要在 `standalone/main.ts` 登記。
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）。
