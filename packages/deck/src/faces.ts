@@ -1,4 +1,4 @@
-import type { Face, FaceSlot, Round } from '@kancil-quiz/games-sdk';
+import type { Face, FaceField, FaceSlot, Round } from '@kancil-quiz/games-sdk';
 import type {
     FaceFields,
     QuizOption,
@@ -7,17 +7,23 @@ import type {
 } from '@kancil-quiz/schema';
 import { normalizeForMatch } from '@kancil-quiz/text';
 
-// 詞彙組依 faces 設定組出一面。text 與 translation_zh 都放進 Face.text，
+// 詞彙組依 faces 設定組出一面。text 與 translation_zh 都放進 Face.text，以 Face.lang 區分，
 // 所以同一面不能同時用這兩個欄位（check() 會擋下）。
-export function vocabFace(item: VocabItem, fields: FaceFields): Face {
+export function vocabFace(
+    item: VocabItem,
+    fields: FaceFields,
+    language: string,
+): Face {
     const face: Face = {};
     for (const field of fields) {
         switch (field) {
             case 'text':
                 face.text = item.text;
+                face.lang = language;
                 break;
             case 'translation_zh':
                 face.text = item.translation_zh;
+                face.lang = 'zh-TW';
                 break;
             case 'romanization':
                 if (item.romanization) {
@@ -67,7 +73,7 @@ export function isEmptyFace(face: Face): boolean {
 // 遊戲在這個位置至少能呈現這一面的一個欄位。
 export function isRenderable(
     face: Face,
-    renders: (keyof Face)[] | undefined,
+    renders: FaceField[] | undefined,
 ): boolean {
     return renders === undefined || renders.some((field) => face[field]);
 }

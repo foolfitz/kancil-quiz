@@ -218,6 +218,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
@@ -225,6 +226,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pisang",
           },
           "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
@@ -232,6 +234,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
@@ -239,12 +242,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "jeruk",
           },
           "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "橘子",
       },
       "shape": "mcq",
@@ -255,6 +260,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "apel",
           },
           "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
@@ -262,6 +268,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "mangga",
           },
           "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
@@ -269,6 +276,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
@@ -276,12 +284,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "shape": "mcq",
@@ -292,6 +302,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "jeruk",
           },
           "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
@@ -299,6 +310,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "apel",
           },
           "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
@@ -306,6 +318,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
@@ -313,12 +326,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "semangka",
           },
           "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "shape": "mcq",
@@ -329,6 +344,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "pisang",
           },
           "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
@@ -336,6 +352,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "semangka",
           },
           "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
@@ -343,6 +360,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
@@ -350,12 +368,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "shape": "mcq",
@@ -366,6 +386,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
@@ -373,6 +394,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "semangka",
           },
           "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
@@ -380,6 +402,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "nanas",
           },
           "id": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
@@ -387,12 +410,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "mangga",
           },
           "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "shape": "mcq",
@@ -403,6 +428,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "jeruk",
           },
           "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
@@ -410,6 +436,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
@@ -417,6 +444,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "apel",
           },
           "id": "01M3ZYPGDRQERH58MH1RKP8NX6",
@@ -424,12 +452,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "shape": "mcq",
@@ -440,6 +470,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pepaya",
           },
           "id": "01M3ZYPP98AJFF8G55H6Z83BV9",
@@ -447,6 +478,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "semangka",
           },
           "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
@@ -454,6 +486,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "jeruk",
           },
           "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
@@ -461,12 +494,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "mangga",
           },
           "id": "01M3ZYPJC83KW8N8H9C5VW1BWW",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "shape": "mcq",
@@ -477,6 +512,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "id",
             "text": "semangka",
           },
           "id": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
@@ -484,6 +520,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "pisang",
           },
           "id": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
@@ -491,6 +528,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "jeruk",
           },
           "id": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
@@ -498,12 +536,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "id",
             "text": "anggur",
           },
           "id": "01M3ZYPMARP8KRGECBB02ETN7V",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "shape": "mcq",
@@ -513,9 +553,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPHD0DDS3T9CJ8EDAKHV8",
       "left": {
+        "lang": "zh-TW",
         "text": "橘子",
       },
       "right": {
+        "lang": "id",
         "text": "jeruk",
       },
       "shape": "pair",
@@ -523,9 +565,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPP98AJFF8G55H6Z83BV9",
       "left": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "right": {
+        "lang": "id",
         "text": "pepaya",
       },
       "shape": "pair",
@@ -533,9 +577,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPGDRQERH58MH1RKP8NX6",
       "left": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "right": {
+        "lang": "id",
         "text": "apel",
       },
       "shape": "pair",
@@ -543,9 +589,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPFEG8GF5P5PD9NWYK2JT",
       "left": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "right": {
+        "lang": "id",
         "text": "pisang",
       },
       "shape": "pair",
@@ -553,9 +601,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPNA06BJZ7QYSM0C4W7Y5",
       "left": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "right": {
+        "lang": "id",
         "text": "nanas",
       },
       "shape": "pair",
@@ -563,9 +613,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPMARP8KRGECBB02ETN7V",
       "left": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "right": {
+        "lang": "id",
         "text": "anggur",
       },
       "shape": "pair",
@@ -573,9 +625,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPJC83KW8N8H9C5VW1BWW",
       "left": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "right": {
+        "lang": "id",
         "text": "mangga",
       },
       "shape": "pair",
@@ -583,9 +637,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/id-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPKBGBWGGMBYRKV2YHEE4",
       "left": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "right": {
+        "lang": "id",
         "text": "semangka",
       },
       "shape": "pair",
@@ -603,6 +659,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -611,6 +668,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "kluai",
             "text": "กล้วย",
           },
@@ -619,6 +677,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -627,6 +686,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "som",
             "text": "ส้ม",
           },
@@ -634,6 +694,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "橘子",
       },
       "shape": "mcq",
@@ -644,6 +705,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "aeppoen",
             "text": "แอปเปิล",
           },
@@ -652,6 +714,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "mamuang",
             "text": "มะม่วง",
           },
@@ -660,6 +723,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -668,6 +732,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -675,6 +740,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "shape": "mcq",
@@ -685,6 +751,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "som",
             "text": "ส้ม",
           },
@@ -693,6 +760,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "aeppoen",
             "text": "แอปเปิล",
           },
@@ -701,6 +769,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -709,6 +778,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "taengmo",
             "text": "แตงโม",
           },
@@ -716,6 +786,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "shape": "mcq",
@@ -726,6 +797,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "kluai",
             "text": "กล้วย",
           },
@@ -734,6 +806,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "taengmo",
             "text": "แตงโม",
           },
@@ -742,6 +815,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -750,6 +824,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -757,6 +832,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "shape": "mcq",
@@ -767,6 +843,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -775,6 +852,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "taengmo",
             "text": "แตงโม",
           },
@@ -783,6 +861,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "sapparot",
             "text": "สับปะรด",
           },
@@ -791,6 +870,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "mamuang",
             "text": "มะม่วง",
           },
@@ -798,6 +878,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "shape": "mcq",
@@ -808,6 +889,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "som",
             "text": "ส้ม",
           },
@@ -816,6 +898,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -824,6 +907,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "aeppoen",
             "text": "แอปเปิล",
           },
@@ -832,6 +916,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -839,6 +924,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "shape": "mcq",
@@ -849,6 +935,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "malako",
             "text": "มะละกอ",
           },
@@ -857,6 +944,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "taengmo",
             "text": "แตงโม",
           },
@@ -865,6 +953,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "som",
             "text": "ส้ม",
           },
@@ -873,6 +962,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "mamuang",
             "text": "มะม่วง",
           },
@@ -880,6 +970,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "shape": "mcq",
@@ -890,6 +981,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "th",
             "romanization": "taengmo",
             "text": "แตงโม",
           },
@@ -898,6 +990,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "kluai",
             "text": "กล้วย",
           },
@@ -906,6 +999,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "som",
             "text": "ส้ม",
           },
@@ -914,6 +1008,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "th",
             "romanization": "a-ngun",
             "text": "องุ่น",
           },
@@ -921,6 +1016,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "shape": "mcq",
@@ -930,9 +1026,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQEPGVW5GN483M2PVWX4M",
       "left": {
+        "lang": "zh-TW",
         "text": "橘子",
       },
       "right": {
+        "lang": "th",
         "romanization": "som",
         "text": "ส้ม",
       },
@@ -941,9 +1039,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQKJRVPW5RCF858Y9FXDF",
       "left": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "right": {
+        "lang": "th",
         "romanization": "malako",
         "text": "มะละกอ",
       },
@@ -952,9 +1052,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQDQ823GW2FPHB3YAK909",
       "left": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "right": {
+        "lang": "th",
         "romanization": "aeppoen",
         "text": "แอปเปิล",
       },
@@ -963,9 +1065,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQCR0360FQWGSDAQFESTK",
       "left": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "right": {
+        "lang": "th",
         "romanization": "kluai",
         "text": "กล้วย",
       },
@@ -974,9 +1078,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQJKG5A68B6MJB65JP8CW",
       "left": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "right": {
+        "lang": "th",
         "romanization": "sapparot",
         "text": "สับปะรด",
       },
@@ -985,9 +1091,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQHM8TE6A919NWKTCJPND",
       "left": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "right": {
+        "lang": "th",
         "romanization": "a-ngun",
         "text": "องุ่น",
       },
@@ -996,9 +1104,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQFNR3MNNFN71A7SFPR8G",
       "left": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "right": {
+        "lang": "th",
         "romanization": "mamuang",
         "text": "มะม่วง",
       },
@@ -1007,9 +1117,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/th-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQGN0AV3FECA1M3J7G6D0",
       "left": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "right": {
+        "lang": "th",
         "romanization": "taengmo",
         "text": "แตงโม",
       },
@@ -1244,6 +1356,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
@@ -1251,6 +1364,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả chuối",
           },
           "id": "01M3ZYPY38WC6089XH59VBSYYS",
@@ -1258,6 +1372,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
@@ -1265,12 +1380,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả cam",
           },
           "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "柳橙",
       },
       "shape": "mcq",
@@ -1281,6 +1398,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả táo",
           },
           "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
@@ -1288,6 +1406,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả xoài",
           },
           "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
@@ -1295,6 +1414,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
@@ -1302,12 +1422,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "shape": "mcq",
@@ -1318,6 +1440,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả cam",
           },
           "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
@@ -1325,6 +1448,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả táo",
           },
           "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
@@ -1332,6 +1456,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
@@ -1339,12 +1464,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả dưa hấu",
           },
           "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "shape": "mcq",
@@ -1355,6 +1482,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả chuối",
           },
           "id": "01M3ZYPY38WC6089XH59VBSYYS",
@@ -1362,6 +1490,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả dưa hấu",
           },
           "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
@@ -1369,6 +1498,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
@@ -1376,12 +1506,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "shape": "mcq",
@@ -1392,6 +1524,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
@@ -1399,6 +1532,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả dưa hấu",
           },
           "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
@@ -1406,6 +1540,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả dứa",
           },
           "id": "01M3ZYQ3YRQHVYPGP21WXK83SB",
@@ -1413,12 +1548,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả xoài",
           },
           "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "shape": "mcq",
@@ -1429,6 +1566,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả cam",
           },
           "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
@@ -1436,6 +1574,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
@@ -1443,6 +1582,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả táo",
           },
           "id": "01M3ZYPZ2G7JRB1C17YFZGM74K",
@@ -1450,12 +1590,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "shape": "mcq",
@@ -1466,6 +1608,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả đu đủ",
           },
           "id": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
@@ -1473,6 +1616,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả dưa hấu",
           },
           "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
@@ -1480,6 +1624,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả cam",
           },
           "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
@@ -1487,12 +1632,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả xoài",
           },
           "id": "01M3ZYQ1101BM2CCBVKG1J3F9S",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "shape": "mcq",
@@ -1503,6 +1650,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": true,
           "face": {
+            "lang": "vi",
             "text": "quả dưa hấu",
           },
           "id": "01M3ZYQ208RQHHRX7N0W7SXQE4",
@@ -1510,6 +1658,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả chuối",
           },
           "id": "01M3ZYPY38WC6089XH59VBSYYS",
@@ -1517,6 +1666,7 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả cam",
           },
           "id": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
@@ -1524,12 +1674,14 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
         {
           "correct": false,
           "face": {
+            "lang": "vi",
             "text": "quả nho",
           },
           "id": "01M3ZYQ2ZGZ851852KV8S7BMYM",
         },
       ],
       "prompt": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "shape": "mcq",
@@ -1539,9 +1691,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ01R4AYPJHDJ3RYZYBZG",
       "left": {
+        "lang": "zh-TW",
         "text": "柳橙",
       },
       "right": {
+        "lang": "vi",
         "text": "quả cam",
       },
       "shape": "pair",
@@ -1549,9 +1703,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ4Y0HZ4RAAQF69KJWSRH",
       "left": {
+        "lang": "zh-TW",
         "text": "木瓜",
       },
       "right": {
+        "lang": "vi",
         "text": "quả đu đủ",
       },
       "shape": "pair",
@@ -1559,9 +1715,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPZ2G7JRB1C17YFZGM74K",
       "left": {
+        "lang": "zh-TW",
         "text": "蘋果",
       },
       "right": {
+        "lang": "vi",
         "text": "quả táo",
       },
       "shape": "pair",
@@ -1569,9 +1727,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYPY38WC6089XH59VBSYYS",
       "left": {
+        "lang": "zh-TW",
         "text": "香蕉",
       },
       "right": {
+        "lang": "vi",
         "text": "quả chuối",
       },
       "shape": "pair",
@@ -1579,9 +1739,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ3YRQHVYPGP21WXK83SB",
       "left": {
+        "lang": "zh-TW",
         "text": "鳳梨",
       },
       "right": {
+        "lang": "vi",
         "text": "quả dứa",
       },
       "shape": "pair",
@@ -1589,9 +1751,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ2ZGZ851852KV8S7BMYM",
       "left": {
+        "lang": "zh-TW",
         "text": "葡萄",
       },
       "right": {
+        "lang": "vi",
         "text": "quả nho",
       },
       "shape": "pair",
@@ -1599,9 +1763,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ1101BM2CCBVKG1J3F9S",
       "left": {
+        "lang": "zh-TW",
         "text": "芒果",
       },
       "right": {
+        "lang": "vi",
         "text": "quả xoài",
       },
       "shape": "pair",
@@ -1609,9 +1775,11 @@ exports[`buildRounds() > ../../schema/fixtures/sets/vi-vocab-fruits/set.json 的
     {
       "entryId": "01M3ZYQ208RQHHRX7N0W7SXQE4",
       "left": {
+        "lang": "zh-TW",
         "text": "西瓜",
       },
       "right": {
+        "lang": "vi",
         "text": "quả dưa hấu",
       },
       "shape": "pair",

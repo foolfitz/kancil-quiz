@@ -1,5 +1,6 @@
 import type {
     Face,
+    FaceField,
     FaceSlot,
     GameRequirements,
     Round,
@@ -68,8 +69,8 @@ function cardsOf(set: KancilSet): Card[] {
         return set.entries.map((entry, i) => ({
             entryId: entry.id,
             position: i + 1,
-            question: vocabFace(entry.item, set.faces.prompt),
-            answer: vocabFace(entry.item, set.faces.answer),
+            question: vocabFace(entry.item, set.faces.prompt, set.language),
+            answer: vocabFace(entry.item, set.faces.answer, set.language),
         }));
     }
 
@@ -98,7 +99,7 @@ const SLOT_NAMES: Record<FaceSlot, string> = {
     back: '背面',
 };
 
-const FIELD_NAMES: Record<keyof Face, string> = {
+const FIELD_NAMES: Record<FaceField, string> = {
     text: '文字',
     romanization: '羅馬拼寫',
     audio: '音檔',

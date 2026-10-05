@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { collectErrors, createActivity, expectNothingClipped } from './helpers';
 
-// 圖卡牆（docs/SPEC.md 7.5）：一頁排出所有卡片，點一下翻面，可以全部翻面；結束後顯示看過的張數。
+// 圖卡牆（docs/SPEC.md 7.5）：一頁排出所有卡片，點一下翻面，可以全部翻面；最後一頁可以再玩一次（不顯示結果頁）。
 // 每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
 
 test('選遊戲的畫面分成遊戲與互動教材；圖卡牆一頁放得下一課的卡片', async ({
@@ -84,11 +84,13 @@ test('選遊戲的畫面分成遊戲與互動教材；圖卡牆一頁放得下�
     await page.getByRole('button', { name: '全部翻回來' }).click();
     await expect(page.locator('.kq-wall__inner.is-flipped')).toHaveCount(0);
 
-    await page.getByRole('button', { name: '完成 ✓' }).click();
-    await expect(
-        page.getByRole('heading', { name: '看過 6 / 6 張' }),
-    ).toBeVisible();
-    await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
+    // 再玩一次：不顯示結果頁，重新排出卡片、全部翻回題目那一面
+    await page.locator('.kq-wall__card').nth(2).click();
+    await expect(page.locator('.kq-wall__inner.is-flipped')).toHaveCount(1);
+    await page.getByRole('button', { name: '↻ 再玩一次' }).click();
+    await expect(cards).toHaveCount(6);
+    await expect(page.locator('.kq-wall__inner.is-flipped')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: /看過/ })).toHaveCount(0);
 
     expect(errors).toEqual([]);
 });

@@ -48,8 +48,9 @@ test('老師用教材的一課建立轉盤，轉到的詞與指針指的一致�
 
     const slices = page.locator('.kq-wheel__slice');
     await expect(slices).toHaveCount(6);
-    // 轉盤上顯示題目那一面的中文
-    await expect(page.locator('.kq-wheel__svg')).toContainText('爸爸');
+    // 轉盤上預設顯示目標語（題目那一面是插圖與中文意思，答案那一面才是印尼語）
+    await expect(page.locator('.kq-wheel__svg')).toContainText('ayah');
+    await expect(page.locator('.kq-wheel__svg')).not.toContainText('爸爸');
     // 整個轉盤在畫面內
     const wheel = await page.locator('.kq-wheel__wrap').boundingBox();
     const viewport = page.viewportSize();

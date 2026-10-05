@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { collectErrors, createActivity, expectNothingClipped } from './helpers';
 
-// 字卡（docs/SPEC.md 7.5、7.6、S-03）：翻面、換卡，結束後顯示看過的張數；老師在成績頁看到看過哪幾張。
+// 字卡（docs/SPEC.md 7.5、7.6、S-03）：翻面、換卡，最後一張可以再玩一次（不顯示結果頁）；
+// 老師在成績頁看到看過哪幾張。
 // 每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
 
 test.describe.serial('字卡', () => {
@@ -62,14 +63,19 @@ test.describe.serial('字卡', () => {
         await page.getByRole('button', { name: '翻面' }).click();
         await page.getByRole('button', { name: '下一張 →' }).click();
 
-        await page.getByRole('button', { name: '完成 ✓' }).click();
+        // 最後一張的「下一張」停用，往後也不會離開；另一個「再玩一次」才結束這次作答，直接從第一張重新開始
         await expect(
-            page.getByRole('heading', { name: '看過 3 / 6 張' }),
-        ).toBeVisible();
-        await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
-        await page.screenshot({
-            path: testInfo.outputPath('cards-results.png'),
-        });
+            page.getByRole('button', { name: '下一張 →' }),
+        ).toBeDisabled();
+        await page.keyboard.press('ArrowRight');
+        await expect(progress).toHaveText('第 6 / 6 張');
+        await page.screenshot({ path: testInfo.outputPath('cards-last.png') });
+        await page.getByRole('button', { name: '↻ 再玩一次' }).click();
+        await expect(progress).toHaveText('第 1 / 6 張');
+        await expect(inner).not.toHaveClass(/is-flipped/);
+        await expect(page.getByRole('heading', { name: /看過/ })).toHaveCount(
+            0,
+        );
 
         expect(errors).toEqual([]);
     });
@@ -82,9 +88,10 @@ test.describe.serial('字卡', () => {
         await page.waitForURL('**/results');
 
         await expect(page.getByText('逐題統計')).toBeVisible();
+        // 再玩一次開始了第二次作答（還沒看任何一張），排在前面；看過三張的是第一次
         const row = page.locator('[data-test="attempt-row"]');
-        await expect(row).toHaveCount(1);
-        await row.click();
+        await expect(row).toHaveCount(2);
+        await row.last().click();
         const detail = page.locator('[data-test="attempt-detail"] > li');
         await expect(detail).toHaveCount(6);
         await expect(detail.filter({ hasText: '沒看過' })).toHaveCount(3);

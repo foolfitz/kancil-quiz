@@ -380,7 +380,11 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 // 遊戲在自己的事件處理中呼叫 emit，等它返回後再卸載。
                 setTimeout(() => {
                     stopGame?.();
-                    void finish(event.gameScore, event.durationMs);
+                    if (event.replay) {
+                        void replay(event.gameScore, event.durationMs);
+                    } else {
+                        void finish(event.gameScore, event.durationMs);
+                    }
                 });
             }
         };
@@ -397,6 +401,29 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             },
             emit,
         });
+
+        // 玩的人在遊戲中按了「再玩一次」（例如字卡的最後一張）：結束這次作答，不顯示結果。
+        // 要輸入名字的活動回到開始畫面，名字已經填好，輪流用平板時也可以換人；其他的直接重新開始。
+        async function replay(
+            gameScore: number | undefined,
+            durationMs: number,
+        ): Promise<void> {
+            if (attempt) {
+                message('準備中…');
+                // 這類遊戲不計分，上傳失敗最多少一筆看過的紀錄，不擋住下一次
+                await attempt
+                    .complete({
+                        game_score: gameScore,
+                        duration_ms: durationMs,
+                    })
+                    .catch(() => undefined);
+            }
+            if (needsLabel) {
+                startScreen();
+            } else {
+                void play();
+            }
+        }
 
         async function finish(
             gameScore: number | undefined,
