@@ -20,7 +20,7 @@
 </head>
 <body>
     {{-- 學生端播放頁不使用 Inertia（docs/SPEC.md 10.2） --}}
-    <div id="player" data-activity="{{ $activity->id }}" data-preview="{{ $preview ? '1' : '0' }}" @if ($trial ?? false) data-trial="1" @endif></div>
+    <div id="player" data-activity="{{ $activity->id }}" data-preview="{{ $preview ? '1' : '0' }}" @if ($trial ?? false) data-trial="1" @endif @isset($playsUrl) data-plays-url="{{ $playsUrl }}" @endisset></div>
     @isset($backUrl)
         {{-- 教材試玩（docs/SPEC.md S-06）：回到那一課換遊戲 --}}
         <a class="kq-trial-back" href="{{ $backUrl }}">← 回到這一課</a>

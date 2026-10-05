@@ -16,7 +16,7 @@
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
 | `games/*` | 各個遊戲；`maze-quiz` 是 git submodule（見下方） | 7.5 |
 
-- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API。
+- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
   - 訪客用 `resources/js/layouts/GuestLayout.vue`，已登入的老師看教材時照舊用側邊欄，在 `resources/js/app.ts` 的 `layout` 依登入與否選擇。首頁不論登入與否都用 `GuestLayout`。
   - 給搜尋引擎與連結預覽：controller 以 `App\Support\PageMeta::make()` 產生 `meta` prop，`resources/views/partials/page-meta.blade.php` 寫進伺服器輸出的 `<head>`，Vue 端由 `components/kancil/PageMeta.vue` 以相同的 `head-key` 接手。
@@ -26,6 +26,7 @@
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）。
   - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組，`preview()` 在交易中匯入後還原；`VolumeFile` 讀取資料檔（repo 的 `volume.json`，或後台上傳的「課文與詞彙.json」）；`CurriculumImages` 依檔名把插圖對應到一冊的詞；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。repo 的 `database/curriculum/` 只放印尼語第 1 冊（示範資料與 E2E），格式見該目錄的 README；其他冊在後台匯入。
+  - 人氣統計（SPEC A-04）：`App\Curriculum\PlayCounts` 把試玩的計次累加到 `curriculum_plays`（一課、一個遊戲、台灣時間的一天一列，只有次數），並和課堂的作答數（直接用教材題組建立的活動）一起彙總；後台頁面是 `app/Filament/Pages/PlayStats.php`，管理員與審核者都能看。
   - `app/Filament/Pages/ImportCurriculum.php`：後台的「匯入教材」頁，只有管理員能用：上傳詞彙的 JSON、批次上傳插圖，都先預覽再寫入。審核者修正過的課以 `CurriculumImporter::editedOnSite()` 判斷（最近一次匯入詞彙之後有沒有教材帳號以外的版本，`curriculum_refs.imported_revision`）；寫入教材題組的程式要以教材帳號產生版本，否則會被當成修正。
   - 老師端側邊欄的「後台」連結只給能進 Filament 的人（`auth.adminUrl`）；`NavItem.external` 的項目用一般連結整頁載入，不走 Inertia。
   - `app/Policies/SetPolicy.php`：題組權限。`manage`（擁有者）、`edit`（加上審核者修正公開題組）、`view`、`copy`、`export`（manage 或已公開）、`review`、`createActivity`（manage，加上所有老師都能用教材題組）；教材題組沒有人能 `manage` 或 `review`。未公開題組的分享連結以 token 判斷，不經過 policy。

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AttemptController;
+use App\Http\Controllers\Api\CurriculumPlayController;
 use App\Http\Controllers\Api\PlaybackController;
 use App\Http\Controllers\SetExportController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,10 @@ Route::prefix('v1')->middleware('throttle:student-api')->name('api.')->group(fun
     Route::post('activities/{activity}/attempts', [AttemptController::class, 'store'])->name('attempts.store');
     Route::post('attempts/{attempt}/responses', [AttemptController::class, 'responses'])->name('attempts.responses');
     Route::post('attempts/{attempt}/complete', [AttemptController::class, 'complete'])->name('attempts.complete');
+    // 教材試玩的計次（S-06、A-04）：只累計次數
+    Route::post('curriculum/{language}/{volume}/{lesson}/plays', [CurriculumPlayController::class, 'store'])
+        ->whereNumber(['volume', 'lesson'])
+        ->name('curriculum.plays');
     // 公開題組的 zip（開放資料，T-15）
     Route::get('sets/{set}/export', [SetExportController::class, 'openData'])->name('sets.export');
 });

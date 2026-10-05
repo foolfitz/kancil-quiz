@@ -17,6 +17,7 @@ if (root?.dataset.activity) {
         preview: root.dataset.preview === '1',
         // 訪客從教材的一課直接試玩（docs/SPEC.md S-06）
         trial: root.dataset.trial === '1',
+        playsUrl: root.dataset.playsUrl,
         games: {
             'maze-quiz': () =>
                 import('@kancil-quiz/game-maze-quiz').then((m) => m.default),

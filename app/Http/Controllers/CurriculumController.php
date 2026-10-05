@@ -138,7 +138,7 @@ class CurriculumController extends Controller
 
     /**
      * 不經過活動直接玩教材的一課（docs/SPEC.md S-06）。和老師的「建立前預覽」一樣直接帶入播放格式，
-     * 用遊戲的預設設定；不建立活動，也不留作答紀錄。
+     * 用遊戲的預設設定；不建立活動，也不留作答紀錄，只累計這一課、這個遊戲的次數（App\Curriculum\PlayCounts）。
      */
     public function play(string $language, int $volume, int $lesson, string $game): View
     {
@@ -161,6 +161,8 @@ class CurriculumController extends Controller
             'preview' => false,
             'trial' => true,
             'backUrl' => Textbook::lessonUrl($ref),
+            // 人氣統計（A-04）：播放器在開始與玩完時各送一次
+            'playsUrl' => route('api.curriculum.plays', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson], false),
             'playback' => ActivityPlayback::payload($activity, $revision),
         ]);
     }

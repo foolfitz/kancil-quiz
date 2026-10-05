@@ -15,6 +15,7 @@ import type { KancilActivity } from '@kancil-quiz/schema';
 import { ApiError, PlayerApi } from './api';
 import type { AttemptSession, ResponseRecord } from './api';
 import { AudioHost } from './audio';
+import { PlayCounter } from './plays';
 import {
     answerFace,
     computeResults,
@@ -48,6 +49,8 @@ export interface PlayerConfig {
     standalone?: boolean;
     // 教材試玩：不經過活動直接玩教材的一課，不建立作答紀錄，成績在本機判定
     trial?: boolean;
+    // 教材試玩的計次網址（人氣統計）：開始與玩完時各送一次，同一個分頁只算第一次
+    playsUrl?: string;
     // 已經取得的播放格式，有的話就不向 API 取得（老師在建立活動之前預覽）
     activity?: KancilActivity;
 }
@@ -145,6 +148,10 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
     }
 
     root.lang = activity.set.language;
+    const plays =
+        config.trial && config.playsUrl
+            ? new PlayCounter(config.playsUrl, activity.game.id)
+            : null;
     document.title = `${activity.set.title}｜${game.title['zh-TW']}`;
 
     // 學生先用平板的時鐘判斷；開始作答時以伺服器為準（見 play()）。
@@ -283,6 +290,8 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             return;
         }
 
+        plays?.count('start');
+
         let attempt: AttemptSession | null = null;
         if (!offline) {
             message('準備中…');
@@ -377,6 +386,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 attempt?.record(record);
             } else if (event.type === 'completed' && !finished) {
                 finished = true;
+                plays?.count('finish');
                 // 遊戲在自己的事件處理中呼叫 emit，等它返回後再卸載。
                 setTimeout(() => {
                     stopGame?.();

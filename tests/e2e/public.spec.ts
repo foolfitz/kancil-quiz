@@ -49,7 +49,15 @@ test('訪客從首頁找到一課，直接玩選擇題', async ({ page }, testIn
         }),
     ).toBeVisible();
     await expect(page.getByText('預覽模式')).toHaveCount(0);
+    // 人氣統計（SPEC A-04）：開始與玩完各送一次，只帶遊戲與事件
+    const plays: unknown[] = [];
+    page.on('request', (request) => {
+        if (request.url().endsWith('/api/v1/curriculum/id/1/3/plays')) {
+            plays.push(request.postDataJSON());
+        }
+    });
     await page.getByRole('button', { name: '開始' }).click();
+    await expect.poll(() => plays).toEqual([{ game: 'quiz', event: 'start' }]);
 
     for (let i = 1; i <= 6; i++) {
         await expect(page.locator('.kq-quiz__progress')).toHaveText(
@@ -66,6 +74,12 @@ test('訪客從首頁找到一課，直接玩選擇題', async ({ page }, testIn
         page.getByRole('heading', { name: /^答對 \d \/ 6 題$/ }),
     ).toBeVisible();
     await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
+    await expect
+        .poll(() => plays)
+        .toEqual([
+            { game: 'quiz', event: 'start' },
+            { game: 'quiz', event: 'finish' },
+        ]);
     await page.screenshot({ path: testInfo.outputPath('trial-results.png') });
 
     await page.getByRole('link', { name: '← 回到這一課' }).click();
