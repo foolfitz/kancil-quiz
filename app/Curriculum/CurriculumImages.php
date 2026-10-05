@@ -168,6 +168,19 @@ final class CurriculumImages
         return ['words' => count($targets), 'lessons' => $lessons];
     }
 
+    /**
+     * 一課的教材題組中還沒有插圖的詞（後台的教材對照表）。題組要先載入 entries.item.media。
+     *
+     * @return list<string>
+     */
+    public static function missing(Set $set): array
+    {
+        return array_values($set->entries
+            ->filter(fn (SetEntry $entry) => $entry->item !== null && self::image($entry) === null)
+            ->map(fn (SetEntry $entry) => (string) $entry->item?->text)
+            ->all());
+    }
+
     private static function image(SetEntry $entry): ?Media
     {
         $image = $entry->item?->media->firstWhere('pivot.role', 'image');

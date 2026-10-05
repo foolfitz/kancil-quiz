@@ -7,6 +7,7 @@ use App\Curriculum\CurriculumImporter;
 use App\Curriculum\Textbook;
 use App\Curriculum\VolumeFile;
 use App\Filament\Pages\ImportCurriculum;
+use App\Filament\Resources\CurriculumRefs\Pages\ListCurriculumRefs;
 use App\Models\CurriculumRef;
 use App\Models\Media;
 use App\Models\Set;
@@ -297,7 +298,9 @@ class CurriculumUploadTest extends TestCase
         $page->call('importWords')->assertSet('wordsPreview', null);
         $this->assertSame([1, 3, 4], CurriculumRef::where('volume', 2)->orderBy('lesson')->pluck('lesson')->all());
 
+        // 選了冊就先列出缺插圖的詞與對應的檔名
         $page->set('images.volume', 2)
+            ->assertSee('這一冊還沒有插圖的詞（7 個），括號中是對應的檔名：merah（merah）、kuning（kuning）、tidak ada（tidak_ada）')
             ->set('images.files', [
                 UploadedFile::fake()->image('Merah.png'),
                 UploadedFile::fake()->image('kakek.jpg'),
@@ -319,6 +322,29 @@ class CurriculumUploadTest extends TestCase
         $this->assertSame($this->imageOf($this->lesson(3), 'kakek'), $this->imageOf($this->lesson(4), 'kakek'));
         $this->assertSame(3, Media::count());
         $this->assertSame([], $page->get('images.matches'));
+    }
+
+    public function test_the_curriculum_table_lists_words_without_images(): void
+    {
+        $this->importBookTwo();
+        app(CurriculumImages::class)->attach('id', 2, ['kakek' => $this->png('kakek.png')], Textbook::IMAGE_ATTRIBUTION);
+        $refs = CurriculumRef::where('volume', 2)->orderBy('lesson')->get();
+        $empty = CurriculumRef::create(['language_code' => 'id', 'volume' => 2, 'lesson' => 9, 'title_zh' => '還沒有匯入']);
+
+        $this->actingAs($this->admin());
+        Livewire::test(ListCurriculumRefs::class)
+            ->assertTableColumnStateSet('images', '缺 4 個：merah、kuning、tidak ada、ada', $refs[0])
+            ->assertTableColumnStateSet('images', '缺 1 個：apa kabar', $refs[1])
+            ->assertTableColumnStateSet('images', null, $empty)
+            ->filterTable('missing_images')
+            ->assertCanSeeTableRecords([$refs[0], $refs[1]])
+            ->assertCanNotSeeTableRecords([$empty]);
+
+        app(CurriculumImages::class)->attach('id', 2, ['apa_kabar' => $this->png('apa_kabar.png')], Textbook::IMAGE_ATTRIBUTION);
+        Livewire::test(ListCurriculumRefs::class)
+            ->assertTableColumnStateSet('images', '齊全', $refs[1])
+            ->filterTable('missing_images')
+            ->assertCanNotSeeTableRecords([$refs[1]]);
     }
 
     public function test_the_import_page_shows_file_errors(): void

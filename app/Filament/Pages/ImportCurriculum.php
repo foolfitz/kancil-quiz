@@ -181,6 +181,9 @@ class ImportCurriculum extends Page
                         ->helperText('只列出已經匯入詞彙的冊。')
                         ->required()->live()->afterStateUpdated(fn () => $this->resetMatches()),
                 ]),
+                // 選了冊就先列出缺插圖的詞與對應的檔名，不必等上傳才知道
+                Text::make(fn () => $this->volumeMissingText())
+                    ->visible(fn () => ! $this->hasMatches() && filled($this->images['volume'] ?? null)),
                 FileUpload::make('files')->label('插圖')
                     ->helperText('PNG、JPEG 或 WebP，每張最大 8 MB。會轉成長邊最多 1024 px 的 WebP。')
                     ->multiple()
@@ -403,6 +406,16 @@ class ImportCurriculum extends Page
         }
 
         return $get('../../replace') ? ['取代原本的插圖', 'info'] : ['已有插圖，略過', 'gray'];
+    }
+
+    private function volumeMissingText(): string
+    {
+        $missing = array_filter($this->currentWords(), fn (array $word) => $word['missing']);
+
+        return $missing === []
+            ? '這一冊的詞都有插圖了。'
+            : '這一冊還沒有插圖的詞（'.count($missing).' 個），括號中是對應的檔名：'
+                .implode('、', array_map(fn (array $word) => "{$word['text']}（{$word['key']}）", $missing));
     }
 
     private function missingWordsText(): string
