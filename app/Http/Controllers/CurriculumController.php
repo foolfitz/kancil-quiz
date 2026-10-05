@@ -39,11 +39,7 @@ class CurriculumController extends Controller
     public function home(Request $request): Response
     {
         $catalog = $this->catalog($request);
-        $names = Language::enabled()
-            ->whereIn('code', CurriculumRef::whereNotNull('set_id')->select('language_code'))
-            ->orderBy('sort')
-            ->pluck('name_zh')
-            ->join('、');
+        $names = $catalog['languages']->pluck('name_zh')->join('、');
 
         return Inertia::render('Welcome', [
             ...Arr::except($catalog, 'default'),
@@ -170,15 +166,18 @@ class CurriculumController extends Controller
     }
 
     /**
-     * 首頁與教材頁的課表。沒有指定語言時，選第一個有教材的語言（default 為 true）。
+     * 首頁與教材頁的課表。只列出已經匯入詞彙的語言；沒有指定語言時，選第一個匯入的語言（default 為 true）。
      *
      * @return array{languages: Collection<int, Language>, language: string, default: bool, lessons: list<array<string, mixed>>}
      */
     private function catalog(Request $request): array
     {
-        $languages = Language::enabled()->get(['code', 'name_zh', 'name_native']);
+        $imported = CurriculumRef::whereNotNull('set_id');
+        $languages = Language::enabled()
+            ->whereIn('code', (clone $imported)->select('language_code'))
+            ->get(['code', 'name_zh', 'name_native']);
         $codes = array_map('strval', $languages->modelKeys());
-        $default = CurriculumRef::whereIn('language_code', $codes)->whereNotNull('set_id')->orderBy('id')->value('language_code') ?? $codes[0] ?? '';
+        $default = (clone $imported)->whereIn('language_code', $codes)->orderBy('id')->value('language_code') ?? '';
         $language = in_array($request->query('language'), $codes, true) ? (string) $request->query('language') : $default;
 
         return [

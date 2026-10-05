@@ -16,7 +16,8 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // 測試關掉（phpunit.xml）：本機開著 Vite 開發伺服器時 Inertia 會自動 SSR，測試結果不該隨之改變
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', true),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

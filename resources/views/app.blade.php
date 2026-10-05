@@ -49,13 +49,14 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
-        @isset($skeleton)
-            {{-- 公開頁面（docs/SPEC.md S-06）：與 <x-inertia::app /> 相同，只是在 #app 中先放骨架，給不執行 JS 的程式看。
-                 Vue 掛上時會清空 #app（沒有 data-server-rendered，不做 hydration）。 --}}
+        {{-- 公開頁面（docs/SPEC.md S-06）沒有 SSR 時：與 <x-inertia::app /> 相同，只是在 #app 中先放骨架，給不執行 JS 的程式看。
+             Vue 掛上時會清空 #app（沒有 data-server-rendered，不做 hydration）。正式環境不跑 SSR；
+             本機開著 Vite 開發伺服器時 Inertia 會自動 SSR，就照常用 SSR 的結果。 --}}
+        @if (isset($skeleton) && app(Inertia\Ssr\SsrState::class)->dispatch() === null)
             <script data-page="app" type="application/json">{!! json_encode($page, JSON_HEX_TAG) !!}</script>
             <div id="app">@include($skeleton)</div>
         @else
             <x-inertia::app />
-        @endisset
+        @endif
     </body>
 </html>

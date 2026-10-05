@@ -133,7 +133,7 @@ function play(url: string): void {
 <template>
     <PageMeta :meta="meta" />
 
-    <div class="flex max-w-5xl flex-col gap-6 p-4">
+    <div class="flex flex-col gap-6 p-4" :class="user ? 'max-w-5xl' : ''">
         <div>
             <Link
                 :href="
@@ -226,119 +226,130 @@ function play(url: string): void {
                 直接建立的活動會一直使用這一課最新的詞彙。想增減詞、換題目的呈現方式，請先複製成自己的題組。
             </p>
 
-            <section
-                v-if="playable.length > 0"
-                class="space-y-3"
-                data-test="lesson-games"
+            <!-- 訪客：寬螢幕時「老師：用這一課出作業」放在右側；窄螢幕依序是試玩、說明、詞彙 -->
+            <div
+                class="grid gap-6"
+                :class="
+                    user
+                        ? ''
+                        : 'lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start'
+                "
             >
-                <div>
-                    <h2 class="font-semibold">直接玩這一課</h2>
-                    <p class="text-sm text-muted-foreground">
-                        {{
-                            user
-                                ? '試玩不會留下作答紀錄。要發給學生、看成績，請用上面的「選遊戲、建立活動」。'
-                                : '不必登入，也不會留下作答紀錄。'
-                        }}
-                    </p>
-                </div>
-                <div
-                    v-for="group in playable"
-                    :key="group.category.id"
-                    class="space-y-2"
+                <section
+                    v-if="playable.length > 0"
+                    class="min-w-0 space-y-3 lg:col-start-1"
+                    data-test="lesson-games"
                 >
-                    <h3 class="text-sm text-muted-foreground">
-                        {{ group.category.title }}
-                    </h3>
-                    <ul class="flex flex-wrap gap-2">
-                        <li v-for="game in group.games" :key="game.id">
-                            <Button as-child variant="outline">
-                                <a
-                                    :href="playUrl(game.id)"
-                                    data-test="lesson-play"
-                                    ><Play class="size-4" />
-                                    {{ game.title['zh-TW'] }}</a
+                    <div>
+                        <h2 class="font-semibold">直接玩這一課</h2>
+                        <p class="text-sm text-muted-foreground">
+                            {{
+                                user
+                                    ? '試玩不會留下作答紀錄。要發給學生、看成績，請用上面的「選遊戲、建立活動」。'
+                                    : '不必登入，也不會留下作答紀錄。'
+                            }}
+                        </p>
+                    </div>
+                    <div
+                        v-for="group in playable"
+                        :key="group.category.id"
+                        class="space-y-2"
+                    >
+                        <h3 class="text-sm text-muted-foreground">
+                            {{ group.category.title }}
+                        </h3>
+                        <ul class="flex flex-wrap gap-2">
+                            <li v-for="game in group.games" :key="game.id">
+                                <Button as-child variant="outline">
+                                    <a
+                                        :href="playUrl(game.id)"
+                                        data-test="lesson-play"
+                                        ><Play class="size-4" />
+                                        {{ game.title['zh-TW'] }}</a
+                                    >
+                                </Button>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <aside
+                    v-if="!user"
+                    class="space-y-2 rounded-xl border bg-muted/30 p-4 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                    data-test="lesson-teacher"
+                >
+                    <h2 class="font-semibold">老師：用這一課出作業</h2>
+                    <p class="text-sm text-muted-foreground">
+                        登入後可以用這一課建立活動，取得給學生的連結與 QR
+                        code，設定開放與截止時間，看每位學生的成績；也能複製或挑詞做成自己的題組。
+                        <template v-if="sharedCount > 0"
+                            >共備庫中還有
+                            {{ sharedCount }}
+                            個其他老師對應這一課的題組。</template
+                        >
+                    </p>
+                    <Button as-child size="sm">
+                        <Link :href="login()">老師登入</Link>
+                    </Button>
+                </aside>
+
+                <section class="min-w-0 space-y-3 lg:col-start-1">
+                    <h2 class="font-semibold">詞彙（{{ words.length }} 個）</h2>
+                    <ul
+                        class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+                        data-test="lesson-words"
+                    >
+                        <li
+                            v-for="word in words"
+                            :key="word.id ?? word.item.text"
+                            class="flex flex-col overflow-hidden rounded-xl border"
+                        >
+                            <img
+                                v-if="word.item.image"
+                                :src="word.item.image.url"
+                                :alt="word.item.translation_zh"
+                                class="aspect-square w-full bg-muted/30 object-contain p-2"
+                                loading="lazy"
+                            />
+                            <div class="flex items-start gap-2 p-3">
+                                <div class="min-w-0 flex-1">
+                                    <p
+                                        class="text-lg font-semibold break-words"
+                                        :lang="lesson.language.code"
+                                    >
+                                        {{ word.item.text }}
+                                    </p>
+                                    <p class="text-sm text-muted-foreground">
+                                        {{ word.item.translation_zh }}
+                                    </p>
+                                </div>
+                                <button
+                                    v-if="word.item.audio.length > 0"
+                                    type="button"
+                                    class="inline-flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+                                    title="播放發音"
+                                    @click="play(word.item.audio[0].url)"
                                 >
-                            </Button>
+                                    <Volume2 class="size-4" />
+                                </button>
+                            </div>
                         </li>
                     </ul>
-                </div>
-            </section>
-
-            <aside
-                v-if="!user"
-                class="space-y-2 rounded-xl border bg-muted/30 p-4"
-                data-test="lesson-teacher"
-            >
-                <h2 class="font-semibold">老師：用這一課出作業</h2>
-                <p class="text-sm text-muted-foreground">
-                    登入後可以用這一課建立活動，取得給學生的連結與 QR
-                    code，設定開放與截止時間，看每位學生的成績；也能複製或挑詞做成自己的題組。
-                    <template v-if="sharedCount > 0"
-                        >共備庫中還有
-                        {{ sharedCount }} 個其他老師對應這一課的題組。</template
-                    >
-                </p>
-                <Button as-child size="sm">
-                    <Link :href="login()">老師登入</Link>
-                </Button>
-            </aside>
-
-            <section class="space-y-3">
-                <h2 class="font-semibold">詞彙（{{ words.length }} 個）</h2>
-                <ul
-                    class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                    data-test="lesson-words"
-                >
-                    <li
-                        v-for="word in words"
-                        :key="word.id ?? word.item.text"
-                        class="flex flex-col overflow-hidden rounded-xl border"
-                    >
-                        <img
-                            v-if="word.item.image"
-                            :src="word.item.image.url"
-                            :alt="word.item.translation_zh"
-                            class="aspect-square w-full bg-muted/30 object-contain p-2"
-                            loading="lazy"
-                        />
-                        <div class="flex items-start gap-2 p-3">
-                            <div class="min-w-0 flex-1">
-                                <p
-                                    class="text-lg font-semibold break-words"
-                                    :lang="lesson.language.code"
-                                >
-                                    {{ word.item.text }}
-                                </p>
-                                <p class="text-sm text-muted-foreground">
-                                    {{ word.item.translation_zh }}
-                                </p>
-                            </div>
-                            <button
-                                v-if="word.item.audio.length > 0"
-                                type="button"
-                                class="inline-flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-muted"
-                                title="播放發音"
-                                @click="play(word.item.audio[0].url)"
-                            >
-                                <Volume2 class="size-4" />
-                            </button>
-                        </div>
-                    </li>
-                </ul>
-                <p class="text-sm text-muted-foreground">
-                    {{ set.description }}
-                    <template v-if="imageCredits.length > 0"
-                        >插圖：{{ imageCredits.join('；') }}。</template
-                    >
-                    授權：{{ set.license }}。教材來源：國教署<a
-                        href="https://mkm.k12ea.gov.tw/textbook"
-                        target="_blank"
-                        rel="noopener"
-                        class="underline underline-offset-4"
-                        >新住民子女教育資訊網</a
-                    >。
-                </p>
-            </section>
+                    <p class="text-sm text-muted-foreground">
+                        {{ set.description }}
+                        <template v-if="imageCredits.length > 0"
+                            >插圖：{{ imageCredits.join('；') }}。</template
+                        >
+                        授權：{{ set.license }}。教材來源：國教署<a
+                            href="https://mkm.k12ea.gov.tw/textbook"
+                            target="_blank"
+                            rel="noopener"
+                            class="underline underline-offset-4"
+                            >新住民子女教育資訊網</a
+                        >。
+                    </p>
+                </section>
+            </div>
         </template>
         <p v-else class="text-muted-foreground" data-test="lesson-empty">
             這一課還沒有匯入詞彙。<template v-if="user"

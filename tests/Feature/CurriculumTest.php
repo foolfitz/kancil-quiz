@@ -414,10 +414,18 @@ class CurriculumTest extends TestCase
             ->where('lessons.0.url', $lessonUrl)
             ->where('meta.url', route('home')));
 
-        // 首頁預設的語言不帶參數，其他語言帶 ?language=
+        // 還沒匯入詞彙的語言（越南語）不列出，指定了也回到預設的語言
         $this->get('/?language=vi')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('languages', 1)
+            ->where('languages.0.code', 'id')
+            ->where('language', 'id')
+            ->has('lessons', 2));
+
+        // 首頁預設的語言不帶參數，其他語言帶 ?language=
+        CurriculumRef::create(['language_code' => 'vi', 'volume' => 1, 'lesson' => 1, 'set_id' => Set::factory()->create(['language_code' => 'vi'])->id]);
+        $this->get('/?language=vi')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('languages', 2)
             ->where('language', 'vi')
-            ->has('lessons', 0)
             ->where('meta.url', route('home', ['language' => 'vi'])));
 
         $this->get('/curriculum?language=id')->assertOk()->assertInertia(fn (Assert $page) => $page

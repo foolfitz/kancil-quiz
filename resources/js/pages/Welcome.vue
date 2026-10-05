@@ -48,14 +48,9 @@ function languageHref(code: string): string {
                 <Button v-if="user" as-child size="lg" variant="outline">
                     <Link :href="dashboard()">我的首頁</Link>
                 </Button>
-                <template v-else>
-                    <Button as-child size="lg" variant="outline">
-                        <Link :href="login()">老師登入</Link>
-                    </Button>
-                    <span class="text-sm text-muted-foreground"
-                        >需要邀請連結才能註冊。</span
-                    >
-                </template>
+                <Button v-else as-child size="lg" variant="outline">
+                    <Link :href="login()">老師登入</Link>
+                </Button>
             </div>
         </section>
 
