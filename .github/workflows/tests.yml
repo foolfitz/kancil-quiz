@@ -9,9 +9,16 @@ on:
 permissions:
   contents: read
 
+# 同一個分支又推了新的 commit 時，取消還在跑的舊一輪（E2E 要跑十幾分鐘）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # 格式、lint、型別、schema、Vitest、Pint、PHPStan、PHPUnit（composer.json 的 ci:check）
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -35,9 +42,86 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
+          cache: npm
 
       - name: Setup Application
         run: composer setup
 
       - name: Run CI Checks
         run: composer ci:check
+
+  # 端對端測試（tests/e2e、playwright.config.ts）：建置好前端後用 Chromium 跑完整個 Playwright 套件。
+  # WebKit（iPad Safari）只在本機以 E2E_WEBKIT=1 執行：Linux 上的 WebKit 和 iPad 的 Safari 仍有差異，
+  # 又要多一倍的時間，在 CI 上只會增加等待與誤報（CLAUDE.md「環境」）。
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true # packages/games/maze-quiz
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_sqlite, gd, zip
+          tools: composer:v2
+          coverage: none
+
+      # 錄音的測試會上傳音檔，伺服器用 ffmpeg 轉檔
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      # submodule、依賴、.env、資料庫與前端建置（含獨立播放器）
+      - name: Setup Application
+        run: composer setup
+
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # 瀏覽器有快取時只會裝系統套件
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test --reporter=list,html
+
+      # 失敗時把 HTML 報告（含 trace 與截圖）留下來，在 workflow 的 Summary 下載
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore

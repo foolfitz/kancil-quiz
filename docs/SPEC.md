@@ -781,6 +781,7 @@ kancil-quiz/
 - **判分集中**：遊戲不判定正式成績。判定規則只在 Laravel 與 `@kancil-quiz/deck` 各有一份，兩邊共用同一批 fixture 測試（見 7.4）。
 - **Fixture**：`packages/schema/fixtures/` 內為每個已開放的語言各準備至少一份詞彙組與問答組（第一階段為 `id`、`vi`），另加一份泰文預警 fixture，所有測試共用。fixture 附上「轉成 `Round[]`」的預期結果（TS 測試用），以及「判定成績」的預期結果（PHP 與 TS 共用）。
 - **給 AI 代理的說明**：repo 根目錄放 `CLAUDE.md`，摘要本文件第 6 到 8 節與上述約定，並說明常用指令（`composer dev`、`npm run test` 等）。
+- **CI**：GitHub Actions 在每次 push 與 PR 執行 `composer ci:check`（格式、型別、schema、Vitest、Pint、PHPStan、PHPUnit），以及用 Chromium 跑完整個 Playwright 套件（7.6）；失敗時留下 Playwright 的報告與 trace。WebKit（iPad Safari）只在本機執行。
 
 ---
 

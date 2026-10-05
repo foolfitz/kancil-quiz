@@ -93,7 +93,7 @@
 | `composer test` | Pint、PHPStan、PHPUnit |
 | `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `../maze-quiz` 的最新 commit，之後要 commit 新的指標 |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
-| `composer ci:check` | CI 的完整檢查 |
+| `composer ci:check` | CI 的完整檢查（GitHub Actions 的 `ci` job；E2E 在 `e2e` job 另外跑，見下方「環境」） |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password（在登入頁下方的「管理員：用 email 與密碼登入」）。本機沒有設定 `GOOGLE_CLIENT_ID` 時不顯示 Google 登入 |
 | `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
 | `php artisan kancil:create-admin <email>` | 建立管理員（會要求設定密碼），或把既有的帳號設為管理員。老師不需要邀請，用 Google 登入就會建立帳號 |
@@ -110,4 +110,5 @@
 - 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
 - submodule 的網址是本機路徑時（本機的這份 repo，或從本機路徑 clone 的），git 2.38 起 submodule 的 clone 與 fetch 都要加 `-c protocol.file.allow=always`，例如上面的 `submodule update --remote`、`submodule update --init`；從 GitHub clone 的不需要。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
+- GitHub Actions（`.github/workflows/tests.yml`）在每次 push 到 `main` 與 PR 時跑兩個 job：`ci` 執行 `composer ci:check`；`e2e` 執行 `composer setup`、`npx playwright install --with-deps chromium`、`npx playwright test --reporter=list,html`，失敗時把 `playwright-report/`（含 trace 與截圖）與 `test-results/` 上傳成 artifact，在該次 workflow 的 Summary 下載。只跑 Chromium：Linux 上的 WebKit 和 iPad 的 Safari 仍有差異，又要多一倍時間，WebKit 照舊在本機跑。action 都以 commit 的 SHA 固定並註明版本，更新時用 `git ls-remote https://github.com/<owner>/<repo> refs/tags/<tag>` 查 SHA，不要用猜的。
 - 正式環境的映像檔（`Dockerfile`）：FrankenPHP 加上 PHP 擴充與 ffmpeg，PHP 設定在 `docker/php.ini`，Caddy 在 `docker/Caddyfile`。新增 PHP 擴充或系統套件時兩邊（本機與 `Dockerfile`）都要裝。`.dockerignore` 排除整個 `storage/`（本機的資料庫備份與快取不能進映像檔），映像檔中的空目錄由 `Dockerfile` 建立。
