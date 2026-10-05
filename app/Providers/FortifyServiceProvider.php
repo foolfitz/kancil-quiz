@@ -59,6 +59,8 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
             'googleLogin' => GoogleAccounts::configured(),
+            // 還沒設定 Google 時，只在本機提示環境變數的名稱
+            'setupHint' => app()->isLocal(),
             'status' => $request->session()->get('status'),
         ]));
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import CurriculumController from '@/actions/App/Http/Controllers/CurriculumController';
 import InputError from '@/components/InputError.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -25,6 +26,8 @@ defineOptions({
 defineProps<{
     status?: string;
     googleLogin: boolean;
+    // 本機開發時才提示要設定哪些環境變數
+    setupHint: boolean;
 }>();
 
 const page = usePage();
@@ -71,8 +74,15 @@ const passwordOpen = computed(
             </a>
         </Button>
         <p v-else class="text-center text-sm text-muted-foreground">
-            這個網站還沒有設定 Google
-            登入（GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET）。
+            Google 登入還沒有開放，現在可以先<Link
+                :href="CurriculumController.index()"
+                class="underline underline-offset-4"
+                >瀏覽、試玩教材</Link
+            >。
+            <template v-if="setupHint">
+                <br />
+                本機開發：在 .env 設定 GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET。
+            </template>
         </p>
         <InputError :message="errors.google" class="text-center" />
 

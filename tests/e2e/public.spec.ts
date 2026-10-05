@@ -95,9 +95,7 @@ test('老師登入頁、隱私權政策與使用條款', async ({ page }, testIn
     await page.getByRole('link', { name: '老師登入' }).first().click();
     await page.waitForURL('**/login');
     // E2E 沒有設定 Google 的 OAuth 用戶端；密碼登入收在下面，預設不展開
-    await expect(
-        page.getByText('這個網站還沒有設定 Google 登入'),
-    ).toBeVisible();
+    await expect(page.getByText('Google 登入還沒有開放')).toBeVisible();
     await expect(page.locator('input[name=password]')).toBeHidden();
     await page.screenshot({ path: testInfo.outputPath('login.png') });
 

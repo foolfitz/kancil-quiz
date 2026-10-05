@@ -64,7 +64,7 @@ class GoogleLoginTest extends TestCase
         $this->assertStringContainsString('redirect_uri='.urlencode(url('/auth/google/callback')), (string) $redirect);
 
         config(['services.google.client_id' => null]);
-        $this->get(route('login'))->assertInertia(fn (Assert $page) => $page->where('googleLogin', false));
+        $this->get(route('login'))->assertInertia(fn (Assert $page) => $page->where('googleLogin', false)->where('setupHint', false));
         $this->get(route('google.redirect'))->assertNotFound();
         $this->get(route('google.callback'))->assertNotFound();
     }
