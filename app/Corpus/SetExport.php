@@ -4,6 +4,7 @@ namespace App\Corpus;
 
 use App\Models\Media;
 use App\Models\SetRevision;
+use App\Support\Licenses;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use stdClass;
@@ -17,12 +18,6 @@ use ZipArchive;
  */
 class SetExport
 {
-    private const LICENSE_NAMES = [
-        'CC-BY-4.0' => 'CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）',
-        'CC-BY-SA-4.0' => 'CC BY-SA 4.0（https://creativecommons.org/licenses/by-sa/4.0/）',
-        'CC0-1.0' => 'CC0 1.0（https://creativecommons.org/publicdomain/zero/1.0/）',
-    ];
-
     /**
      * 建立 zip 暫存檔，回傳路徑；呼叫端用完要刪除。
      */
@@ -158,6 +153,8 @@ class SetExport
 
     private static function licenseName(string $license): string
     {
-        return self::LICENSE_NAMES[$license] ?? $license;
+        $url = Licenses::url($license);
+
+        return Licenses::name($license).($url === null ? '' : "（{$url}）");
     }
 }

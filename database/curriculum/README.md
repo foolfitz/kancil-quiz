@@ -12,7 +12,8 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 
 - 課名與詞彙依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」，紙本採 CC BY-NC-ND 4.0。
 - 這裡只收錄課名與詞彙（詞與中文意思），**不收錄課文、教材的插圖與音檔**（D-4）。教材原始檔中有課文也不要放進來。
-- 插圖一律自製，作者、出處與授權寫在各冊 `volume.json` 的 `images`。
+- 課名與詞彙照原教材標示作者（國教署）與授權（CC BY-NC-ND 4.0），老師複製後也保留在每個詞條上。
+- 插圖一律自製，作者、出處與授權寫在各冊 `volume.json` 的 `images`（Kancil Quiz，CC BY 4.0）。
 
 ## volume.json
 
@@ -21,8 +22,8 @@ php artisan kancil:import-curriculum database/curriculum/id/1
     "language": "id",
     "volume": 1,
     "textbook": "新住民語文學習教材 印尼語第1冊",
-    "authors": [{ "name": "Kancil Quiz" }],
-    "license": "CC-BY-4.0",
+    "authors": [{ "name": "教育部國民及學前教育署" }],
+    "license": "CC-BY-NC-ND-4.0",
     "images": {
         "authors": [{ "name": "Kancil Quiz" }],
         "license": "CC-BY-4.0",
@@ -48,7 +49,7 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 
 - `language`、`volume`：語言代碼與冊。語言要已經在 `languages` 資料表中。
 - `textbook`：教材名稱，寫進題組說明與詞條出處（例：「《新住民語文學習教材 印尼語第1冊》第 3 課，課本第 26 頁」）。
-- `authors`、`license`：教材題組與詞條的作者與授權。作者寫本專案的名稱（Kancil Quiz），不寫個人。
+- `authors`、`license`：教材題組與詞條（課名與詞彙）的作者與授權，照原教材的版權頁標示：國教署，CC BY-NC-ND 4.0。省略時也用這兩個值（`App\Curriculum\Textbook`）。
 - `images`：插圖的作者、授權與出處，記在每一張圖上。重新匯入時會更新已匯入圖片的這些資料，不必重新匯入圖檔。
 - `lessons[].title_native`：目標語的課名，選填。
 - `lessons[].vocabulary[]`：`text`（目標語）、`translation_zh`（中文意思）、`page`（課本頁碼，選填）、`image`（相對於這個目錄的路徑，選填）。同一課的詞不可重複，比對時不分大小寫、忽略多餘的空白。

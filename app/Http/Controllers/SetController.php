@@ -62,7 +62,7 @@ class SetController extends Controller
 
         return Inertia::render('sets/Create', [
             'languages' => $languages,
-            'licenses' => SetDetailsRequest::LICENSES,
+            'licenses' => Set::LICENSES,
             'language' => $language,
             // 換語言時以 partial reload 重新取得
             'textbook' => fn () => TextbookData::lessons($language),
@@ -168,7 +168,8 @@ class SetController extends Controller
                 ])
                 : [],
             'languages' => Language::enabled()->get(['code', 'name_zh', 'name_native']),
-            'licenses' => SetDetailsRequest::LICENSES,
+            // 教材題組的授權不在老師的選項中，編輯時仍要列出
+            'licenses' => array_values(array_unique([...Set::LICENSES, $set->license])),
             'curriculumRefs' => CurriculumRef::query()
                 ->whereIn('language_code', Language::enabled()->pluck('code'))
                 ->orderBy('volume')

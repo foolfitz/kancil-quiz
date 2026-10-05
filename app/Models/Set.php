@@ -44,6 +44,12 @@ class Set extends Model
 
     public const KINDS = ['vocab', 'quiz'];
 
+    /**
+     * 老師可以為自己的題組選擇的授權，第一個是預設（docs/SPEC.md D-3）。
+     * 教材題組照原教材標示 CC-BY-NC-ND-4.0（App\Curriculum\Textbook），不在這裡面。
+     */
+    public const LICENSES = ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0'];
+
     public const VISIBILITIES = ['private', 'unlisted', 'public'];
 
     public const REVIEW_STATUSES = ['none', 'pending', 'approved', 'rejected'];

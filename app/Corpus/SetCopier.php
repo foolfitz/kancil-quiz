@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
  *
  * - 新題組與新詞條的 forked_from_id 指向來源。
  * - 詞條的 authors 沿用原作者；題組的 authors 記下來源的作者，擁有者在組成交換格式時加在最後。
+ * - 詞條的授權沿用原詞條。題組的授權是新加入的詞條的預設，來源不是老師能選的授權時（教材題組的
+ *   CC BY-NC-ND）改用預設的授權，取自教材的詞條仍各自標示原教材的授權。
  * - 媒體檔不可變，複製的詞條與原詞條引用同一批媒體。
  */
 class SetCopier
@@ -35,7 +37,7 @@ class SetCopier
                 'description' => $source->description,
                 'language_code' => $source->language_code,
                 'faces' => $source->faces,
-                'license' => $source->license,
+                'license' => in_array($source->license, Set::LICENSES, true) ? $source->license : Set::LICENSES[0],
                 'tags' => $source->tags,
                 'authors' => $upstream ?: null,
                 'forked_from_id' => $source->id,

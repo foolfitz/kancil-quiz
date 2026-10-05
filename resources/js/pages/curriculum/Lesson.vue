@@ -46,6 +46,9 @@ const props = defineProps<{
         title: string;
         description: string | null;
         license: string;
+        // 例：CC BY-NC-ND 4.0；認得的授權才有條款網址
+        license_name: string;
+        license_url: string | null;
         authors: string[];
         can: {
             activity: boolean;
@@ -339,10 +342,20 @@ function play(url: string): void {
                     </ul>
                     <p class="text-sm text-muted-foreground">
                         {{ set.description }}
+                        <!-- 課名與詞彙照原教材標示作者與授權（docs/SPEC.md D-4），插圖是自製的 -->
+                        課名與詞彙：{{ set.authors.join('、') }}，<a
+                            v-if="set.license_url"
+                            :href="set.license_url"
+                            target="_blank"
+                            rel="noopener license"
+                            class="underline underline-offset-4"
+                            >{{ set.license_name }}</a
+                        ><template v-else>{{ set.license_name }}</template
+                        >。
                         <template v-if="imageCredits.length > 0"
                             >插圖：{{ imageCredits.join('；') }}。</template
                         >
-                        授權：{{ set.license }}。教材來源：國教署<a
+                        教材來源：國教署<a
                             href="https://mkm.k12ea.gov.tw/textbook"
                             target="_blank"
                             rel="noopener"

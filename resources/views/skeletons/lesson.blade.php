@@ -17,7 +17,14 @@
                 <li><span lang="{{ $lesson['language']['code'] }}">{{ $word['item']['text'] }}</span>：{{ $word['item']['translation_zh'] }}</li>
             @endforeach
         </ul>
-        <p>{{ $props['set']['description'] ?? '' }} 授權：{{ $props['set']['license'] ?? '' }}。教材來源：國教署<a href="https://mkm.k12ea.gov.tw/textbook">新住民子女教育資訊網</a>。</p>
+        @if ($props['set'])
+            <p>
+                {{ $props['set']['description'] }}
+                課名與詞彙：{{ implode('、', $props['set']['authors']) }}，@if ($props['set']['license_url'])<a href="{{ $props['set']['license_url'] }}" rel="license">{{ $props['set']['license_name'] }}</a>@else{{ $props['set']['license_name'] }}@endif。
+                @if ($props['imageCredits'])插圖：{{ implode('；', $props['imageCredits']) }}。@endif
+                教材來源：國教署<a href="https://mkm.k12ea.gov.tw/textbook">新住民子女教育資訊網</a>。
+            </p>
+        @endif
     @else
         <p>這一課還沒有匯入詞彙。</p>
     @endif

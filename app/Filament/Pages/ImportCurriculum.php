@@ -6,9 +6,9 @@ use App\Curriculum\CurriculumImages;
 use App\Curriculum\CurriculumImporter;
 use App\Curriculum\Textbook;
 use App\Curriculum\VolumeFile;
-use App\Http\Requests\Sets\SetDetailsRequest;
 use App\Models\CurriculumRef;
 use App\Models\Language;
+use App\Models\Set as SetModel;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -194,7 +194,7 @@ class ImportCurriculum extends Page
                     ->live(),
                 Fieldset::make('插圖的署名')->columns(3)->schema([
                     TextInput::make('authors')->label('作者')->helperText('多位作者以「、」分隔。')->required(),
-                    Select::make('license')->label('授權')->options(array_combine(SetDetailsRequest::LICENSES, SetDetailsRequest::LICENSES))
+                    Select::make('license')->label('授權')->options(array_combine(SetModel::LICENSES, SetModel::LICENSES))
                         ->required()->selectablePlaceholder(false),
                     TextInput::make('source')->label('出處')->required(),
                 ]),

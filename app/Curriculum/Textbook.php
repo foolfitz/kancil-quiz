@@ -23,16 +23,17 @@ final class Textbook
     public const FACES = ['prompt' => ['image', 'translation_zh'], 'answer' => ['text']];
 
     /**
-     * 教材題組與詞條的作者與授權，資料檔沒寫時使用（App\Curriculum\VolumeFile）。作者寫本專案的名稱，不寫個人。
+     * 教材題組與詞條的作者與授權，資料檔沒寫時使用（App\Curriculum\VolumeFile）。
+     * 課名與詞彙取自國教署的教材，照原教材的版權頁標示：總編輯是國教署，採 CC BY-NC-ND 4.0（D-4）。
      */
-    public const AUTHORS = [['name' => 'Kancil Quiz']];
+    public const AUTHORS = [['name' => '教育部國民及學前教育署']];
 
-    public const LICENSE = 'CC-BY-4.0';
+    public const LICENSE = 'CC-BY-NC-ND-4.0';
 
     /**
-     * 在後台上傳插圖時的預設署名。
+     * 在後台上傳插圖時的預設署名。插圖是本專案自製的，作者寫本專案的名稱，不寫個人。
      */
-    public const IMAGE_ATTRIBUTION = ['authors' => self::AUTHORS, 'license' => 'CC-BY-4.0', 'source' => 'AI 生成'];
+    public const IMAGE_ATTRIBUTION = ['authors' => [['name' => 'Kancil Quiz']], 'license' => 'CC-BY-4.0', 'source' => 'AI 生成'];
 
     public static function owner(): User
     {

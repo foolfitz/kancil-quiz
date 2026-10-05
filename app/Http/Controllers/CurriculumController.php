@@ -13,6 +13,7 @@ use App\Models\Language;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\SetEntry;
+use App\Support\Licenses;
 use App\Support\PageMeta;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -91,6 +92,8 @@ class CurriculumController extends Controller
                 'title' => $set->title,
                 'description' => $set->description,
                 'license' => $set->license,
+                'license_name' => Licenses::name($set->license),
+                'license_url' => Licenses::url($set->license),
                 'authors' => array_column($set->effectiveAuthors(), 'name'),
                 'can' => [
                     'activity' => Gate::allows('createActivity', $set),
@@ -216,7 +219,7 @@ class CurriculumController extends Controller
     }
 
     /**
-     * 插圖的署名，例：Kancil Quiz，AI 生成（CC-BY-4.0）。相同的署名只列一次。
+     * 插圖的署名，例：Kancil Quiz，AI 生成（CC BY 4.0）。相同的署名只列一次。
      *
      * @return list<string>
      */
@@ -228,7 +231,7 @@ class CurriculumController extends Controller
             ->map(fn (Media $media) => implode('，', array_filter([
                 implode('、', array_column($media->authors ?? [], 'name')),
                 $media->source,
-            ])).($media->license ? "（{$media->license}）" : ''))
+            ])).($media->license ? '（'.Licenses::name($media->license).'）' : ''))
             ->filter(fn (string $credit) => $credit !== '')
             ->unique()
             ->all());

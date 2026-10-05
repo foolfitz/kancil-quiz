@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Corpus\SetExport;
 use App\Curriculum\CurriculumImporter;
 use App\Curriculum\Textbook;
 use App\Models\Activity;
@@ -62,8 +63,8 @@ class CurriculumTest extends TestCase
             'language' => 'id',
             'volume' => 1,
             'textbook' => '新住民語文學習教材 印尼語第1冊',
-            'authors' => [['name' => 'Kancil Quiz']],
-            'license' => 'CC-BY-4.0',
+            'authors' => Textbook::AUTHORS,
+            'license' => Textbook::LICENSE,
             'images' => ['authors' => [['name' => 'Kancil Quiz']], 'license' => 'CC-BY-4.0', 'source' => 'AI 生成'],
             'lessons' => [
                 [
@@ -139,13 +140,16 @@ class CurriculumTest extends TestCase
         $this->assertSame([3], $set->curriculumRefs->pluck('lesson')->all());
 
         $content = $set->currentRevision()->firstOrFail()->content();
-        $this->assertSame([['name' => 'Kancil Quiz']], json_decode((string) json_encode($content->authors), true));
+        // 課名與詞彙照原教材標示（D-4），插圖是自製的
+        $this->assertSame([['name' => '教育部國民及學前教育署']], json_decode((string) json_encode($content->authors), true));
+        $this->assertSame('CC-BY-NC-ND-4.0', $content->license);
         $this->assertSame(Textbook::FACES, json_decode((string) json_encode($content->faces), true));
         $this->assertSame(['ayah', 'ibu', 'kakak'], array_map(fn ($entry) => $entry->item->text, $content->entries));
         $item = $content->entries[0]->item;
         $this->assertSame('《新住民語文學習教材 印尼語第1冊》第 3 課，課本第 26 頁', $item->source);
-        $this->assertSame('CC-BY-4.0', $item->license);
+        $this->assertSame('CC-BY-NC-ND-4.0', $item->license);
         $this->assertSame('AI 生成', $item->image->source);
+        $this->assertSame('CC-BY-4.0', $item->image->license);
         // 課文不匯入（D-4）
         $this->assertStringNotContainsString('Siti', (string) json_encode($content, JSON_UNESCAPED_UNICODE));
 
@@ -208,7 +212,8 @@ class CurriculumTest extends TestCase
         $this->actingAs($curator)->put("/sets/{$set->id}", [
             'title' => $set->title,
             'language_code' => 'id',
-            'license' => 'CC-BY-4.0',
+            // 教材題組的授權不在老師的選項中，審核者修正時維持原本的
+            'license' => 'CC-BY-NC-ND-4.0',
             'curriculum_ref_ids' => $set->curriculumRefs->modelKeys(),
             'faces' => Textbook::FACES,
             'entries' => $entries->map(fn (SetEntry $entry, int $i) => ['id' => $entry->id, 'item' => [
@@ -260,7 +265,7 @@ class CurriculumTest extends TestCase
             ->where('can.manage', false)
             ->where('can.edit', false)
             ->where('set.textbook_url', route('curriculum.lesson', ['language' => 'id', 'volume' => 1, 'lesson' => 3]))
-            ->where('set.authors', ['Kancil Quiz']));
+            ->where('set.authors', ['教育部國民及學前教育署']));
 
         $this->actingAs($this->teacher)->get("/sets/{$set->id}/activities/create")->assertOk();
         $this->actingAs($this->teacher)->post("/sets/{$set->id}/activities", ['game_id' => 'quiz'])->assertRedirect();
@@ -326,7 +331,10 @@ class CurriculumTest extends TestCase
         $this->assertNull($set->forked_from_id);
         $this->assertSame([3, 4], $set->curriculumRefs->pluck('lesson')->all());
         $this->assertSame(Textbook::FACES, $set->faces);
-        $this->assertSame([['name' => 'Kancil Quiz']], $set->authors);
+        $this->assertSame([['name' => '教育部國民及學前教育署']], $set->authors);
+        // 題組是老師選的授權，取自教材的詞條保留原教材的
+        $this->assertSame('CC-BY-4.0', $set->license);
+        $this->assertSame('CC-BY-NC-ND-4.0', $set->entries()->firstOrFail()->item->license);
 
         $entries = $set->entries()->with('item.media')->get();
         $this->assertSame(['ayah', 'selamat pagi', 'ibu'], $entries->pluck('item.text')->all());
@@ -388,7 +396,9 @@ class CurriculumTest extends TestCase
             ->where('words.0.item.text', 'ayah')
             ->where('set.can.activity', true)
             ->where('set.can.edit', false)
-            ->where('imageCredits', ['Kancil Quiz，AI 生成（CC-BY-4.0）'])
+            ->where('set.license_name', 'CC BY-NC-ND 4.0')
+            ->where('set.license_url', 'https://creativecommons.org/licenses/by-nc-nd/4.0/')
+            ->where('imageCredits', ['Kancil Quiz，AI 生成（CC BY 4.0）'])
             ->has('shared', 1)
             ->where('shared.0.title', '家人改編')
             ->has('mySets', 1)
@@ -454,6 +464,32 @@ class CurriculumTest extends TestCase
             ->where('sharedCount', 1));
     }
 
+    public function test_copies_keep_the_textbook_license_on_the_words(): void
+    {
+        $this->import();
+        $set = $this->lesson(3);
+
+        $this->actingAs($this->teacher)->post("/sets/{$set->id}/copy")->assertRedirect();
+
+        // 題組的授權是老師之後加入的詞條的預設；CC BY-NC-ND 不在老師的選項中，改用預設的
+        $copy = $this->teacher->sets()->firstOrFail();
+        $this->assertSame('CC-BY-4.0', $copy->license);
+        $content = $copy->currentRevision()->firstOrFail()->content();
+        $item = $content->entries[0]->item;
+        $this->assertSame('CC-BY-NC-ND-4.0', $item->license);
+        $this->assertSame([['name' => '教育部國民及學前教育署']], json_decode((string) json_encode($item->authors), true));
+        $this->assertSame('《新住民語文學習教材 印尼語第1冊》第 3 課，課本第 26 頁', $item->source);
+
+        // 匯出的 LICENSE.txt 列出與題組不同的授權
+        $license = SetExport::license($content, 1);
+        $this->assertStringContainsString('授權：CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）', $license);
+        $this->assertStringContainsString('第 1 題 ayah（爸爸）：作者 教育部國民及學前教育署；授權 CC BY-NC-ND 4.0（https://creativecommons.org/licenses/by-nc-nd/4.0/）；出處 《新住民語文學習教材 印尼語第1冊》第 3 課，課本第 26 頁', $license);
+
+        // 老師編輯自己的副本時可以換成其他老師能選的授權，但不能選教材的
+        $this->actingAs($this->teacher)->get("/sets/{$copy->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('licenses', ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0']));
+    }
+
     public function test_public_pages_render_a_skeleton_and_meta_for_crawlers(): void
     {
         $this->import();
@@ -464,6 +500,8 @@ class CurriculumTest extends TestCase
         $this->assertStringContainsString('<meta data-inertia="og:title" property="og:title" content="印尼語第 1 冊第 3 課：Keluarga Saya 我的家人">', $html);
         $this->assertMatchesRegularExpression('#<meta data-inertia="og:image" property="og:image" content="http[^"]+">#', $html);
         $this->assertMatchesRegularExpression('#<div id="app"><div class="kq-skeleton">.*<span lang="id">ayah</span>：爸爸#s', $html);
+        $this->assertStringContainsString('課名與詞彙：教育部國民及學前教育署，<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license">CC BY-NC-ND 4.0</a>。', $html);
+        $this->assertStringContainsString('插圖：Kancil Quiz，AI 生成（CC BY 4.0）。', $html);
 
         // Inertia 的頁面資料照常輸出，Vue 掛上後換掉骨架
         $this->assertSame(1, preg_match('#<script data-page="app" type="application/json">(.*?)</script>#s', $html, $match));
