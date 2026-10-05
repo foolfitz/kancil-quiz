@@ -534,6 +534,12 @@ class CurriculumTest extends TestCase
         $this->assertSame('practice', $playback['mode']);
         $this->assertSame($set->current_revision_id, $playback['set_revision_id']);
         $this->assertSame('ayah', $playback['set']['entries'][0]['item']['text']);
+        // 換遊戲：列出所有遊戲與相容條件，播放器只顯示能玩的
+        $this->assertSame(1, preg_match('#<script type="application/json" id="kq-trial-games">(.*?)</script>#s', (string) $response->getContent(), $match));
+        $games = collect(json_decode($match[1], true))->keyBy('id');
+        $this->assertSame('選擇題', $games['quiz']['title']);
+        $this->assertSame('/curriculum/id/1/3/play/quiz', $games['quiz']['url']);
+        $this->assertSame('mcq', $games['quiz']['requires']['shape']);
 
         $this->get('/curriculum/id/1/3/play/no-such-game')->assertNotFound();
         $this->get('/curriculum/id/1/9/play/quiz')->assertNotFound();

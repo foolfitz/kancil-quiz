@@ -16,7 +16,7 @@
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
 | `games/*` | 各個遊戲；`maze-quiz` 是 git submodule（見下方） | 7.5 |
 
-- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。
+- 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。試玩頁的開始與結果畫面列出同一課的其他遊戲（`otherGames`）：controller 給全部遊戲的相容條件（`#kq-trial-games`），`resources/js/player.ts` 用 `check()` 只留下能玩的。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
   - 訪客用 `resources/js/layouts/GuestLayout.vue`，已登入的老師看教材時照舊用側邊欄，在 `resources/js/app.ts` 的 `layout` 依登入與否選擇。首頁不論登入與否都用 `GuestLayout`。
   - 給搜尋引擎與連結預覽：controller 以 `App\Support\PageMeta::make()` 產生 `meta` prop，`resources/views/partials/page-meta.blade.php` 寫進伺服器輸出的 `<head>`，Vue 端由 `components/kancil/PageMeta.vue` 以相同的 `head-key` 接手。

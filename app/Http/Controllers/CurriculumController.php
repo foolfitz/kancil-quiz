@@ -167,6 +167,13 @@ class CurriculumController extends Controller
             // 人氣統計（A-04）：播放器在開始與玩完時各送一次
             'playsUrl' => route('api.curriculum.plays', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson], false),
             'playback' => ActivityPlayback::payload($activity, $revision),
+            // 換遊戲：播放器依題組判斷哪些能玩（@kancil-quiz/deck 的 check()），只列出那些
+            'trialGames' => array_values(array_map(fn (array $other) => [
+                'id' => $other['id'],
+                'title' => $other['title']['zh-TW'],
+                'requires' => $other['requires'],
+                'url' => route('curriculum.play', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson, 'game' => $other['id']], false),
+            ], $this->games->all())),
         ]);
     }
 

@@ -53,6 +53,13 @@ export interface PlayerConfig {
     playsUrl?: string;
     // 已經取得的播放格式，有的話就不向 API 取得（老師在建立活動之前預覽）
     activity?: KancilActivity;
+    // 教材試玩：同一課其他能玩的遊戲，開始與結果畫面列出連結，直接換遊戲
+    otherGames?: OtherGame[];
+}
+
+export interface OtherGame {
+    title: string;
+    url: string;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -246,9 +253,29 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 el('p', 'kq-player__note', '預覽模式：不會留下作答紀錄'),
             );
         }
+        appendOtherGames(box);
         appendReportLink(box, () => startScreen());
         show(box);
     };
+
+    function appendOtherGames(box: HTMLElement): void {
+        if (!config.otherGames?.length) {
+            return;
+        }
+        const nav = el('nav', 'kq-player__other-games');
+        nav.setAttribute('aria-label', '換一個遊戲');
+        nav.append(el('p', 'kq-player__detail', '換一個遊戲'));
+        const list = el('ul', 'kq-player__other-games-list');
+        for (const other of config.otherGames) {
+            const item = el('li', '');
+            const link = el('a', 'kq-player__other-game', other.title);
+            link.href = other.url;
+            item.append(link);
+            list.append(item);
+        }
+        nav.append(list);
+        box.append(nav);
+    }
 
     // 檢舉（docs/SPEC.md S-07）：只有老師建立的活動有。預覽、試玩與獨立播放器沒有對外的活動連結。
     function appendReportLink(box: HTMLElement, back: () => void): void {
@@ -633,6 +660,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 }),
             );
         }
+        appendOtherGames(box);
         appendReportLink(box, () => show(box));
         show(box);
     }

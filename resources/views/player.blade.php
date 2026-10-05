@@ -29,5 +29,9 @@
         {{-- 建立前預覽與教材試玩：活動不存在，直接帶入播放格式，不向 API 取得 --}}
         <script type="application/json" id="kq-playback">{!! json_encode($playback, App\Corpus\SetContent::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
     @endisset
+    @isset($trialGames)
+        {{-- 教材試玩：同一課的其他遊戲，播放器只列出能玩的（resources/js/player.ts） --}}
+        <script type="application/json" id="kq-trial-games">{!! json_encode($trialGames, App\Corpus\SetContent::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+    @endisset
 </body>
 </html>

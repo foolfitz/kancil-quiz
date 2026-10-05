@@ -141,6 +141,43 @@
     font-size: 1rem;
 }
 
+/* 教材試玩的「換一個遊戲」（docs/SPEC.md S-06）：在「開始」、「再玩一次」的下面，比它們低調 */
+.kq-player__other-games {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.kq-player__other-games-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.kq-player__other-game {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.25rem 1rem;
+    border: 1px solid var(--kq-player-muted);
+    border-radius: 999px;
+    background: var(--kq-player-card);
+    color: inherit;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.kq-player__other-game:hover,
+.kq-player__other-game:focus-visible {
+    border-color: var(--kq-player-accent);
+}
+
 /* 檢舉（docs/SPEC.md S-07）：放在開始與結果畫面的最下面，字小一點，不和「開始」搶目光 */
 .kq-player__report-link {
     margin-top: 1.5rem;

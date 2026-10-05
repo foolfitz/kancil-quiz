@@ -82,6 +82,20 @@ test('訪客從首頁找到一課，直接玩選擇題', async ({ page }, testIn
         ]);
     await page.screenshot({ path: testInfo.outputPath('trial-results.png') });
 
+    // 換遊戲：只列出這一課能玩的其他遊戲，不含正在玩的
+    const otherGames = page.getByRole('navigation', { name: '換一個遊戲' });
+    await expect(otherGames.getByRole('link', { name: '選擇題' })).toHaveCount(
+        0,
+    );
+    await otherGames.getByRole('link', { name: '迷宮問答' }).click();
+    await page.waitForURL('**/curriculum/id/1/3/play/maze-quiz');
+    await expect(
+        page
+            .getByRole('navigation', { name: '換一個遊戲' })
+            .getByRole('link', { name: '選擇題' }),
+    ).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('trial-switch.png') });
+
     await page.getByRole('link', { name: '← 回到這一課' }).click();
     await page.waitForURL('**/curriculum/id/1/3');
 
