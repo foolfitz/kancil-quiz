@@ -106,51 +106,75 @@ function describe(day: Day): string {
         <!-- 放不下整年時（手機、iPad 直向）在框內捲動。外層用 rtl、表格用 ltr：一開始就停在最右邊，
              先看到最近的日子，視窗大小改變時也一樣，不必用 JS 捲動 -->
         <div class="overflow-x-auto pb-1" dir="rtl">
-            <table
-                class="kq-calendar border-separate border-spacing-[3px] text-xs text-muted-foreground"
-                dir="ltr"
-            >
-                <thead>
-                    <tr>
-                        <td class="sticky left-0 bg-background"></td>
-                        <th
-                            v-for="(label, i) in months"
+            <!-- 裡面這一層至少和框一樣寬：放得下時表格靠左，放不下時才由 rtl 的外層停在最右邊 -->
+            <div class="w-max min-w-full" dir="ltr">
+                <!-- 每一格都是一樣大的正方形：table-layout: fixed 加上 colgroup 的固定寬度，表格的 width 給一個
+                 比內容小的值，寬度就剛好等於各欄加上間距；月份的文字用絕對定位，不會把那一欄撐寬 -->
+                <table
+                    class="kq-calendar w-px table-fixed border-separate border-spacing-[3px] text-xs text-muted-foreground"
+                >
+                    <colgroup>
+                        <col class="kq-calendar__labels" />
+                        <col
+                            v-for="(week, i) in weeks"
                             :key="i"
-                            scope="col"
-                            class="h-4 overflow-visible text-left font-normal whitespace-nowrap"
-                        >
-                            {{ label }}
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(weekday, row) in WEEKDAYS" :key="weekday">
-                        <th
-                            scope="row"
-                            class="sticky left-0 bg-background pr-1 text-left font-normal"
-                            :class="row % 2 === 0 ? 'text-transparent' : ''"
-                            :aria-label="`星期${weekday}`"
-                        >
-                            {{ weekday }}
-                        </th>
-                        <td
-                            v-for="(week, col) in weeks"
-                            :key="col"
-                            class="kq-calendar__day rounded-[2px]"
-                            :data-level="week[row]?.level ?? null"
-                            :data-date="week[row]?.date"
-                            :title="week[row] ? describe(week[row]) : undefined"
-                            :aria-label="
-                                week[row] ? describe(week[row]) : undefined
-                            "
-                        >
-                            <span v-if="week[row]" class="sr-only">{{
-                                describe(week[row])
-                            }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            class="kq-calendar__week"
+                        />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <td class="kq-calendar__sticky sticky left-0"></td>
+                            <th
+                                v-for="(label, i) in months"
+                                :key="i"
+                                scope="col"
+                                class="relative h-4 font-normal"
+                            >
+                                <!-- 最後兩欄的月份靠右對齊，文字才不會超出表格、多出一段空白 -->
+                                <span
+                                    v-if="label"
+                                    class="absolute top-0 whitespace-nowrap"
+                                    :class="
+                                        i >= weeks.length - 2
+                                            ? 'right-0'
+                                            : 'left-0'
+                                    "
+                                    >{{ label }}</span
+                                >
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(weekday, row) in WEEKDAYS" :key="weekday">
+                            <th
+                                scope="row"
+                                class="kq-calendar__sticky sticky left-0 text-left font-normal"
+                                :class="row % 2 === 0 ? 'text-transparent' : ''"
+                                :aria-label="`星期${weekday}`"
+                            >
+                                {{ weekday }}
+                            </th>
+                            <td
+                                v-for="(week, col) in weeks"
+                                :key="col"
+                                class="kq-calendar__day rounded-[2px]"
+                                :data-level="week[row]?.level ?? null"
+                                :data-date="week[row]?.date"
+                                :title="
+                                    week[row] ? describe(week[row]) : undefined
+                                "
+                                :aria-label="
+                                    week[row] ? describe(week[row]) : undefined
+                                "
+                            >
+                                <span v-if="week[row]" class="sr-only">{{
+                                    describe(week[row])
+                                }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div
             class="flex items-center justify-end gap-1 text-xs text-muted-foreground"
@@ -169,6 +193,20 @@ function describe(day: Day): string {
 </template>
 
 <style scoped>
+.kq-calendar {
+    --kq-cell: 11px;
+}
+.kq-calendar__labels {
+    width: 1.25rem;
+}
+.kq-calendar__week {
+    width: var(--kq-cell);
+}
+/* 星期的欄位捲動時固定在左邊；背景連同 3px 的間距一起蓋住底下捲過的格子 */
+.kq-calendar__sticky {
+    background: var(--background);
+    box-shadow: 0 0 0 3px var(--background);
+}
 .kq-calendar__day {
     --kq-cell: 11px;
     width: var(--kq-cell);
