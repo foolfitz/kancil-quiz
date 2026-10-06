@@ -680,12 +680,14 @@ kancil-quiz/
 │   ├── games-sdk/              # 遊戲介面定義（第 7.2 節）
 │   ├── player/                 # 遊戲宿主；可另外建置成獨立播放器
 │   └── games/
-│       ├── maze-quiz/          # git submodule：獨立的 maze-quiz repo
-│       ├── quiz/
-│       ├── flash-cards/
-│       ├── match-up/
-│       ├── card-wall/          # 互動教材：圖卡牆
-│       └── spin-wheel/         # 互動教材：轉盤
+│       ├── maze-quiz/          # git submodule：獨立的 maze-quiz repo（可以單獨執行）
+│       ├── kancil-games/       # git submodule：內建的遊戲（只能在平台中使用）
+│       │   ├── quiz/
+│       │   └── match-up/
+│       └── kancil-materials/   # git submodule：內建的互動教材（只能在平台中使用）
+│           ├── flash-cards/
+│           ├── card-wall/
+│           └── spin-wheel/
 ├── tests/
 ├── docker/                     # 正式環境的映像檔設定、備份與還原（Dockerfile、compose.yaml 在根目錄）
 └── docs/
@@ -701,6 +703,12 @@ kancil-quiz/
 - 需要 `@kancil-quiz/deck` 與 fixture 的測試（7.6 的判定一致）放在平台的 `packages/games/maze-quiz.test.ts`。
 - 修改流程：在 `maze-quiz` repo 修改、測試、commit，再到平台更新 submodule 指標，跑完平台的檢查後 commit。
 - M4 把 `games-sdk`、`text` 發布到 npm 之後，`maze-quiz` 改依版本號引用，刪除 `vendor/`、路徑別名與副本一致測試。
+
+**內建的遊戲與互動教材也是獨立的 repo，但依附平台**：計分的遊戲（選擇題、配對）在 `kancil-games`，不計分的互動教材（字卡、圖卡牆、轉盤）在 `kancil-materials`，都採 AGPL-3.0-or-later（與平台相同），以 git submodule 掛在 `packages/games/` 下，`.gitmodules` 寫相對網址。
+
+- 與迷宮不同，它們沒有自己的建置、測試設定、`vendor/` 副本與示範頁：直接用平台 workspace 中的 `games-sdk`、`text`、`deck` 與 fixture，只能在平台中修改、測試與建置。
+- 每個 repo 中一個遊戲一個目錄，套件名稱與遊戲 ID 不變（`@kancil-quiz/game-quiz` 等），平台的 workspace 多列兩層目錄。
+- 修改流程：直接在平台的 submodule 目錄中修改、在平台跑測試，於 submodule 中 commit 並推送，再到平台 commit 新的 submodule 指標。
 
 **播放頁不使用 Inertia**：學生端要盡量輕量，而且要與獨立播放器共用同一套程式碼，所以用獨立的 Vite 入口 `player.ts` 載入 `@kancil-quiz/player`。
 

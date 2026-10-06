@@ -5,7 +5,9 @@
     "license": "AGPL-3.0-or-later",
     "workspaces": [
         "packages/*",
-        "packages/games/*"
+        "packages/games/*",
+        "packages/games/kancil-games/*",
+        "packages/games/kancil-materials/*"
     ],
     "type": "module",
     "scripts": {

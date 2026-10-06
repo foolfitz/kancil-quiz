@@ -14,7 +14,7 @@
 | `deck` | 題組轉 `Round[]`、干擾選項、相容檢查、看起來一樣的題目與選項（`duplicateFaces()`，編輯頁的提醒）、成績判定 | 7.3、7.4 |
 | `games-sdk` | 遊戲模組介面 | 7.2 |
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
-| `games/*` | 各個遊戲；`maze-quiz` 是 git submodule（見下方） | 7.5 |
+| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。試玩頁的開始與結果畫面列出同一課的其他遊戲（`otherGames`）：controller 給全部遊戲的相容條件（`#kq-trial-games`），`resources/js/player.ts` 用 `check()` 只留下能玩的。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
@@ -55,6 +55,12 @@
   - 它單獨執行時用 `vendor/` 中 `games-sdk` 與 `text` 的副本。改了這兩個套件，要把新版複製到 `../maze-quiz/vendor/` 並 commit，再更新指標；`packages/games/maze-quiz.test.ts` 會檢查副本與正本相同。
   - 迷宮與 `judge()` 的一致測試（SPEC 7.6）也在 `packages/games/maze-quiz.test.ts`，因為要用到 `deck` 與 fixture。它直接 import 迷宮的內部模組（`src/session.ts` 等），迷宮重構時要一起改。
   - 這裡的 `vp check`、`vue-tsc` 與 Vitest 也會涵蓋 submodule 的檔案，所以迷宮的格式設定與這裡相同。
+- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本是本 repo 旁邊的 `../kancil-games`、`../kancil-materials`（AGPL-3.0-or-later，SPEC 10.2）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
+  - 動手前先 `git -C packages/games/kancil-games switch main`（`submodule update` 之後是 detached HEAD，commit 會掛在沒有分支的地方）。
+  - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），`git -C packages/games/kancil-games push` 推回 `../kancil-games`（本機的那份設了 `receive.denyCurrentBranch=updateInstead`，推送時會一併更新它的工作目錄），再回到這裡 commit 新的 submodule 指標。不要在 `../kancil-games` 直接改。
+  - 一個 commit 同時改到遊戲與平台時（例如改了 `games-sdk` 與用到它的遊戲），先 commit submodule，再在這裡把平台的修改與新的指標放在同一個 commit。
+  - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。
+- 推上 GitHub 時，先推三個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。三個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
 - Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）。
 
 ## 必守規則
@@ -94,6 +100,7 @@
 | `npm run schema:check` | 檢查產生的型別是否與 schema 同步 |
 | `composer test` | Pint、PHPStan、PHPUnit |
 | `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `../maze-quiz` 的最新 commit，之後要 commit 新的指標 |
+| `git -c protocol.file.allow=always submodule update --init` | clone 之後或切換 commit 之後，把三個 submodule 都對到這個 repo 記錄的版本 |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查（GitHub Actions 的 `ci` job；E2E 在 `e2e` job 另外跑，見下方「環境」） |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password（在登入頁下方的「管理員：用 email 與密碼登入」）。本機沒有設定 `GOOGLE_CLIENT_ID` 時不顯示 Google 登入 |

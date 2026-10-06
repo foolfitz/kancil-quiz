@@ -24,4 +24,6 @@ playwright-report
 .phpunit.cache
 .phpunit.result.cache
 packages/games/maze-quiz/.git
+packages/games/kancil-games/.git
+packages/games/kancil-materials/.git
 packages/games/maze-quiz/dist

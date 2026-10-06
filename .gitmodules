@@ -2,3 +2,11 @@
 	path = packages/games/maze-quiz
 	url = ../maze-quiz
 	branch = master
+[submodule "packages/games/kancil-games"]
+	path = packages/games/kancil-games
+	url = ../kancil-games
+	branch = main
+[submodule "packages/games/kancil-materials"]
+	path = packages/games/kancil-materials
+	url = ../kancil-materials
+	branch = main
