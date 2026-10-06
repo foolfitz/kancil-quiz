@@ -56,9 +56,9 @@
   - 它單獨執行時用 `vendor/` 中 `games-sdk` 與 `text` 的副本。改了這兩個套件，要把新版複製到 `../maze-quiz/vendor/` 並 commit，再更新指標；`packages/games/maze-quiz.test.ts` 會檢查副本與正本相同。
   - 迷宮與 `judge()` 的一致測試（SPEC 7.6）也在 `packages/games/maze-quiz.test.ts`，因為要用到 `deck` 與 fixture。它直接 import 迷宮的內部模組（`src/session.ts` 等），迷宮重構時要一起改。
   - 這裡的 `vp check`、`vue-tsc` 與 Vitest 也會涵蓋 submodule 的檔案，所以迷宮的格式設定與這裡相同。
-- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本是本 repo 旁邊的 `../kancil-games`、`../kancil-materials`（AGPL-3.0-or-later，SPEC 10.2）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
+- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本在 GitHub 的 `foolfitz/kancil-games`、`foolfitz/kancil-materials`（AGPL-3.0-or-later，SPEC 10.2），submodule 的 `origin` 直接指向 GitHub（`.gitmodules` 的相對網址，`git submodule sync` 會照這個 repo 的 `origin` 換算）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
   - 動手前先 `git -C packages/games/kancil-games switch main`（`submodule update` 之後是 detached HEAD，commit 會掛在沒有分支的地方）。
-  - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），`git -C packages/games/kancil-games push` 推回 `../kancil-games`（本機的那份設了 `receive.denyCurrentBranch=updateInstead`，推送時會一併更新它的工作目錄），再回到這裡 commit 新的 submodule 指標。不要在 `../kancil-games` 直接改。
+  - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），再回到這裡 commit 新的 submodule 指標。推送是 `git -C packages/games/kancil-games push`，直接推上 GitHub。本機旁邊的 `../kancil-games`、`../kancil-materials` 是拆出時的舊工作目錄，已經不用。
   - 一個 commit 同時改到遊戲與平台時（例如改了 `games-sdk` 與用到它的遊戲），先 commit submodule，再在這裡把平台的修改與新的指標放在同一個 commit。
   - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。
 - 推上 GitHub 時，先推三個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。三個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
