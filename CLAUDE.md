@@ -14,7 +14,7 @@
 | `deck` | 題組轉 `Round[]`、干擾選項、相容檢查、看起來一樣的題目與選項（`duplicateFaces()`，編輯頁的提醒）、成績判定 | 7.3、7.4 |
 | `games-sdk` | 遊戲模組介面 | 7.2 |
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
-| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
+| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對、打地鼠）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。試玩頁的開始與結果畫面列出同一課的其他遊戲（`otherGames`）：controller 給全部遊戲的相容條件（`#kq-trial-games`），`resources/js/player.ts` 用 `check()` 只留下能玩的。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
@@ -45,11 +45,11 @@
   - `app/Support/KancilFormat.php`：用 `opis/json-schema` 驗證題組與活動格式。
   - `app/Support/Pruner.php`：資料的保存期限（SPEC 第 5 節），由排程每天執行 `kancil:prune`（`routes/console.php`，正式環境是 `compose.yaml` 的 `scheduler` 服務）。期限在 `config/kancil.php` 的 `retention`。新增會引用媒體或題組版本的資料時，要把它加進 `Pruner` 的引用檢查，否則被引用的媒體或版本會被清掉。問答題 `payload` 引用的媒體另外記在對照表 `set_entry_media`（`SetEntry` 儲存時同步，`Pruner` 與 `TeacherStats` 都用它，不掃 `payload`）；繞過 model 事件寫入 `payload` 的程式要自己呼叫 `SetEntry::syncMedia()`，測試的 `tests/TestCase.php` 在每個測試結束時會檢查對照表與 `payload` 一致。
   - `app/Support/SystemStatus.php`：系統狀態（SPEC A-02）。備份（主機上的 `docker/backup.sh` 用 `docker compose exec` 寫進 volume）、`kancil:prune`（`PruneCommand`，dry run 不記）與排程的心跳（`routes/console.php`，每 15 分鐘）各把最近一次的結果寫成 local disk 上的 `status/*.json`，這裡讀出來判斷正常、過期或失敗（`StatusCheck`、`Health`）；後台頁面是 `app/Filament/Pages/SystemStatus.php`，只有管理員能看。新增排程的工作時，把結果也記在這裡。
-- 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲後要在 `resources/js/player.ts` 與 `packages/player/standalone/main.ts` 登記，並執行 `npm run games:manifest`。
+- 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲要接的地方見下方「新增一個遊戲」。
 - 遊戲自己的得分（`completed` 的 `gameScore`，存成 `attempts.game_score`）不是成績，只有 meta 給了名稱（`scoreLabel`，例如打地鼠「星星」）的遊戲才顯示：學生的結果頁在 `packages/player` 的 `showResults()`，老師的成績頁與 CSV 經由 `GameRegistry::scoreLabel()`（`Results.vue` 的 `activity.score_label`、`ActivityResults` 的 `best_game_score`）。選擇題、配對、迷宮的得分就是答對題數，不設定（SPEC 7.4）。
 - 遊戲分成計分的「遊戲」與不計分的「互動教材」（字卡、圖卡牆、轉盤），由 `requires.scored` 決定；老師端與獨立播放器用 `@kancil-quiz/deck` 的 `groupGames()` 分組（SPEC 7.5）。
 - 會翻面的卡片不要只靠 `backface-visibility`：Playwright 的 WebKit（Linux）不支援，背面會鏡像蓋在正面上。三個卡片類的遊戲都在翻到一半時用 `visibility` 藏起背面，E2E 以 `toBeHidden()` 檢查；翻面的那一層也不要加 `container-type` 或 `overflow`，縮放用的 container 放在裡面一層。
-- 畫面大小（SPEC S-02、7.1）：遊戲的版面以自己的根元素為 container（`container-type: size`），用 `@container` 區分手機（寬小於 600px 或高小於 480px）、平板與投影，不用視窗的 media query。`@container` 裡的規則只套用在 container 的後代，改不到根元素本身：會隨尺寸改變的內距、間距要放在裡面一層（配對、選擇題、字卡的 `.kq-match__layout`、`.kq-quiz__layout`、`.kq-cards__layout`）。宿主的 `.kq-player__stage` 固定為畫面的高度（`100dvh` 扣掉 safe area），不隨遊戲的內容撐高，放不下的由遊戲自己捲動；一頁的內容要盡量在畫面內，配對放不下時（高度或寬度超出，手機橫放時題目排成一排）由 `fitPairsPerPage()` 減少每頁的組數（最少 3），遊戲區的大小改變時（ResizeObserver）以 `MatchSession.refit()` 重新分頁、進度保留。手機的 E2E 只用不必登入的教材試玩頁（`tests/e2e/phone.spec.ts`，`*-phone`、`*-phone-landscape` 兩個 project），手指拖曳用 `helpers.ts` 的 `touchDragTo()`（Chromium 以 CDP 送真正的觸控事件）。
+- 畫面大小（SPEC S-02、7.1）：遊戲的版面以自己的根元素為 container（`container-type: size`），用 `@container` 區分手機（寬小於 600px 或高小於 480px）、平板與投影，不用視窗的 media query。`@container` 裡的規則只套用在 container 的後代，改不到根元素本身：會隨尺寸改變的內距、間距要放在裡面一層（配對、選擇題、字卡、打地鼠的 `.kq-match__layout`、`.kq-quiz__layout`、`.kq-cards__layout`、`.kq-whack__layout`）。宿主的 `.kq-player__stage` 固定為畫面的高度（`100dvh` 扣掉 safe area），不隨遊戲的內容撐高，放不下的由遊戲自己捲動；一頁的內容要盡量在畫面內，配對放不下時（高度或寬度超出，手機橫放時題目排成一排）由 `fitPairsPerPage()` 減少每頁的組數（最少 3），遊戲區的大小改變時（ResizeObserver）以 `MatchSession.refit()` 重新分頁、進度保留。手機的 E2E 只用不必登入的教材試玩頁（`tests/e2e/phone.spec.ts`，`*-phone`、`*-phone-landscape` 兩個 project），手指拖曳用 `helpers.ts` 的 `touchDragTo()`（Chromium 以 CDP 送真正的觸控事件）。
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
 - `answered` 事件的 `presented`：`mcq` 由宿主補上；配對的右側卡片分頁出現，由遊戲提供同一頁的卡片（SPEC 7.2）。伺服器限制每筆最多 12 個。
 - 迷宮問答 `packages/games/maze-quiz` 是 git submodule，正本是獨立的 `maze-quiz` repo（MIT，SPEC 10.2），本機放在本 repo 旁邊的 `../maze-quiz`：
@@ -57,13 +57,40 @@
   - 它單獨執行時用 `vendor/` 中 `games-sdk` 與 `text` 的副本。改了這兩個套件，要把新版複製到 `../maze-quiz/vendor/` 並 commit，再更新指標；`packages/games/maze-quiz.test.ts` 會檢查副本與正本相同。
   - 迷宮與 `judge()` 的一致測試（SPEC 7.6）也在 `packages/games/maze-quiz.test.ts`，因為要用到 `deck` 與 fixture。它直接 import 迷宮的內部模組（`src/session.ts` 等），迷宮重構時要一起改。
   - 這裡的 `vp check`、`vue-tsc` 與 Vitest 也會涵蓋 submodule 的檔案，所以迷宮的格式設定與這裡相同。
-- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本在 GitHub 的 `foolfitz/kancil-games`、`foolfitz/kancil-materials`（AGPL-3.0-or-later，SPEC 10.2），submodule 的 `origin` 直接指向 GitHub（`.gitmodules` 的相對網址，`git submodule sync` 會照這個 repo 的 `origin` 換算）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
+- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`、`whack-a-mole`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本在 GitHub 的 `foolfitz/kancil-games`、`foolfitz/kancil-materials`（AGPL-3.0-or-later，SPEC 10.2），submodule 的 `origin` 直接指向 GitHub（`.gitmodules` 的相對網址，`git submodule sync` 會照這個 repo 的 `origin` 換算）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
   - 動手前先 `git -C packages/games/kancil-games switch main`（`submodule update` 之後是 detached HEAD，commit 會掛在沒有分支的地方）。
   - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），再回到這裡 commit 新的 submodule 指標。推送是 `git -C packages/games/kancil-games push`，直接推上 GitHub。本機旁邊的 `../kancil-games`、`../kancil-materials` 是拆出時的舊工作目錄，已經不用。
   - 一個 commit 同時改到遊戲與平台時（例如改了 `games-sdk` 與用到它的遊戲），先 commit submodule，再在這裡把平台的修改與新的指標放在同一個 commit。
-  - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。
+  - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。其他要接的地方見下方「新增一個遊戲」。
 - 推上 GitHub 時，先推三個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。三個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
 - Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）；產生的程式在 `App\Support\Ulid::make()`，不是主鍵的公開識別碼（`users.public_id`）也用它。
+
+## 新增一個遊戲
+
+一個新遊戲要接到下面這些地方（2026-10-06 加入打地鼠時整理）。漏掉的話，通常是 E2E 或 PHP 測試先發現。
+
+1. **遊戲本身**，在 submodule 中：計分的放 `packages/games/kancil-games/<目錄>/`，不計分的放 `packages/games/kancil-materials/<目錄>/`，照現有的遊戲放這幾個檔：
+   - `package.json`：名稱 `@kancil-quiz/game-<id>`、`AGPL-3.0-or-later`、`repository.directory`，依賴 `@kancil-quiz/games-sdk`。
+   - `src/meta.ts`：`id`、`title`、`requires`（形狀、`minRounds`、`optionCount`、`renders`、`scored`）、`optionsSchema`（老師端的設定表單由它產生，列舉值用 `oneOf` + `const` + `title`）、`defaultOptions`。遊戲得分不等於答對題數時加上 `scoreLabel`，結果頁與成績頁才會顯示。`mount()` 裡要再檢查一次設定值（例如打地鼠的 `normalizeOptions()`），舊的或不合法的值退回預設。
+   - `src/session.ts`：不碰 DOM 的進行狀態。用到時間的，時間由呼叫的人傳入，測試才能控制。
+   - `src/index.ts`：`mount()`，default export 是 `{ ...meta, mount }`。`destroy()` 要清掉所有計時器與事件監聽；`pause()`、`resume()` 給宿主在分頁被藏起來時用。
+   - `src/style.css`：樣式都限定在自己的根元素之下。根元素是 container，內距放在 `__layout` 那一層（見上方「畫面大小」）。
+   - `tests/session.test.ts`：計分的遊戲要有與 `judge()` 的一致測試。
+   - 那個 repo 的 `README.md` 的遊戲表。
+2. **平台**：
+   - `npm install`，讓 workspace 連到新的套件（`package-lock.json` 會變）。
+   - 登記：`resources/js/player.ts` 的 `games`、`packages/player/standalone/main.ts` 的 `GAMES`。
+   - `npm run games:manifest`。伺服器的 `GameRegistry`、老師端選遊戲、教材試玩列出的遊戲都讀 manifest，不必另外登記。
+   - 寫死遊戲數的測試跟著改：`tests/Feature/CurriculumTest.php`、`tests/Feature/TeacherFlowTest.php` 的 `has('games', N)`，`tests/e2e/standalone.spec.ts` 的 `.kq-standalone__game:enabled`。
+   - 需要改 `games-sdk`（例如新的欄位）時，迷宮的 `vendor/` 副本也要更新（見上方迷宮的說明）。
+3. **E2E**：
+   - `tests/e2e/<id>.spec.ts`：iPad 直向、橫向與投影。計分的遊戲由老師建立活動、學生玩完看結果、老師看成績頁；越南文的字不被截切（`expectNothingClipped()`）。
+   - `tests/e2e/phone.spec.ts`：手機直向與橫放用教材試玩頁，內容都在畫面內、沒有水平捲軸。
+   - 有倒數的遊戲先 `page.clock.install()`，再用 `page.clock.fastForward()` 快轉，不要真的等。
+   - 共用的操作放 `tests/e2e/helpers.ts`。不要從另一個 spec 匯入，那個 spec 的測試會一起被載入。
+   - 用 Chromium 與 WebKit（`E2E_WEBKIT=1`）各跑一次，看過每個尺寸的截圖。
+4. **文件**：SPEC 7.5 的遊戲表（v2 候選中拿掉）、7.6、開頭的版本與修訂紀錄；`README.md` 與這份 `CLAUDE.md` 列出遊戲的地方（上方的套件表與 submodule 的說明）。
+5. **commit**：先在 submodule 中 commit，再回到這裡，把平台的修改與新的 submodule 指標放在同一個 commit（見上方 submodule 的說明）。
 
 ## 必守規則
 
