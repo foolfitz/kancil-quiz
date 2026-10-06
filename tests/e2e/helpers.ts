@@ -162,3 +162,24 @@ export async function matchPage(page: Page): Promise<void> {
         await expect(row).toHaveClass(/is-matched/);
     }
 }
+
+// 打地鼠：等這一題的題目出現（打對之後停一下才換題），回傳詞條 ID。詞彙組的正解選項 ID 就是詞條 ID
+export async function whackPrompt(
+    page: Page,
+    previous: string | null,
+): Promise<string> {
+    const prompt = page.locator('.kq-whack__prompt');
+    if (previous) {
+        await expect(prompt).not.toHaveAttribute('data-entry-id', previous);
+    }
+    return (await prompt.getAttribute('data-entry-id')) ?? '';
+}
+
+// 打地鼠：等舉著正解的地鼠冒出來再打。正解最慢隔一批就會出現，一批最多停幾秒
+export async function whackAnswer(page: Page, entryId: string): Promise<void> {
+    const mole = page.locator(
+        `.kq-whack__hole.is-up[data-option-id="${entryId}"]`,
+    );
+    await expect(mole).toBeVisible({ timeout: 15_000 });
+    await mole.click();
+}

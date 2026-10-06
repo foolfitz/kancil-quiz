@@ -5,6 +5,7 @@ import matchUp from '@kancil-quiz/game-match-up';
 import mazeQuiz from '@kancil-quiz/game-maze-quiz';
 import quiz from '@kancil-quiz/game-quiz';
 import spinWheel from '@kancil-quiz/game-spin-wheel';
+import whackAMole from '@kancil-quiz/game-whack-a-mole';
 import type { GameModule } from '@kancil-quiz/games-sdk';
 import type { KancilActivity } from '@kancil-quiz/schema';
 import { ZipError, openSetZip, startPlayer } from '../src';
@@ -22,6 +23,7 @@ const GAMES: AnyGame[] = [
     quiz,
     mazeQuiz,
     matchUp,
+    whackAMole,
     flashCards,
     cardWall,
     spinWheel,

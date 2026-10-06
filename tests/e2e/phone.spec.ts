@@ -7,6 +7,8 @@ import {
     expectNoHorizontalOverflow,
     expectNothingClipped,
     touchDragTo,
+    whackAnswer,
+    whackPrompt,
 } from './helpers';
 
 // 手機（docs/SPEC.md S-02、7.6）：直向與橫放的手機都能玩完每個遊戲，一頁的內容都在畫面內、不必捲動，
@@ -268,6 +270,68 @@ test('選擇題：每一題的選項都在畫面內，玩完看到結果', async
     await expectBackLinkClearOfTitle(page);
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: testInfo.outputPath('results-phone.png') });
+
+    expect(errors).toEqual([]);
+});
+
+test('打地鼠：題目與九個洞都在畫面內，時間到看到結果', async ({
+    page,
+}, testInfo) => {
+    const errors = collectErrors(page);
+    await page.clock.install();
+    await start(page, '/curriculum/id/1/3/play/whack-a-mole');
+
+    // 直向的題目在上、草地在下；橫放的題目在左邊一欄、草地在右邊（7.5）
+    const prompt = page.locator('.kq-whack__prompt');
+    const field = page.locator('.kq-whack__field');
+    await expectInViewport(page, prompt);
+    await expectInViewport(page, field);
+    await expectInViewport(page, page.locator('.kq-whack__timer'));
+    const promptBox = await prompt.boundingBox();
+    const fieldBox = await field.boundingBox();
+    if (isLandscape(page)) {
+        expect(
+            (promptBox?.x ?? 0) + (promptBox?.width ?? 0),
+        ).toBeLessThanOrEqual(fieldBox?.x ?? 0);
+    } else {
+        expect(
+            (promptBox?.y ?? 0) + (promptBox?.height ?? 0),
+        ).toBeLessThanOrEqual(fieldBox?.y ?? 0);
+    }
+    expect(fieldBox?.height).toBeGreaterThan(200);
+    for (const hole of await page.locator('.kq-whack__hole').all()) {
+        await expectInViewport(page, hole);
+    }
+    await expectGameFits(page);
+    await expectNoHorizontalOverflow(page);
+
+    // 打對三題；地鼠舉著的字不被截切
+    let entryId: string | null = null;
+    for (let i = 0; i < 3; i++) {
+        entryId = await whackPrompt(page, entryId);
+        if (i === 0) {
+            await expect(
+                page.locator(
+                    `.kq-whack__hole.is-up[data-option-id="${entryId}"]`,
+                ),
+            ).toBeVisible({ timeout: 15_000 });
+            await expectNothingClipped(page, '.kq-whack__sign');
+            await page.screenshot({
+                path: testInfo.outputPath('whack-phone.png'),
+            });
+        }
+        await whackAnswer(page, entryId);
+    }
+    await expect(page.locator('.kq-whack__stars')).toHaveText('★ 6');
+
+    // 時間到：第一輪沒輪到的三題算沒有作答
+    await page.clock.fastForward('01:00');
+    await expect(
+        page.getByRole('heading', { name: '答對 3 / 6 題' }),
+    ).toBeVisible();
+    await expect(page.getByText('沒有作答')).toHaveCount(3);
+    await expectBackLinkClearOfTitle(page);
+    await expectNoHorizontalOverflow(page);
 
     expect(errors).toEqual([]);
 });

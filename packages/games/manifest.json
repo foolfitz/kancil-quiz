@@ -410,6 +410,77 @@
                 "removeAfterSpin": true,
                 "autoPlayAudio": true
             }
+        },
+        {
+            "id": "whack-a-mole",
+            "version": "0.1.0",
+            "title": {
+                "zh-TW": "打地鼠"
+            },
+            "requires": {
+                "shape": "mcq",
+                "minRounds": 1,
+                "optionCount": {
+                    "min": 2,
+                    "max": 6
+                },
+                "renders": {
+                    "prompt": [
+                        "text",
+                        "image",
+                        "audio"
+                    ],
+                    "option": [
+                        "text",
+                        "image"
+                    ]
+                },
+                "scored": true
+            },
+            "optionsSchema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "title": "打地鼠的設定",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "seconds",
+                    "speed"
+                ],
+                "properties": {
+                    "seconds": {
+                        "title": "遊戲時間（秒）",
+                        "description": "時間到就結束。題目打完會重新洗牌再輪一次，打得又快又準，星星就越多；第一輪沒輪到的題目算答錯。",
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 180,
+                        "default": 60
+                    },
+                    "speed": {
+                        "title": "地鼠的速度",
+                        "description": "地鼠冒出來後停留多久。每多輪一次，地鼠會再快一點。",
+                        "type": "string",
+                        "oneOf": [
+                            {
+                                "const": "slow",
+                                "title": "慢"
+                            },
+                            {
+                                "const": "normal",
+                                "title": "中"
+                            },
+                            {
+                                "const": "fast",
+                                "title": "快"
+                            }
+                        ],
+                        "default": "slow"
+                    }
+                }
+            },
+            "defaultOptions": {
+                "seconds": 60,
+                "speed": "slow"
+            }
         }
     ]
 }

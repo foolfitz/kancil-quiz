@@ -417,7 +417,7 @@ class TeacherFlowTest extends TestCase
 
         $this->get("/sets/{$set->id}/activities/create")->assertInertia(fn (Assert $page) => $page
             ->component('activities/Create')
-            ->has('games', 6)
+            ->has('games', 7)
             ->where('content.entries.0.item.text', 'quả chuối'));
 
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'quiz', 'options' => ['autoAdvance' => false]])->assertRedirect();
