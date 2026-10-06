@@ -9,6 +9,9 @@ import {
     touchDragTo,
     whackAnswer,
     whackPrompt,
+    archerPrompt,
+    archerToLandscape,
+    shootBalloon,
 } from './helpers';
 
 // 手機（docs/SPEC.md S-02、7.6）：直向與橫放的手機都能玩完每個遊戲，一頁的內容都在畫面內、不必捲動，
@@ -332,6 +335,54 @@ test('打地鼠：題目與九個洞都在畫面內，時間到看到結果', as
     await expect(page.locator('.kq-player__score')).toHaveText('星星 6');
     await expect(page.getByText('沒有作答')).toHaveCount(3);
     await expectBackLinkClearOfTitle(page);
+    await expectNoHorizontalOverflow(page);
+
+    expect(errors).toEqual([]);
+});
+
+test('射氣球：直向時請學生轉成橫的，橫放時天空與弓箭手都在畫面內', async ({
+    page,
+}, testInfo) => {
+    test.setTimeout(90_000);
+    const errors = collectErrors(page);
+    await page.clock.install();
+    await start(page, '/curriculum/id/1/3/play/balloon-archer');
+    await archerToLandscape(page);
+
+    // 橫放：題目在左邊一欄，天空、柱子與弓箭手在右邊
+    const prompt = page.locator('.kq-archer__prompt');
+    const field = page.locator('.kq-archer__field');
+    await expectInViewport(page, prompt);
+    await expectInViewport(page, field);
+    await expectInViewport(page, page.locator('.kq-archer__player'));
+    const promptBox = await prompt.boundingBox();
+    const fieldBox = await field.boundingBox();
+    expect((promptBox?.x ?? 0) + (promptBox?.width ?? 0)).toBeLessThanOrEqual(
+        fieldBox?.x ?? 0,
+    );
+    await expectGameFits(page);
+    await expectNoHorizontalOverflow(page);
+    await expect(
+        page.locator('.kq-archer__balloon.is-flying').first(),
+    ).toBeAttached();
+    await page.clock.runFor(2500);
+    await page.screenshot({ path: testInfo.outputPath('archer-phone.png') });
+
+    // 手指拉弓射中三題
+    let entryId: string | null = null;
+    for (let i = 0; i < 3; i++) {
+        entryId = await archerPrompt(page, entryId);
+        await shootBalloon(page, entryId, { touch: true });
+    }
+    await expect(page.locator('.kq-archer__stars')).toHaveText('★ 6');
+
+    // 時間到：第一輪沒輪到的三題算沒有作答
+    await page.clock.fastForward('01:00');
+    await expect(
+        page.getByRole('heading', { name: '答對 3 / 6 題' }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.kq-player__score')).toHaveText('星星 6');
+    await expect(page.getByText('沒有作答')).toHaveCount(3);
     await expectNoHorizontalOverflow(page);
 
     expect(errors).toEqual([]);

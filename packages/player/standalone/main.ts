@@ -1,4 +1,5 @@
 import { check, groupGames } from '@kancil-quiz/deck';
+import balloonArcher from '@kancil-quiz/game-balloon-archer';
 import cardWall from '@kancil-quiz/game-card-wall';
 import flashCards from '@kancil-quiz/game-flash-cards';
 import matchUp from '@kancil-quiz/game-match-up';
@@ -24,6 +25,7 @@ const GAMES: AnyGame[] = [
     mazeQuiz,
     matchUp,
     whackAMole,
+    balloonArcher,
     flashCards,
     cardWall,
     spinWheel,

@@ -58,6 +58,10 @@ if (root?.dataset.activity) {
                 import('@kancil-quiz/game-spin-wheel').then((m) => m.default),
             'whack-a-mole': () =>
                 import('@kancil-quiz/game-whack-a-mole').then((m) => m.default),
+            'balloon-archer': () =>
+                import('@kancil-quiz/game-balloon-archer').then(
+                    (m) => m.default,
+                ),
         },
     });
 }

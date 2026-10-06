@@ -447,7 +447,7 @@ class CurriculumTest extends TestCase
             ->component('curriculum/Lesson')
             ->has('words', 3)
             ->where('content.entries.0.item.text', 'ayah')
-            ->has('games', 7)
+            ->has('games', 8)
             ->where('set.can', ['activity' => false, 'copy' => false, 'edit' => false, 'export' => false])
             ->where('activities', [])
             ->where('mySets', [])

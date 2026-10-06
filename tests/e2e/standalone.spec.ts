@@ -33,7 +33,7 @@ test('老師匯出私人題組，在獨立播放器中玩配對與字卡', async
     await expect(
         page.getByRole('heading', { name: '水果（越南語）' }),
     ).toBeVisible();
-    await expect(page.locator('.kq-standalone__game:enabled')).toHaveCount(7);
+    await expect(page.locator('.kq-standalone__game:enabled')).toHaveCount(8);
     // 分成遊戲與互動教材（docs/SPEC.md 7.5）
     await expect(
         page.locator('.kq-standalone__subtitle', { hasText: '互動教材' }),
