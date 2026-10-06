@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 use Throwable;
 
 /**
- * 清除過了保存期限的作答紀錄、老師刪除的資料、舊的題組版本與沒有引用的媒體（docs/SPEC.md 第 5、9 節）。
+ * 清除過了保存期限的作答紀錄、貢獻紀錄、老師刪除的資料、舊的題組版本與沒有引用的媒體（docs/SPEC.md 第 5、9 節）。
  * 排程每天執行（routes/console.php）；規則見 App\Support\Pruner。真正執行（不是 dry run）的結果記在
  * App\Support\SystemStatus，後台的「系統狀態」頁會顯示。
  *

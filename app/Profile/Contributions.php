@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
  *   修訂紀錄本來就看得到。審核者修正別人的公開題組（C-03）也算審核者的貢獻。
  *   題組版本 30 天後可能被清除（第 5 節），所以每天的次數另外累計在 contributions（一位老師、
  *   一個題組、一天一列）；題組被刪除、下架或擁有者被停用時，它的貢獻就不再顯示。
+ *   日曆用不到的舊紀錄（超過 13 個月）由 kancil:prune 清除（App\Support\Pruner）。
  * - 公開：自己的題組通過審核的那一天（set_reviews 的 approved），同樣只算目前公開的題組。
  *
  * @phpstan-type Day array{revisions: int, published: int}

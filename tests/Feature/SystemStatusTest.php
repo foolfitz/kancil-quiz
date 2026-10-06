@@ -173,18 +173,33 @@ class SystemStatusTest extends TestCase
         $record = json_decode((string) Storage::disk('local')->get(SystemStatus::PRUNE_FILE), true);
         $this->assertSame('2026-10-06T02:00:00Z', $record['at']);
         $this->assertTrue($record['ok']);
-        $this->assertSame(['attempts', 'activities', 'sets', 'items', 'set_revisions', 'media', 'files'], array_keys($record['deleted']));
+        $this->assertSame(['attempts', 'contributions', 'activities', 'sets', 'items', 'set_revisions', 'media', 'files'], array_keys($record['deleted']));
 
         $check = $this->systemStatus()->prune();
         $this->assertSame(Health::Ok, $check->health);
         $this->assertSame('最近一次資料的清除成功：2026-10-06 10:00（剛剛）', $check->summary);
-        $this->assertSame('作答紀錄 0、活動 0、題組 0、詞條 0、題組版本 0、媒體 0、媒體檔案 0', $check->details['刪除的筆數']);
+        $this->assertSame('作答紀錄 0、貢獻紀錄 0、活動 0、題組 0、詞條 0、題組版本 0、媒體 0、媒體檔案 0', $check->details['刪除的筆數']);
 
         $this->travelTo($this->now->addHours(27));
         $check = $this->systemStatus()->prune();
         $this->assertSame(Health::Warning, $check->health);
         $this->assertSame('已經 27 小時沒有資料的清除了，最近一次成功是 2026-10-06 10:00（27 小時前）', $check->summary);
         $this->assertStringContainsString('prune.log', (string) $check->advice);
+    }
+
+    public function test_a_prune_record_from_before_a_table_was_added_still_shows(): void
+    {
+        // 新增回報的資料表之後，上一次執行留下的紀錄沒有那一項，當作 0
+        $this->record(SystemStatus::PRUNE_FILE, [
+            'at' => $this->now->subHours(6)->format('Y-m-d\TH:i:s\Z'), 'ok' => true,
+            'deleted' => ['attempts' => 3, 'activities' => 0, 'sets' => 0, 'items' => 0, 'set_revisions' => 1, 'media' => 2, 'files' => 4],
+        ]);
+
+        $check = $this->systemStatus()->prune();
+
+        $this->assertSame(Health::Ok, $check->health);
+        $this->assertSame('作答紀錄 3、貢獻紀錄 0、活動 0、題組 0、詞條 0、題組版本 1、媒體 2、媒體檔案 4', $check->details['刪除的筆數']);
+        $this->actingAs($this->userWithRole('admin'))->get('/admin/system-status')->assertOk()->assertSee('貢獻紀錄 0');
     }
 
     public function test_a_failed_prune_is_recorded(): void

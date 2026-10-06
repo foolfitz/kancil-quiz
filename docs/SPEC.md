@@ -277,7 +277,7 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 | 資料表 | 主要欄位 | 說明 |
 |---|---|---|
 | `users` | `id`、`public_id`（ULID）、`name`、`email`、`password`（可以是空的）、`google_id`、`disabled_at`、`anonymized_at`、`upload_quota_mb`、`locale`、`attribution_name`、`attribution_url`、`default_license`、`school`、`teaching_languages`（json）、`bio` | 用 Google 登入的老師沒有密碼（T-03）。`public_id` 是創作者頁面網址用的公開識別碼（T-20），遞增的 `id` 不出現在網址中。`disabled_at` 是管理員停用的時間（A-05），`anonymized_at` 是刪除帳號的時間（T-19）。`upload_quota_mb` 是管理員為個別老師調整的上傳上限，空的就用預設值（第 9 節）。最後六個是創作者資料（T-20）：`attribution_name` 空的就用 `name`，`default_license` 空的就用 CC BY 4.0 |
-| `contributions` | `id`、`user_id`、`set_id`、`date`、`revisions` | 貢獻日曆（T-20）：一位老師、一個題組、一天（台灣時間）一列，記那一天為這個題組產生了幾個版本；題組版本本身會被清除，所以另外累計。只有次數，隨題組真正刪除時一起刪除 |
+| `contributions` | `id`、`user_id`、`set_id`、`date`、`revisions` | 貢獻日曆（T-20）：一位老師、一個題組、一天（台灣時間）一列，記那一天為這個題組產生了幾個版本；題組版本本身會被清除，所以另外累計。只有次數，隨題組真正刪除時一起刪除；日曆用不到的舊紀錄（超過 13 個月）由 `kancil:prune` 清除 |
 | `reports` | `id`、`activity_id`、`reason`、`created_at`、`resolved_at`、`resolved_by` | 播放頁的檢舉（S-07）。不存 IP 或檢舉人的資料；活動真正刪除時一起刪除 |
 | `languages` | `code`（PK）、`name_zh`、`name_native`、`script`、`word_spacing`（bool）、`enabled`（bool） | 預建 7 種語言，第一階段只開放 `id`、`vi`；見附錄 A |
 | `curriculum_refs` | `id`、`language_code`、`volume`、`lesson`、`title_zh`、`title_native`、`set_id`、`imported_revision` | 教材冊課對照。`title_native` 是目標語的課名，`set_id` 是這一課的教材題組，`imported_revision` 是最近一次匯入詞彙後教材題組的版本號（3.6） |
@@ -316,6 +316,7 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 - 保存期限由每天的排程 `kancil:prune` 執行（台灣時間凌晨 4 點，在備份之後），期限在 `config/kancil.php` 的 `retention`；`--dry-run` 只列出會刪除的筆數。每次真正執行的結果（時間、各項刪除的筆數，或失敗的原因）記在 volume 的 `storage/app/private/status/prune.json`，後台的系統狀態頁顯示最近一次（A-02）：
   - 媒體在沒有任何詞條、問答題或題組版本引用時清除。剛上傳的媒體老師可能還沒儲存，上傳 7 天後才清除；媒體目錄中沒有對應資料的檔案也一樣。
   - 作答紀錄預設保存 12 個月，從開始作答起算（`KANCIL_ATTEMPT_RETENTION_MONTHS`）。
+  - 貢獻日曆每天的版本數（`contributions`）保存 13 個月（以台灣時間的日期算）：日曆顯示最近 52 週加上這一週，比 12 個月多幾天，多留一個月最早的那一欄才不會先被清掉。
   - 題組版本不是最新版本、沒有作答或審核紀錄（`set_reviews`）引用，而且被新版本取代超過 30 天時清除。教材題組的版本不清除：判斷審核者修正過要看匯入之後的版本（3.6）。
   - 老師刪除的題組、活動，以及從題組移除的詞條，先以 soft delete 保留 30 天（網站上沒有復原的功能，留給管理員處理誤刪），之後真正刪除，連同活動的作答紀錄、題組的內容、版本與只有它用到的詞條。複製出去的題組不受影響。
 

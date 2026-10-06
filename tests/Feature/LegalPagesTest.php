@@ -24,7 +24,8 @@ class LegalPagesTest extends TestCase
                 ->where('operator', 'Kancil Quiz 志工團隊')
                 ->where('contactEmail', 'hello@example.org')
                 ->where('retention.attempt_months', 12)
-                ->where('retention.trashed_days', 30));
+                ->where('retention.trashed_days', 30)
+                ->where('retention.contribution_months', 13));
 
         $this->get('/terms')->assertOk()
             ->assertInertia(fn (Assert $page) => $page

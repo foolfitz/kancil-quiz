@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Corpus\MediaUrls;
 use App\Models\Activity;
 use App\Models\Attempt;
+use App\Models\Contribution;
 use App\Models\CurriculumRef;
 use App\Models\Item;
 use App\Models\Media;
@@ -12,6 +13,7 @@ use App\Models\Set;
 use App\Models\SetEntry;
 use App\Models\SetReview;
 use App\Models\SetRevision;
+use App\Profile\Contributions;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
@@ -24,11 +26,13 @@ use Throwable;
  * 期限在 config/kancil.php 的 retention。依序清除，前面刪掉的資料不再引用後面的，所以一次就能清乾淨：
  *
  * 1. 作答紀錄：開始作答超過保存期限（預設 12 個月）。
- * 2. 老師刪除的活動、題組與詞條：刪除超過 30 天，連同活動的作答紀錄、題組的內容與版本。
- * 3. 題組版本：不是最新版本、沒有作答或審核紀錄引用，而且被新版本取代超過 30 天。
+ * 2. 貢獻紀錄（創作者頁面的貢獻日曆每天的版本數，App\Profile\Contributions）：日期（台灣時間）超過 13 個月。
+ *    日曆只顯示最近 52 週加上這一週，更早的用不到。
+ * 3. 老師刪除的活動、題組與詞條：刪除超過 30 天，連同活動的作答紀錄、題組的內容、版本與貢獻紀錄。
+ * 4. 題組版本：不是最新版本、沒有作答或審核紀錄引用，而且被新版本取代超過 30 天。
  *    教材題組的版本不清除：「審核者修正過」要看匯入之後的版本（CurriculumImporter::editedOnSite()）。
- * 4. 媒體：沒有詞條、問答題或題組版本引用，而且上傳超過 7 天（老師可能還沒按儲存）。
- * 5. 媒體目錄中沒有對應資料的檔案（例如寫入資料庫失敗時留下的），同樣超過 7 天才刪。
+ * 5. 媒體：沒有詞條、問答題或題組版本引用，而且上傳超過 7 天（老師可能還沒按儲存）。
+ * 6. 媒體目錄中沒有對應資料的檔案（例如寫入資料庫失敗時留下的），同樣超過 7 天才刪。
  *
  * 資料庫在同一個交易中刪除，提交後才刪檔案。dry run 在交易中刪除、算出筆數後還原，不刪檔案。
  */
@@ -39,6 +43,7 @@ class Pruner
      */
     public const TABLES = [
         'attempts' => '作答紀錄',
+        'contributions' => '貢獻紀錄',
         'activities' => '活動',
         'sets' => '題組',
         'items' => '詞條',
@@ -57,6 +62,7 @@ class Pruner
         DB::beginTransaction();
         try {
             $this->pruneAttempts($now);
+            $this->pruneContributions($now);
             $this->pruneTrashed($now);
             $this->pruneRevisions($now);
             $files = $this->pruneMedia($now);
@@ -109,7 +115,18 @@ class Pruner
     }
 
     /**
+     * 貢獻日曆用的每天版本數。date 是台灣時間的日期（Contributions::date()），期限也以台灣時間的日期比較。
+     */
+    private function pruneContributions(CarbonImmutable $now): void
+    {
+        $cutoff = Contributions::date($now->subMonthsNoOverflow((int) config('kancil.retention.contribution_months')));
+
+        Contribution::where('date', '<', $cutoff)->delete();
+    }
+
+    /**
      * 老師刪除的活動、題組與詞條。網站上沒有復原的功能，保留一段時間是給管理員處理誤刪。
+     * 題組的貢獻紀錄隨題組刪除（外鍵 cascade）。
      */
     private function pruneTrashed(CarbonImmutable $now): void
     {

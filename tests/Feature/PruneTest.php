@@ -6,6 +6,7 @@ use App\Corpus\SetWriter;
 use App\Models\Activity;
 use App\Models\Attempt;
 use App\Models\AttemptResponse;
+use App\Models\Contribution;
 use App\Models\CurriculumRef;
 use App\Models\Item;
 use App\Models\Media;
@@ -14,6 +15,7 @@ use App\Models\SetEntry;
 use App\Models\SetReview;
 use App\Models\SetRevision;
 use App\Models\User;
+use App\Profile\Contributions;
 use App\Support\Pruner;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Event;
@@ -25,7 +27,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /**
- * 資料的保存期限（docs/SPEC.md 第 5、9 節）：作答紀錄、老師刪除的資料、舊的題組版本與沒有引用的媒體，
+ * 資料的保存期限（docs/SPEC.md 第 5、9 節）：作答紀錄、貢獻紀錄、老師刪除的資料、舊的題組版本與沒有引用的媒體，
  * 由排程每天執行的 kancil:prune 清除（App\Support\Pruner）。
  */
 class PruneTest extends TestCase
@@ -158,6 +160,37 @@ class PruneTest extends TestCase
         $this->assertModelMissing($attempt);
     }
 
+    public function test_contributions_are_kept_for_thirteen_months_by_taiwan_date(): void
+    {
+        // 現在是 2026-10-05 12:00 UTC，台灣時間同一天 20:00；13 個月前是 2025-09-05
+        $set = $this->vocabSet();
+        $set->update(['visibility' => 'public', 'review_status' => 'approved']);
+        $row = fn (string $date) => Contribution::create(['user_id' => $this->teacher->id, 'set_id' => $set->id, 'date' => $date, 'revisions' => 1]);
+        $old = $row('2025-09-04');
+        $boundary = $row('2025-09-05');
+        // 日曆最早的那一天（52 週前那一週的星期日）一定還在
+        $oldestShown = $row(Contributions::calendar($this->teacher)['from']);
+        $today = Contribution::where('set_id', $set->id)->where('date', '2026-10-05')->firstOrFail();
+
+        $result = $this->prune();
+
+        $this->assertSame(1, $result['contributions']);
+        $this->assertModelMissing($old);
+        foreach ([$boundary, $oldestShown, $today] as $kept) {
+            $this->assertModelExists($kept);
+        }
+        $this->assertSame('2025-10-05', $oldestShown->date);
+        $this->assertArrayHasKey($oldestShown->date, Contributions::calendar($this->teacher)['days']);
+
+        // 期限以台灣時間的日期算：UTC 17:00 在台灣已經是 10 月 6 日，9 月 5 日就超過 13 個月了
+        $this->travelTo($this->now->setTime(17, 0));
+        $result = app(Pruner::class)->run();
+
+        $this->assertSame(1, $result['contributions']);
+        $this->assertModelMissing($boundary);
+        $this->assertModelExists($oldestShown);
+    }
+
     public function test_old_revisions_are_pruned_unless_attempts_or_reviews_refer_to_them(): void
     {
         $set = Set::factory()->for($this->teacher, 'owner')->create();
@@ -256,7 +289,9 @@ class PruneTest extends TestCase
         $this->assertSame(0, Item::withTrashed()->whereIn('id', $items)->count());
         $this->assertNull(Activity::withTrashed()->find($activity->id));
         $this->assertModelMissing($attempt);
-        $expected = ['attempts' => 1, 'activities' => 1, 'sets' => 1, 'items' => 3, 'set_revisions' => 2, 'media' => 0];
+        // 貢獻紀錄隨題組刪除（兩次儲存在同一天，是同一列）
+        $this->assertSame(0, Contribution::where('set_id', $old->id)->count());
+        $expected = ['attempts' => 1, 'contributions' => 1, 'activities' => 1, 'sets' => 1, 'items' => 3, 'set_revisions' => 2, 'media' => 0];
         $this->assertSame($expected, array_intersect_key($result, $expected));
 
         // 複製出去的題組不受影響，插圖仍在用
@@ -348,26 +383,30 @@ class PruneTest extends TestCase
 
     public function test_a_dry_run_reports_without_deleting(): void
     {
-        $activity = $this->activity($this->vocabSet());
+        $set = $this->vocabSet();
+        $activity = $this->activity($set);
         $this->at('13 months');
         $attempt = $this->attempt($activity);
         $unused = $this->media();
+        $contribution = Contribution::create(['user_id' => $this->teacher->id, 'set_id' => $set->id, 'date' => '2025-01-01', 'revisions' => 1]);
 
         $this->travelTo($this->now);
         $this->artisan('kancil:prune --dry-run')
             ->expectsOutputToContain('dry run')
             ->expectsTable(['資料', '會刪除'], [
-                ['作答紀錄', 1], ['活動', 0], ['題組', 0], ['詞條', 0], ['題組版本', 0], ['媒體', 1], ['媒體檔案', 2],
+                ['作答紀錄', 1], ['貢獻紀錄', 1], ['活動', 0], ['題組', 0], ['詞條', 0], ['題組版本', 0], ['媒體', 1], ['媒體檔案', 2],
             ])
             ->assertSuccessful();
 
         $this->assertModelExists($attempt);
+        $this->assertModelExists($contribution);
         $this->assertModelExists($unused);
         Storage::disk('public')->assertExists([$unused->path, (string) $unused->thumbnail_path]);
 
         $this->artisan('kancil:prune')->assertSuccessful();
 
         $this->assertModelMissing($attempt);
+        $this->assertModelMissing($contribution);
         $this->assertModelMissing($unused);
         Storage::disk('public')->assertMissing($unused->path);
     }

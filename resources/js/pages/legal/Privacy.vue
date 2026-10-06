@@ -10,7 +10,11 @@ defineProps<{
     operator: string | null;
     contactEmail: string | null;
     sourceUrl: string;
-    retention: { attempt_months: number; trashed_days: number };
+    retention: {
+        attempt_months: number;
+        trashed_days: number;
+        contribution_months: number;
+    };
     meta: PageMetaData;
 }>();
 </script>
@@ -111,6 +115,11 @@ defineProps<{
                 天後連同學生的作答永久刪除。
             </li>
             <li>沒有任何題組使用的圖片與音檔：自動刪除。</li>
+            <li>
+                創作者頁面的貢獻日曆用的每天修改次數：保存
+                {{ retention.contribution_months }}
+                個月，之後自動刪除。
+            </li>
             <li>試玩的次數：只有次數，沒有個人資料，持續保留。</li>
             <li>
                 網站每天備份；已經刪除的資料，要等備份輪替之後才會從備份中消失。
