@@ -14,7 +14,7 @@
 | `deck` | 題組轉 `Round[]`、干擾選項、相容檢查、看起來一樣的題目與選項（`duplicateFaces()`，編輯頁的提醒）、成績判定 | 7.3、7.4 |
 | `games-sdk` | 遊戲模組介面 | 7.2 |
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
-| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對、打地鼠）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
+| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對、打地鼠；`arcade` 不是遊戲，是打地鼠這類遊戲共用的規則）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。試玩頁的開始與結果畫面列出同一課的其他遊戲（`otherGames`）：controller 給全部遊戲的相容條件（`#kq-trial-games`），`resources/js/player.ts` 用 `check()` 只留下能玩的。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
@@ -72,7 +72,7 @@
 1. **遊戲本身**，在 submodule 中：計分的放 `packages/games/kancil-games/<目錄>/`，不計分的放 `packages/games/kancil-materials/<目錄>/`，照現有的遊戲放這幾個檔：
    - `package.json`：名稱 `@kancil-quiz/game-<id>`、`AGPL-3.0-or-later`、`repository.directory`，依賴 `@kancil-quiz/games-sdk`。
    - `src/meta.ts`：`id`、`title`、`requires`（形狀、`minRounds`、`optionCount`、`renders`、`scored`）、`optionsSchema`（老師端的設定表單由它產生，列舉值用 `oneOf` + `const` + `title`）、`defaultOptions`。遊戲得分不等於答對題數時加上 `scoreLabel`，結果頁與成績頁才會顯示。`mount()` 裡要再檢查一次設定值（例如打地鼠的 `normalizeOptions()`），舊的或不合法的值退回預設。
-   - `src/session.ts`：不碰 DOM 的進行狀態。用到時間的，時間由呼叫的人傳入，測試才能控制。
+   - `src/session.ts`：不碰 DOM 的進行狀態。用到時間的，時間由呼叫的人傳入，測試才能控制。目標帶著選項、星星計分、題目打完重新輪的遊戲（打地鼠），共用 `kancil-games/arcade`（`@kancil-quiz/arcade`）的規則，不要另寫一份。
    - `src/index.ts`：`mount()`，default export 是 `{ ...meta, mount }`。`destroy()` 要清掉所有計時器與事件監聽；`pause()`、`resume()` 給宿主在分頁被藏起來時用。
    - `src/style.css`：樣式都限定在自己的根元素之下。根元素是 container，內距放在 `__layout` 那一層（見上方「畫面大小」）。
    - `tests/session.test.ts`：計分的遊戲要有與 `judge()` 的一致測試。
