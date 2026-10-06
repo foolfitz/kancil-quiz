@@ -564,11 +564,16 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             showResults(
                 computeResults(activity.set, rounds, responses, serverResults),
                 uploaded,
+                gameScore,
             );
         }
     }
 
-    function showResults(results: Results, uploaded: boolean): void {
+    function showResults(
+        results: Results,
+        uploaded: boolean,
+        gameScore: number | undefined,
+    ): void {
         const box = el('div', 'kq-player__screen kq-player__results');
         const total = results.rounds.length;
 
@@ -585,6 +590,19 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                     `答對 ${results.correctCount} / ${total} 題`,
                 ),
             );
+        }
+
+        // 遊戲自己的得分（docs/SPEC.md 7.4）：只有給了名稱（scoreLabel）的遊戲才顯示，例如打地鼠的「星星」；
+        // 選擇題、配對、迷宮的得分就是答對題數，不另外顯示。不是成績，放在答對題數的下面
+        const scoreLabel = game.scoreLabel?.['zh-TW'];
+        if (scoreLabel !== undefined && typeof gameScore === 'number') {
+            const score = el('p', 'kq-player__score');
+            score.append(
+                el('span', 'kq-player__score-label', scoreLabel),
+                ' ',
+                el('span', 'kq-player__score-value', String(gameScore)),
+            );
+            box.append(score);
         }
 
         if (needsLabel && playerLabel) {

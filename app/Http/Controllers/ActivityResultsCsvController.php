@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * 每位學生的成績下載成 CSV（docs/SPEC.md 3.4），方便老師抄進自己的紀錄。
  * 欄位與結果頁的「每位學生」相同；可以用 ?revision= 只看某個版本，與結果頁一致。
+ * 遊戲有給得分名稱時（例：打地鼠「星星」），多一欄「最高星星」（7.4）。
  */
 class ActivityResultsCsvController extends Controller
 {
@@ -27,13 +28,23 @@ class ActivityResultsCsvController extends Controller
         $revisionId = collect($revisions)->firstWhere('id', $request->query('revision'))['id'] ?? null;
         $students = (new ActivityResults($activity, $revisionId))->students();
         $scored = $this->games->find($activity->game_id)['requires']['scored'] ?? true;
+        $scoreLabel = $this->games->scoreLabel($activity->game_id);
         $title = $this->games->title($activity->game_id);
 
         $header = $scored
-            ? ['名字或座號', '答對（第一次玩完）', '題數', '最高答對', '玩了幾次', '玩完幾次', '最後作答時間']
+            ? [
+                '名字或座號',
+                '答對（第一次玩完）',
+                '題數',
+                '最高答對',
+                ...($scoreLabel === null ? [] : ["最高{$scoreLabel}"]),
+                '玩了幾次',
+                '玩完幾次',
+                '最後作答時間',
+            ]
             : ['名字或座號', '玩了幾次', '玩完幾次', '最後作答時間'];
 
-        $rows = array_map(function (array $student) use ($scored) {
+        $rows = array_map(function (array $student) use ($scored, $scoreLabel) {
             $counted = $student['counted'];
             $last = ActivitySettings::format(CarbonImmutable::parse($student['last_at']));
             $last = $last === null ? '' : str_replace('T', ' ', $last);
@@ -44,6 +55,7 @@ class ActivityResultsCsvController extends Controller
                     $counted['completed_at'] === null ? '' : $counted['correct_count'],
                     $counted['round_count'],
                     $student['best']['correct_count'] ?? '',
+                    ...($scoreLabel === null ? [] : [$student['best_game_score'] ?? '']),
                     count($student['attempts']),
                     $student['completed'],
                     $last,

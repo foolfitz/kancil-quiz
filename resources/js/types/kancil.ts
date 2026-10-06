@@ -76,6 +76,8 @@ export interface GameInfo {
     id: string;
     version: string;
     title: { 'zh-TW': string };
+    // 遊戲得分的名稱（例：打地鼠「星星」），只有會顯示遊戲得分的遊戲才有（docs/SPEC.md 7.4）
+    scoreLabel?: { 'zh-TW': string };
     requires: GameRequirements;
     optionsSchema: {
         properties?: Record<string, OptionSchema>;
@@ -151,6 +153,7 @@ export interface StudentAttempt {
     completed_at: string | null;
     correct_count: number | null;
     round_count: number;
+    game_score: number | null;
     counted: boolean;
 }
 
@@ -160,6 +163,8 @@ export interface StudentRow {
     completed: number;
     counted: StudentAttempt;
     best: { correct_count: number; round_count: number } | null;
+    // 所有作答中最高的遊戲得分（7.4），只在遊戲有得分名稱（activity.score_label）時顯示
+    best_game_score: number | null;
     last_at: string;
 }
 

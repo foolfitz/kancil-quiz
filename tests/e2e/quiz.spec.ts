@@ -79,6 +79,8 @@ test.describe.serial('選擇題', () => {
         await expect(heading).toBeVisible();
         correct = Number((await heading.textContent())?.match(/\d/)?.[0]);
         await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
+        // 選擇題的得分就是答對題數，沒有另外一行遊戲得分（docs/SPEC.md 7.4）
+        await expect(page.locator('.kq-player__score')).toHaveCount(0);
         await page.screenshot({ path: testInfo.outputPath('results.png') });
 
         expect(errors).toEqual([]);

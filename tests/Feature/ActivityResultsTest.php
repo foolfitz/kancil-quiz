@@ -59,11 +59,11 @@ class ActivityResultsTest extends TestCase
     }
 
     /**
-     * 學生玩一次：依序送出 [題目, 選了什麼]，最後視需要結束作答。
+     * 學生玩一次：依序送出 [題目, 選了什麼]，最後視需要結束作答（可帶遊戲自己的得分）。
      *
      * @param  list<array{0: string, 1: string}>  $answers
      */
-    private function play(array $answers, bool $complete = true, ?string $label = null): string
+    private function play(array $answers, bool $complete = true, ?string $label = null, ?int $gameScore = null): string
     {
         ['attempt_id' => $attemptId, 'token' => $token] = $this->postJson("/api/v1/activities/{$this->activity->id}/attempts", [
             'set_revision_id' => $this->set->current_revision_id,
@@ -83,7 +83,11 @@ class ActivityResultsTest extends TestCase
         ])->assertOk();
 
         if ($complete) {
-            $this->postJson("/api/v1/attempts/{$attemptId}/complete", ['token' => $token, 'duration_ms' => 42000])->assertOk();
+            $this->postJson("/api/v1/attempts/{$attemptId}/complete", [
+                'token' => $token,
+                'duration_ms' => 42000,
+                ...($gameScore === null ? [] : ['game_score' => $gameScore]),
+            ])->assertOk();
         }
 
         $this->travel(1)->minute(); // 作答紀錄依開始時間排序
@@ -426,6 +430,53 @@ class ActivityResultsTest extends TestCase
                 ->where('questions.0.wrong', 2));
     }
 
+    public function test_games_with_a_score_label_show_the_game_score(): void
+    {
+        // 打地鼠有得分名稱「星星」（7.4）：每次作答列出遊戲得分，每位學生列出所有作答中最高的
+        $this->activity->update(['mode' => 'assignment', 'game_id' => 'whack-a-mole']);
+        [$banana, $apple, $orange] = $this->set->entries()->pluck('id')->all();
+
+        $first = $this->play([[$banana, $banana], [$apple, $orange], [$orange, $orange]], label: '5', gameScore: 2);
+        $this->play([[$banana, $banana], [$apple, $apple], [$orange, $orange]], label: '5', gameScore: 3);
+        $this->play([[$banana, $banana]], complete: false, label: '5');
+        // 玩完但遊戲沒有回報得分
+        $this->play([[$banana, $banana], [$apple, $apple], [$orange, $orange]], label: '6');
+
+        $this->actingAs($this->teacher)
+            ->get("/activities/{$this->activity->id}/results")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('activity.score_label', '星星')
+                // 作答新的在前：沒有回報、沒玩完的都是 null
+                ->where('attempts.data.0.game_score', null)
+                ->where('attempts.data.1.game_score', null)
+                ->where('attempts.data.2.game_score', 3)
+                ->where('attempts.data.3.id', $first)
+                ->where('attempts.data.3.game_score', 2)
+                // 成績以第一次玩完的為準，最高星星看所有作答
+                ->where('students.0.label', '5')
+                ->where('students.0.counted.id', $first)
+                ->where('students.0.counted.game_score', 2)
+                ->where('students.0.attempts.1.game_score', 3)
+                ->where('students.0.best_game_score', 3)
+                ->where('students.1.label', '6')
+                ->where('students.1.best_game_score', null));
+    }
+
+    public function test_games_without_a_score_label_do_not_show_the_game_score(): void
+    {
+        // 選擇題的得分就是答對題數，沒有得分名稱；得分照舊存著，只是頁面不顯示
+        $this->activity->update(['mode' => 'assignment', 'game_id' => 'quiz']);
+        $banana = $this->set->entries()->value('id');
+        $this->play([[$banana, $banana]], label: '5', gameScore: 1);
+
+        $this->actingAs($this->teacher)
+            ->get("/activities/{$this->activity->id}/results")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('activity.score_label', null)
+                ->where('attempts.data.0.game_score', 1)
+                ->where('students.0.best_game_score', 1));
+    }
+
     public function test_attempts_without_a_name_are_each_counted(): void
     {
         [$banana, $apple, $orange] = $this->set->entries()->pluck('id')->all();
@@ -462,12 +513,12 @@ class ActivityResultsTest extends TestCase
 
     public function test_student_results_can_be_downloaded_as_csv(): void
     {
-        $this->activity->update(['mode' => 'assignment']);
+        $this->activity->update(['mode' => 'assignment', 'game_id' => 'whack-a-mole']);
         [$banana, $apple, $orange] = $this->set->entries()->pluck('id')->all();
         $this->travelTo(CarbonImmutable::parse('2026-10-06 01:15:00', 'UTC'));
 
-        $this->play([[$banana, $apple], [$apple, $apple], [$orange, $orange]], label: '3');
-        $this->play([[$banana, $banana], [$apple, $apple], [$orange, $orange]], label: '3');
+        $this->play([[$banana, $apple], [$apple, $apple], [$orange, $orange]], label: '3', gameScore: 2);
+        $this->play([[$banana, $banana], [$apple, $apple], [$orange, $orange]], label: '3', gameScore: 3);
         $this->play([[$banana, $banana]], complete: false, label: '=HYPERLINK("a.tw")');
 
         $this->get("/activities/{$this->activity->id}/results.csv")->assertRedirect('/login');
@@ -482,9 +533,23 @@ class ActivityResultsTest extends TestCase
         $csv = $response->streamedContent();
         $this->assertStringStartsWith("\u{FEFF}", $csv);
         $lines = array_map(str_getcsv(...), explode("\n", trim(substr($csv, 3))));
-        $this->assertSame(['名字或座號', '答對（第一次玩完）', '題數', '最高答對', '玩了幾次', '玩完幾次', '最後作答時間'], $lines[0]);
+        // 打地鼠有得分名稱「星星」，多一欄「最高星星」（7.4）
+        $this->assertSame(['名字或座號', '答對（第一次玩完）', '題數', '最高答對', '最高星星', '玩了幾次', '玩完幾次', '最後作答時間'], $lines[0]);
         // 開頭是 = 的名字加上 '，試算表不會當成公式
-        $this->assertSame(['3', '2', '3', '3', '2', '2', '2026-10-06 09:16'], $lines[1]);
-        $this->assertSame(["'=HYPERLINK(\"a.tw\")", '', '3', '', '1', '0', '2026-10-06 09:17'], $lines[2]);
+        $this->assertSame(['3', '2', '3', '3', '3', '2', '2', '2026-10-06 09:16'], $lines[1]);
+        $this->assertSame(["'=HYPERLINK(\"a.tw\")", '', '3', '', '', '1', '0', '2026-10-06 09:17'], $lines[2]);
+    }
+
+    public function test_the_csv_has_no_game_score_column_for_games_without_a_score_label(): void
+    {
+        // 選擇題沒有得分名稱：欄位與以前相同
+        $this->activity->update(['mode' => 'assignment', 'game_id' => 'quiz']);
+        $banana = $this->set->entries()->value('id');
+        $this->play([[$banana, $banana]], label: '3', gameScore: 1);
+
+        $csv = $this->actingAs($this->teacher)->get("/activities/{$this->activity->id}/results.csv")->assertOk()->streamedContent();
+        $lines = array_map(str_getcsv(...), explode("\n", trim(substr($csv, 3))));
+        $this->assertSame(['名字或座號', '答對（第一次玩完）', '題數', '最高答對', '玩了幾次', '玩完幾次', '最後作答時間'], $lines[0]);
+        $this->assertSame(['3', '1', '3', '1', '1', '1'], array_slice($lines[1], 0, 6));
     }
 }

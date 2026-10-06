@@ -24,6 +24,7 @@ it('manifest.json 與各遊戲的 meta.ts 同步', async () => {
                 id,
                 version,
                 title,
+                scoreLabel,
                 requires,
                 optionsSchema,
                 defaultOptions,
@@ -31,6 +32,8 @@ it('manifest.json 與各遊戲的 meta.ts 同步', async () => {
                 id,
                 version,
                 title,
+                // 只有定義了遊戲得分名稱的遊戲才有這個欄位
+                ...(scoreLabel ? { scoreLabel } : {}),
                 requires,
                 optionsSchema,
                 defaultOptions,

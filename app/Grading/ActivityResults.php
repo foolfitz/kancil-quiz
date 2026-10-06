@@ -25,8 +25,8 @@ use stdClass;
  * @phpstan-import-type Face from EntryFaces
  *
  * @phpstan-type AttemptRow array{id: string, player_label: string|null, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, game_score: int|null, duration_ms: int|null, revision_number: int}
- * @phpstan-type StudentAttempt array{id: string, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, counted: bool}
- * @phpstan-type StudentRow array{label: string, attempts: list<StudentAttempt>, completed: int, counted: StudentAttempt, best: array{correct_count: int, round_count: int}|null, last_at: string}
+ * @phpstan-type StudentAttempt array{id: string, started_at: string, completed_at: string|null, correct_count: int|null, round_count: int, game_score: int|null, counted: bool}
+ * @phpstan-type StudentRow array{label: string, attempts: list<StudentAttempt>, completed: int, counted: StudentAttempt, best: array{correct_count: int, round_count: int}|null, best_game_score: int|null, last_at: string}
  */
 class ActivityResults
 {
@@ -91,6 +91,8 @@ class ActivityResults
 
     /**
      * 依名字或座號彙整的成績，依名字排序（數字依數值，2 排在 10 前面）。
+     * `best_game_score` 是這位學生所有作答中最高的遊戲得分（`attempts.game_score`），
+     * 只有遊戲有給得分名稱（`GameRegistry::scoreLabel()`）時才顯示，不是成績（7.4）。
      *
      * @return list<StudentRow>
      */
@@ -278,7 +280,7 @@ class ActivityResults
             ->whereNotNull('player_label')
             ->orderBy('started_at')
             ->orderBy('id')
-            ->get(['id', 'player_label', 'started_at', 'completed_at', 'correct_count', 'round_count']);
+            ->get(['id', 'player_label', 'started_at', 'completed_at', 'correct_count', 'round_count', 'game_score']);
 
         /** @var array<string, non-empty-list<Attempt>> $groups */
         $groups = [];
@@ -293,10 +295,14 @@ class ActivityResults
             $counted = $completed[0] ?? $mine[0];
 
             $best = null;
+            $bestGameScore = null;
             foreach ($completed as $attempt) {
                 if ($attempt->correct_count !== null && $attempt->round_count > 0 && ($best === null
                     || $attempt->correct_count / $attempt->round_count > $best['correct_count'] / max(1, $best['round_count']))) {
                     $best = ['correct_count' => $attempt->correct_count, 'round_count' => $attempt->round_count];
+                }
+                if ($attempt->game_score !== null && ($bestGameScore === null || $attempt->game_score > $bestGameScore)) {
+                    $bestGameScore = $attempt->game_score;
                 }
             }
 
@@ -306,6 +312,7 @@ class ActivityResults
                 'completed_at' => $attempt->completed_at?->toIso8601String(),
                 'correct_count' => $attempt->correct_count,
                 'round_count' => $attempt->round_count,
+                'game_score' => $attempt->game_score,
                 'counted' => $attempt->id === $counted->id,
             ];
 
@@ -316,6 +323,7 @@ class ActivityResults
                 'completed' => count($completed),
                 'counted' => $row($counted),
                 'best' => $best,
+                'best_game_score' => $bestGameScore,
                 // 都是 UTC 的 ISO 8601，字串比較即時間先後
                 'last_at' => max(array_map(fn (Attempt $attempt) => $attempt->started_at->toIso8601String(), $mine)),
             ];

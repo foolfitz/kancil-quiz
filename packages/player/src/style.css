@@ -63,6 +63,19 @@
     font-size: 1.5rem;
 }
 
+/* 遊戲自己的得分（docs/SPEC.md 7.4），例如打地鼠的「星星 12」：緊接在「答對 x / y 題」下面，
+   字比標題小、顏色淡，表示它不是成績 */
+.kq-player__score {
+    margin: -0.5rem 0 0;
+    color: var(--kq-player-muted);
+    font-size: 1.25rem;
+}
+
+.kq-player__score-value {
+    color: var(--kq-player-fg);
+    font-weight: 700;
+}
+
 .kq-player__detail,
 .kq-player__note {
     margin: 0;
@@ -321,6 +334,11 @@
     .kq-player__subtitle {
         margin-top: 0.5rem;
         font-size: 1.25rem;
+    }
+
+    .kq-player__score {
+        margin-top: -0.25rem;
+        font-size: 1rem;
     }
 
     .kq-player__start {

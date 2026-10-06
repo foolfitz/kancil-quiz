@@ -30,6 +30,8 @@ const props = defineProps<{
         game_id: string;
         game_title: string;
         scored: boolean;
+        // 遊戲得分的名稱（例：打地鼠「星星」）；null 表示這個遊戲不顯示遊戲得分（7.4）
+        score_label: string | null;
         require_label: boolean;
     };
     set: { id: string; title: string; kind: SetKind; language: string };
@@ -177,6 +179,23 @@ const score = (attempt: {
         ? '沒有玩完'
         : `${attempt.correct_count ?? '—'} / ${attempt.round_count}`;
 
+// 遊戲自己的得分（7.4）：只有有名稱的遊戲才顯示，接在答對題數後面，例如「・星星 12」
+const gameScore = (attempt: { game_score: number | null }) =>
+    props.activity.score_label && attempt.game_score !== null
+        ? `・${props.activity.score_label} ${attempt.game_score}`
+        : '';
+
+// 兩個表格的欄數（展開列的 colspan）：遊戲有得分名稱時各多一欄
+const studentColumns = computed(
+    () =>
+        (props.activity.scored ? 6 : 4) + (props.activity.score_label ? 1 : 0),
+);
+const attemptColumns = computed(
+    () =>
+        (multipleRevisions.value ? 6 : 5) +
+        (props.activity.score_label ? 1 : 0),
+);
+
 const dateTime = (iso: string) =>
     new Date(iso).toLocaleString('zh-TW', {
         dateStyle: 'short',
@@ -316,6 +335,12 @@ function duration(ms: number | null): string {
                                 >
                                     最高
                                 </th>
+                                <th
+                                    v-if="activity.score_label"
+                                    class="p-3 font-medium"
+                                >
+                                    最高{{ activity.score_label }}
+                                </th>
                                 <th class="p-3 font-medium">次數</th>
                                 <th class="p-3 font-medium">最後作答</th>
                             </tr>
@@ -384,6 +409,13 @@ function duration(ms: number | null): string {
                                                 : '—'
                                         }}
                                     </td>
+                                    <td
+                                        v-if="activity.score_label"
+                                        class="p-3 whitespace-nowrap"
+                                        data-test="student-game-score"
+                                    >
+                                        {{ student.best_game_score ?? '—' }}
+                                    </td>
                                     <td class="p-3 whitespace-nowrap">
                                         {{ student.attempts.length }} 次<span
                                             v-if="
@@ -404,7 +436,7 @@ function duration(ms: number | null): string {
                                     class="bg-muted/20"
                                 >
                                     <td
-                                        :colspan="activity.scored ? 6 : 4"
+                                        :colspan="studentColumns"
                                         class="space-y-3 p-3"
                                     >
                                         <ul
@@ -426,6 +458,7 @@ function duration(ms: number | null): string {
                                                         attempt.started_at,
                                                     )
                                                 }}・{{ score(attempt)
+                                                }}{{ gameScore(attempt)
                                                 }}{{
                                                     attempt.counted
                                                         ? '（計分）'
@@ -610,6 +643,12 @@ function duration(ms: number | null): string {
                                 >
                                     答對
                                 </th>
+                                <th
+                                    v-if="activity.score_label"
+                                    class="p-3 font-medium"
+                                >
+                                    {{ activity.score_label }}
+                                </th>
                                 <th class="p-3 font-medium">用時</th>
                                 <th
                                     v-if="multipleRevisions"
@@ -675,6 +714,13 @@ function duration(ms: number | null): string {
                                             >沒有玩完</span
                                         >
                                     </td>
+                                    <td
+                                        v-if="activity.score_label"
+                                        class="p-3 whitespace-nowrap"
+                                        data-test="attempt-game-score"
+                                    >
+                                        {{ attempt.game_score ?? '—' }}
+                                    </td>
                                     <td class="p-3 whitespace-nowrap">
                                         {{ duration(attempt.duration_ms) }}
                                     </td>
@@ -689,10 +735,7 @@ function duration(ms: number | null): string {
                                     v-if="expanded === attempt.id"
                                     class="bg-muted/20"
                                 >
-                                    <td
-                                        :colspan="multipleRevisions ? 6 : 5"
-                                        class="p-3"
-                                    >
+                                    <td :colspan="attemptColumns" class="p-3">
                                         <p
                                             v-if="
                                                 loading === attempt.id ||

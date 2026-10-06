@@ -70,6 +70,8 @@ test.describe.serial('配對', () => {
             page.getByRole('heading', { name: '答對 7 / 8 題' }),
         ).toBeVisible();
         await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
+        // 配對的得分就是答對題數，沒有另外一行遊戲得分（7.4）
+        await expect(page.locator('.kq-player__score')).toHaveCount(0);
         await expect(page.locator('.kq-player__review-item')).toHaveCount(1);
         await page.screenshot({
             path: testInfo.outputPath('match-results.png'),

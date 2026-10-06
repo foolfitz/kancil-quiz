@@ -33,6 +33,8 @@ class ActivityResultsController extends Controller
                 'game_id' => $activity->game_id,
                 'game_title' => $game['title']['zh-TW'] ?? $activity->game_id,
                 'scored' => $game['requires']['scored'] ?? true,
+                // 遊戲得分的名稱（例：打地鼠「星星」）；null 表示這個遊戲不顯示遊戲得分（7.4）
+                'score_label' => $this->games->scoreLabel($activity->game_id),
                 'require_label' => $activity->requiresLabel(),
             ],
             'set' => ['id' => $set->id, 'title' => $set->title, 'kind' => $set->kind, 'language' => $set->language_code],

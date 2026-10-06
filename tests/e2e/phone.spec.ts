@@ -329,6 +329,7 @@ test('打地鼠：題目與九個洞都在畫面內，時間到看到結果', as
     await expect(
         page.getByRole('heading', { name: '答對 3 / 6 題' }),
     ).toBeVisible();
+    await expect(page.locator('.kq-player__score')).toHaveText('星星 6');
     await expect(page.getByText('沒有作答')).toHaveCount(3);
     await expectBackLinkClearOfTitle(page);
     await expectNoHorizontalOverflow(page);

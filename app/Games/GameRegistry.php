@@ -10,7 +10,7 @@ use RuntimeException;
  * 可用的遊戲。資料來自 packages/games/manifest.json，由各遊戲套件的 meta.ts 自動產生
  * （npm run games:manifest），伺服器端用它判斷題目形狀、是否計分，並驗證遊戲設定。
  *
- * @phpstan-type Game array{id: string, version: string, title: array{'zh-TW': string}, requires: array{shape: string, minRounds: int, scored: bool}, optionsSchema: array<string, mixed>, defaultOptions: array<string, mixed>}
+ * @phpstan-type Game array{id: string, version: string, title: array{'zh-TW': string}, scoreLabel?: array{'zh-TW': string}, requires: array{shape: string, minRounds: int, scored: bool}, optionsSchema: array<string, mixed>, defaultOptions: array<string, mixed>}
  */
 class GameRegistry
 {
@@ -64,6 +64,15 @@ class GameRegistry
     public function shape(string $id): string
     {
         return $this->get($id)['requires']['shape'];
+    }
+
+    /**
+     * 遊戲得分（attempts.game_score）的名稱，例：打地鼠「星星」。只有設定了名稱的遊戲，
+     * 成績頁與 CSV 才顯示遊戲得分；沒有設定（例如選擇題、配對）或找不到遊戲時為 null（docs/SPEC.md 7.4）。
+     */
+    public function scoreLabel(string $id): ?string
+    {
+        return $this->find($id)['scoreLabel']['zh-TW'] ?? null;
     }
 
     /**

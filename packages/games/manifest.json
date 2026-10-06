@@ -417,6 +417,9 @@
             "title": {
                 "zh-TW": "打地鼠"
             },
+            "scoreLabel": {
+                "zh-TW": "星星"
+            },
             "requires": {
                 "shape": "mcq",
                 "minRounds": 1,

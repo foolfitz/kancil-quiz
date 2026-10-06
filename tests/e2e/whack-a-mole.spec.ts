@@ -92,6 +92,8 @@ test.describe.serial('打地鼠', () => {
         await expect(
             page.getByRole('heading', { name: '答對 7 / 8 題' }),
         ).toBeVisible();
+        // 星星是遊戲得分，顯示在答對題數的下面（7.4）
+        await expect(page.locator('.kq-player__score')).toHaveText('星星 11');
         await expect(page.getByText('成績沒有上傳成功')).toHaveCount(0);
         await expect(page.locator('.kq-player__review-item')).toHaveCount(1);
         await page.screenshot({
@@ -101,7 +103,7 @@ test.describe.serial('打地鼠', () => {
         expect(errors).toEqual([]);
     });
 
-    test('老師在成績頁看到第一輪的成績', async ({ page }) => {
+    test('老師在成績頁看到第一輪的成績與星星', async ({ page }) => {
         const errors = collectErrors(page);
 
         await page.goto(playPath.replace(/^\/p\//, '/activities/'));
@@ -111,6 +113,13 @@ test.describe.serial('打地鼠', () => {
         const row = page.locator('[data-test="attempt-row"]');
         await expect(row).toHaveCount(1);
         await expect(row).toContainText('7 / 8');
+        // 每次作答多一欄「星星」（T-11、7.4）
+        await expect(
+            page.getByRole('columnheader', { name: '星星', exact: true }),
+        ).toBeVisible();
+        await expect(
+            row.locator('[data-test="attempt-game-score"]'),
+        ).toHaveText('11');
         await row.click();
         const detail = page.locator('[data-test="attempt-detail"] > li');
         await expect(detail).toHaveCount(8);
