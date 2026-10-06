@@ -46,10 +46,10 @@ export default defineConfig({
     test: {
         include: ['packages/**/*.test.ts'],
         // 遊戲套件的測試會檢查 CSS 是否都限定在自己的根元素之下
-        // （內建的遊戲在 kancil-games、kancil-materials 兩個 submodule 中，多一層目錄）
+        // （遊戲在 kancil-games、kancil-materials 兩個 submodule 中，各自再分目錄）
         css: {
             include: [
-                /packages\/games\/(?:kancil-(?:games|materials)\/)?[^/]+\/src\/style\.css/,
+                /packages\/games\/kancil-(?:games|materials)\/[^/]+\/src\/style\.css/,
             ],
         },
     },

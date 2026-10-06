@@ -694,10 +694,12 @@ kancil-quiz/
 │   ├── games-sdk/              # 遊戲介面定義（第 7.2 節）
 │   ├── player/                 # 遊戲宿主；可另外建置成獨立播放器
 │   └── games/
-│       ├── maze-quiz/          # git submodule：獨立的 maze-quiz repo（可以單獨執行）
 │       ├── kancil-games/       # git submodule：內建的遊戲（只能在平台中使用）
+│       │   ├── maze-quiz/
 │       │   ├── quiz/
-│       │   └── match-up/
+│       │   ├── match-up/
+│       │   ├── whack-a-mole/
+│       │   └── arcade/         # 不是遊戲：打地鼠這類遊戲共用的規則
 │       └── kancil-materials/   # git submodule：內建的互動教材（只能在平台中使用）
 │           ├── flash-cards/
 │           ├── card-wall/
@@ -710,19 +712,12 @@ kancil-quiz/
     └── game-module-guide.md
 ```
 
-**迷宮問答是獨立的 repo**：`maze-quiz`（MIT），以 git submodule 掛在 `packages/games/maze-quiz`，`.gitmodules` 寫相對網址 `../maze-quiz`，兩個 repo 要放在 GitHub 的同一個帳號下。
+**遊戲與互動教材是獨立的 repo，但依附平台**：計分的遊戲（迷宮問答、選擇題、配對、打地鼠）在 `kancil-games`，不計分的互動教材（字卡、圖卡牆、轉盤）在 `kancil-materials`，都採 AGPL-3.0-or-later（與平台相同），以 git submodule 掛在 `packages/games/` 下，`.gitmodules` 寫相對網址，三個 repo 要放在 GitHub 的同一個帳號下。
 
-- 它單獨 clone 也能安裝、測試與建置：`vendor/` 有 `games-sdk` 與 `text` 的副本，由它自己的 `vite.config.ts` 與 `tsconfig.json` 指過去；放在平台中時照常用 workspace 的正本。平台有測試檢查副本與正本相同。
-- 它有自己的示範頁（`demo/`）：用平台匯出的罐頭題組遊玩，並發布到 GitHub Pages。
-- 需要 `@kancil-quiz/deck` 與 fixture 的測試（7.6 的判定一致）放在平台的 `packages/games/maze-quiz.test.ts`。
-- 修改流程：在 `maze-quiz` repo 修改、測試、commit，再到平台更新 submodule 指標，跑完平台的檢查後 commit。
-- M4 把 `games-sdk`、`text` 發布到 npm 之後，`maze-quiz` 改依版本號引用，刪除 `vendor/`、路徑別名與副本一致測試。
-
-**內建的遊戲與互動教材也是獨立的 repo，但依附平台**：計分的遊戲（選擇題、配對）在 `kancil-games`，不計分的互動教材（字卡、圖卡牆、轉盤）在 `kancil-materials`，都採 AGPL-3.0-or-later（與平台相同），以 git submodule 掛在 `packages/games/` 下，`.gitmodules` 寫相對網址。
-
-- 與迷宮不同，它們沒有自己的建置、測試設定、`vendor/` 副本與示範頁：直接用平台 workspace 中的 `games-sdk`、`text`、`deck` 與 fixture，只能在平台中修改、測試與建置。
-- 每個 repo 中一個遊戲一個目錄，套件名稱與遊戲 ID 不變（`@kancil-quiz/game-quiz` 等），平台的 workspace 多列兩層目錄。
+- 它們沒有自己的建置、測試設定與示範頁：直接用平台 workspace 中的 `games-sdk`、`text`、`deck` 與 fixture，只能在平台中修改、測試與建置。需要 `deck` 與 fixture 的測試（7.6 的判定一致）也放在各遊戲自己的 `tests/`。
+- 每個 repo 中一個遊戲一個目錄，目錄名稱就是遊戲 ID，套件名稱是 `@kancil-quiz/game-<id>`，平台的 workspace 列這兩層目錄。
 - 修改流程：直接在平台的 submodule 目錄中修改、在平台跑測試，於 submodule 中 commit 並推送，再到平台 commit 新的 submodule 指標。
+- 迷宮問答原本是獨立的 `maze-quiz` repo（MIT，可以單獨執行：有示範頁、發布到 GitHub Pages，以及 `games-sdk`、`text` 的副本），2026-10 以 `git subtree` 併入 `kancil-games`，commit 歷史保留，改採 AGPL-3.0-or-later；示範頁、副本與自己的建置設定都拿掉，與其他遊戲一樣維護。
 
 **播放頁不使用 Inertia**：學生端要盡量輕量，而且要與獨立播放器共用同一套程式碼，所以用獨立的 Vite 入口 `player.ts` 載入 `@kancil-quiz/player`。
 
@@ -795,7 +790,7 @@ kancil-quiz/
 | 備份 | 每日資料庫傾印加媒體檔備份到異地；每季實際演練還原一次。`docker/backup.sh`、`docker/restore.sh` 負責打包與還原，異地複製由部署者設定。`backup.sh` 把每次的結果（時間、成功或失敗、檔案與大小）寫回 volume 的 `storage/app/private/status/backup.json`，後台的系統狀態頁顯示最近一次備份，超過一天沒有備份或備份失敗就警告（A-02） |
 | 部署 | 單台 Ubuntu LTS VM，以 Docker Compose 執行：FrankenPHP（內建 Caddy，自動取得 HTTPS 憑證）負責 PHP 與靜態檔，SQLite 與媒體放在同一個 volume。排程（第 5 節的保存期限）以同一個映像檔另開一個服務執行，每 15 分鐘留下一次心跳，後台的系統狀態頁以此判斷排程還在不在（A-02）。步驟見 `docs/deploy.md` |
 | 搜尋與連結預覽 | 首頁與教材頁讓搜尋引擎收錄，伺服器端輸出標題、描述與骨架（10.3）；播放頁與媒體不收錄（`noindex`）。用暫用網域時以 `KANCIL_INDEXING=false` 整站不收錄，換到正式網域後才收錄（`docs/deploy.md`） |
-| 授權 | 程式碼 AGPL-3.0-or-later（見 D-2），獨立 repo 的遊戲模組可以採寬鬆授權（迷宮問答是 MIT，10.2）；語料預設 CC BY 4.0（見 D-3）；取自教材的課名與詞彙照原教材標示 CC BY-NC-ND 4.0（D-4） |
+| 授權 | 程式碼 AGPL-3.0-or-later（見 D-2），內建的遊戲與互動教材的 repo 也相同（10.2）；外部開發者在自己的 repo 開發的遊戲模組可以採寬鬆授權；語料預設 CC BY 4.0（見 D-3）；取自教材的課名與詞彙照原教材標示 CC BY-NC-ND 4.0（D-4） |
 
 ---
 
@@ -861,7 +856,7 @@ kancil-quiz/
 
 ### M4：開放
 
-範圍：O-01、O-03（C）；`docs/game-module-guide.md` 等貢獻者文件；把 `@kancil-quiz/games-sdk`、`@kancil-quiz/text` 發布到 npm，獨立 repo 的遊戲改依版本號引用（10.2）。
+範圍：O-01、O-03（C）；`docs/game-module-guide.md` 等貢獻者文件；把 `@kancil-quiz/games-sdk`、`@kancil-quiz/text` 發布到 npm，讓外部開發者在自己的 repo 開發遊戲模組、依版本號引用（10.2）。
 
 **驗收**：外部開發者只看文件，就能開發並提交一個新的遊戲模組。
 

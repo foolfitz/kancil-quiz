@@ -31,6 +31,5 @@ composer dev                              # 開發伺服器
 ## 授權
 
 - 程式碼：[AGPL-3.0-or-later](LICENSE)。
-- 迷宮問答（`packages/games/maze-quiz`）是獨立的 [maze-quiz](https://github.com/foolfitz/maze-quiz) repo，採 MIT 授權，字型 Andika 採 SIL OFL。
-- 內建的遊戲（選擇題、配對、打地鼠）與互動教材（字卡、圖卡牆、轉盤）分別在 [kancil-games](https://github.com/foolfitz/kancil-games) 與 [kancil-materials](https://github.com/foolfitz/kancil-materials) 兩個 repo，以 git submodule 掛在 `packages/games/`，採 AGPL-3.0-or-later，只能在本平台中使用。
+- 內建的遊戲（迷宮問答、選擇題、配對、打地鼠）與互動教材（字卡、圖卡牆、轉盤）分別在 [kancil-games](https://github.com/foolfitz/kancil-games) 與 [kancil-materials](https://github.com/foolfitz/kancil-materials) 兩個 repo，以 git submodule 掛在 `packages/games/`，採 AGPL-3.0-or-later，只能在本平台中使用。迷宮問答的字型 Andika 採 SIL OFL。
 - 教材資料（`database/curriculum/`）：課名與詞彙依據國教署「新住民語文學習教材」，插圖自製。來源與授權見[該目錄的說明](database/curriculum/README.md)。
