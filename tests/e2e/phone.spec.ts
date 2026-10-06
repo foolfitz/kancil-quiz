@@ -102,6 +102,108 @@ test('配對：一頁的題目與卡片都在畫面內，手指拖曳不會捲�
     expect(errors).toEqual([]);
 });
 
+// 每一頁的題目與卡片都在畫面內，也沒有水平捲軸
+async function expectMatchPageFits(page: Page): Promise<void> {
+    await expectGameFits(page);
+    await expectNoHorizontalOverflow(page);
+    for (const element of await page
+        .locator('.kq-match__row, .kq-match__card')
+        .all()) {
+        await expectInViewport(page, element);
+    }
+}
+
+// 用點選配好一題
+async function matchByTap(page: Page, id: string): Promise<void> {
+    await page.locator(`.kq-match__pool [data-entry-id="${id}"]`).click();
+    await page
+        .locator(`.kq-match__row[data-entry-id="${id}"] .kq-match__drop`)
+        .click();
+    await expect(
+        page.locator(`.kq-match__row[data-entry-id="${id}"]`),
+    ).toHaveClass(/is-matched/);
+}
+
+test('配對：玩到一半轉向，依新的畫面重新分頁，配好的照舊', async ({
+    page,
+}, testInfo) => {
+    const errors = collectErrors(page);
+    await start(page, '/curriculum/id/1/3/play/match-up');
+
+    // 先配好第一組
+    const progress = page.locator('.kq-match__progress');
+    await expect(progress).toHaveText(/配好 0 \/ [3-6] 組$/);
+    const first = page.locator('.kq-match__row').first();
+    const firstId = (await first.getAttribute('data-entry-id')) ?? '';
+    await touchDragTo(
+        page,
+        page.locator(`.kq-match__pool [data-entry-id="${firstId}"]`),
+        first,
+    );
+    await expect(first).toHaveClass(/is-matched/);
+
+    // 轉成另一個方向（7.5）：6 個詞在直向一頁放得下，橫放分成 3、3 兩頁。
+    // 配好的那一組留在這一頁、仍然是配好的，卡片不再出現在卡片區；一頁的內容都在畫面內
+    const viewport = page.viewportSize();
+    if (!viewport) {
+        throw new Error('沒有 viewport');
+    }
+    const rotated = { width: viewport.height, height: viewport.width };
+    const toLandscape = rotated.width > rotated.height;
+    await page.setViewportSize(rotated);
+    await expect(progress).toHaveText(
+        toLandscape ? '第 1 / 2 頁｜配好 1 / 3 組' : '配好 1 / 6 組',
+    );
+    const matched = page.locator(`.kq-match__row[data-entry-id="${firstId}"]`);
+    await expect(matched).toHaveClass(/is-matched/);
+    await expect(matched.locator('.kq-match__card.is-placed')).toBeVisible();
+    await expect(
+        page.locator(`.kq-match__pool [data-entry-id="${firstId}"]`),
+    ).toHaveCount(0);
+    await expectMatchPageFits(page);
+    await page.screenshot({ path: testInfo.outputPath('match-rotated.png') });
+
+    // 再配一組，轉回來：這一頁配好的兩組都留著
+    const secondId = await page
+        .locator('.kq-match__row:not(.is-matched)')
+        .first()
+        .evaluate((el) => (el as HTMLElement).dataset.entryId ?? '');
+    await matchByTap(page, secondId);
+    await page.setViewportSize(viewport);
+    await expect(progress).toHaveText(
+        toLandscape ? '配好 2 / 6 組' : '第 1 / 2 頁｜配好 2 / 3 組',
+    );
+    await expect(page.locator('.kq-match__row.is-matched')).toHaveCount(2);
+    await expectMatchPageFits(page);
+
+    // 把剩下的配完：配好的只算一次，成績是 6 / 6
+    const pages = Number(
+        (await progress.textContent())?.match(/\/ (\d+) 頁/)?.[1] ?? 1,
+    );
+    for (let i = 1; i <= pages; i++) {
+        const ids = await page
+            .locator('.kq-match__row:not(.is-matched)')
+            .evaluateAll((elements) =>
+                elements.map((el) => (el as HTMLElement).dataset.entryId ?? ''),
+            );
+        for (const id of ids) {
+            await matchByTap(page, id);
+        }
+        if (i < pages) {
+            await expect(progress).toHaveText(
+                new RegExp(`^第 ${i + 1} / ${pages} 頁`),
+            );
+            await expectGameFits(page);
+        }
+    }
+    await expect(
+        page.getByRole('heading', { name: '答對 6 / 6 題' }),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+
+    expect(errors).toEqual([]);
+});
+
 test('選擇題：每一題的選項都在畫面內，玩完看到結果', async ({
     page,
 }, testInfo) => {
