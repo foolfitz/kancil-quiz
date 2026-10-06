@@ -207,6 +207,16 @@ function describe(day: Day): string {
     background: var(--background);
     box-shadow: 0 0 0 3px var(--background);
 }
+/* 每一列都剛好一格高：星期的文字（12px）比 11px 的格子略高，行高設成格子的高度，文字仍以這一列為中心，
+   不會把列撐高；格子本身沒有內距 */
+.kq-calendar tbody th,
+.kq-calendar__day {
+    height: var(--kq-cell);
+    line-height: var(--kq-cell);
+    padding: 0;
+    overflow: visible;
+}
+/* 圖例的色塊也用這個 class，在表格外面，所以格子的大小在這裡也定義一次 */
 .kq-calendar__day {
     --kq-cell: 11px;
     width: var(--kq-cell);
