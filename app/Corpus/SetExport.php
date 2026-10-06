@@ -143,12 +143,17 @@ class SetExport
     }
 
     /**
+     * 作者的名字，有網址時附在後面（6.5 的 Author：{name, url?}）。
+     *
      * @param  array<stdClass>  $authors
      * @return list<string>
      */
     private static function names(array $authors): array
     {
-        return array_values(array_map(fn (stdClass $author) => (string) $author->name, $authors));
+        return array_values(array_map(
+            fn (stdClass $author) => (string) $author->name.(isset($author->url) ? "（{$author->url}）" : ''),
+            $authors,
+        ));
     }
 
     private static function licenseName(string $license): string

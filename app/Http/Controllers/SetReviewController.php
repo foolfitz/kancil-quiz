@@ -30,7 +30,7 @@ class SetReviewController extends Controller
         $pending = Set::query()
             ->where('review_status', 'pending')
             ->when($languages !== null, fn ($query) => $query->whereIn('language_code', $languages)->where('owner_id', '!=', $user->id))
-            ->with(['owner:id,name', 'language', 'reviews' => fn ($query) => $query->where('action', 'requested')])
+            ->with(['owner', 'language', 'reviews' => fn ($query) => $query->where('action', 'requested')])
             ->withCount('entries')
             ->get()
             ->map(fn (Set $set) => [
@@ -38,7 +38,7 @@ class SetReviewController extends Controller
                 'kind' => $set->kind,
                 'title' => $set->title,
                 'language' => $set->language->name_zh,
-                'owner' => $set->owner->name,
+                'owner' => $set->owner->attributionName(),
                 'entries_count' => $set->entries_count,
                 'requested_at' => $set->reviews->first()?->created_at->toIso8601String(),
                 'note' => $set->reviews->first()?->note,

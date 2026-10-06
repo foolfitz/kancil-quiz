@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Set;
 use App\Models\SetRevision;
 use App\Models\User;
+use App\Profile\Contributions;
 use App\Support\KancilFormat;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,11 @@ class SetRevisionRecorder
             ]);
 
             $set->forceFill(['current_revision_id' => $revision->id])->save();
+
+            // 創作者頁面的貢獻日曆（docs/SPEC.md T-20）：版本可能被清除，每天的次數另外累計
+            if ($by !== null) {
+                Contributions::record($set, $by, $revision->created_at);
+            }
 
             return $revision;
         });

@@ -2,18 +2,17 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Search, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import SetController from '@/actions/App/Http/Controllers/SetController';
 import Heading from '@/components/Heading.vue';
-import { Badge } from '@/components/ui/badge';
+import SetCard from '@/components/kancil/SetCard.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { library } from '@/routes';
-import { KIND_NAMES, curriculumLabel, lessonLabel } from '@/types/kancil';
+import { lessonLabel } from '@/types/kancil';
 import type {
     CurriculumRef,
     Language,
     Paginated,
-    SetKind,
+    SetCardData,
 } from '@/types/kancil';
 
 // 共備庫（docs/SPEC.md T-13）：依語言、冊、課、標籤瀏覽與搜尋公開的題組。
@@ -26,20 +25,7 @@ type Filters = {
 };
 
 const props = defineProps<{
-    sets: Paginated<{
-        id: string;
-        kind: SetKind;
-        title: string;
-        description: string | null;
-        language: string;
-        owner: string;
-        entries_count: number;
-        curriculum: { volume: number; lesson: number }[];
-        tags: string[];
-        forked: boolean;
-        textbook: boolean;
-        updated_at: string | null;
-    }>;
+    sets: Paginated<SetCardData>;
     filters: Filters;
     languages: Language[];
     curriculumRefs: CurriculumRef[];
@@ -207,50 +193,7 @@ const filtered = computed(() =>
 
         <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <li v-for="set in sets.data" :key="set.id">
-                <Link
-                    :href="SetController.show(set.id)"
-                    class="flex h-full flex-col gap-2 rounded-xl border p-4 transition hover:border-primary"
-                    data-test="library-set"
-                >
-                    <div class="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">{{
-                            KIND_NAMES[set.kind]
-                        }}</Badge>
-                        <Badge variant="outline">{{ set.language }}</Badge>
-                        <Badge v-if="set.textbook">教材</Badge>
-                        <span class="text-sm text-muted-foreground"
-                            >{{ set.entries_count }} 題</span
-                        >
-                    </div>
-                    <h3 class="text-lg font-semibold">{{ set.title }}</h3>
-                    <p
-                        v-if="set.description"
-                        class="line-clamp-2 text-sm text-muted-foreground"
-                    >
-                        {{ set.description }}
-                    </p>
-                    <p class="text-sm text-muted-foreground">
-                        {{ set.owner
-                        }}<template v-if="set.forked">（改編）</template>
-                    </p>
-                    <div
-                        v-if="set.curriculum.length > 0 || set.tags.length > 0"
-                        class="mt-auto flex flex-wrap gap-1"
-                    >
-                        <Badge
-                            v-for="item in set.curriculum"
-                            :key="`${item.volume}-${item.lesson}`"
-                            variant="outline"
-                            >{{ curriculumLabel(item) }}</Badge
-                        >
-                        <Badge
-                            v-for="tag in set.tags"
-                            :key="tag"
-                            variant="outline"
-                            >#{{ tag }}</Badge
-                        >
-                    </div>
-                </Link>
+                <SetCard :set="set" />
             </li>
         </ul>
 

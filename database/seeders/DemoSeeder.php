@@ -45,6 +45,8 @@ class DemoSeeder extends Seeder
 
         $teacher = $this->user('teacher@example.com', '示範老師', 'teacher');
         $colleague = $this->user('colleague@example.com', '示範同事', 'teacher');
+        // 共備庫中點示範同事的名字會進到他的創作者頁面（T-20）
+        $colleague->update(['school' => '示範國小', 'teaching_languages' => ['id'], 'bio' => '教印尼語，喜歡用遊戲帶詞彙。這裡的題組都由教材改編，歡迎複製改編。']);
         $curator = $this->user('curator@example.com', '審核者', 'curator');
         $curator->reviewLanguages()->sync(['id', 'vi']);
 

@@ -29,6 +29,7 @@
   - 人氣統計（SPEC A-04）：`App\Curriculum\PlayCounts` 把試玩的計次累加到 `curriculum_plays`（一課、一個遊戲、台灣時間的一天一列，只有次數），並和課堂的作答數（直接用教材題組建立的活動）一起彙總；後台頁面是 `app/Filament/Pages/PlayStats.php`，管理員與審核者都能看。
   - `app/Filament/Pages/ImportCurriculum.php`：後台的「匯入教材」頁，只有管理員能用：上傳詞彙的 JSON、批次上傳插圖，都先預覽再寫入。審核者修正過的課以 `CurriculumImporter::editedOnSite()` 判斷（最近一次匯入詞彙之後有沒有教材帳號以外的版本，`curriculum_refs.imported_revision`）；寫入教材題組的程式要以教材帳號產生版本，否則會被當成修正。
   - 帳號（SPEC T-01、T-03、第 5 節、A-05）：老師用 Google 登入（Socialite，`App\Http\Controllers\Auth\GoogleLoginController`），帳號的對應與建立在 `App\Auth\GoogleAccounts`：同一個 Google 帳號 → 同一個 email 且還沒連結 Google 的帳號 → 建立新的老師。Fortify 只留密碼登入、雙重驗證與 passkey，給有密碼的帳號（管理員、示範帳號），沒有註冊、重設密碼與驗證信；Filament 沒有自己的登入頁，沒登入時導到 `/login`。設定頁的「安全性」只給有密碼的帳號（`EnsureUserHasPassword`）。刪除帳號是匿名化（`App\Auth\AccountDeletion`），不真的刪除使用者；管理員停用的帳號（`users.disabled_at`）由 `EnsureAccountIsActive` 登出，他的活動、分享連結與開放資料都回 404，公開題組不列在共備庫（`Set::listed()`、`Set::isListed()`、`Set::sharedBy()`）。新增列出公開題組或播放活動的地方時，要一併排除停用的擁有者。
+  - 創作者資料與創作者頁面（SPEC T-20）：設定頁 `/settings/creator`（`Settings\CreatorProfileController`）填署名名稱與網址、預設授權、學校、教的語言、簡介。平台把老師寫成作者的地方一律用 `User::author()`（`{name, url?}`）與 `User::attributionName()`，不要直接用 `$user->name`：`Set::effectiveAuthors()`、`SetCopier`、`SetWriter::creditEditor()`、`MediaCredits::authors()`、`AccountDeletion`；新題組的預設授權用 `User::defaultLicense()`。創作者頁面 `/teachers/{public_id}`（`TeacherProfileController`，只給登入的老師；`User::hasProfilePage()` 排除停用、匿名化與教材帳號，`profileUrl()` 給連結），貢獻統計在 `app/Profile/`：`TeacherStats` 算公開題組的數字，`Contributions` 記錄每天的版本數（`contributions` 表，由 `SetRevisionRecorder` 累計，因為版本會被清除）並算出日曆，兩者都只算 `Set::listed()` 的題組。共備庫與創作者頁面的卡片共用 `App\Corpus\SetCards` 與 `components/kancil/SetCard.vue`。
   - 播放頁的檢舉（SPEC S-07）：`POST /api/v1/activities/{activity}/reports` 存進 `reports`，寄信給管理員（`ActivityReported`，寄不出去不影響），後台的「檢舉」（`app/Filament/Resources/Reports`）處理。
   - 工作階段存在資料庫，但不記錄 IP 與瀏覽器（`App\Support\SessionHandler` 取代 `database` driver）。
   - 播放頁以外的頁面都不能被其他網站放進 iframe（`App\Http\Middleware\DenyFraming`，全域，因為 Filament 不經過 web 群組）；活動與教材試玩的播放頁（路由 `play`、`curriculum.play`）例外，新增學生播放用的路由時要加進去。HSTS 與 `nosniff` 在 `docker/Caddyfile`。
@@ -61,7 +62,7 @@
   - 一個 commit 同時改到遊戲與平台時（例如改了 `games-sdk` 與用到它的遊戲），先 commit submodule，再在這裡把平台的修改與新的指標放在同一個 commit。
   - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。
 - 推上 GitHub 時，先推三個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。三個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
-- Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）。
+- Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）；產生的程式在 `App\Support\Ulid::make()`，不是主鍵的公開識別碼（`users.public_id`）也用它。
 
 ## 必守規則
 

@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Media\UploadQuota;
+use App\Models\Set;
 use App\Models\User;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -44,6 +47,22 @@ class UserForm
                     ->placeholder(fn (): string => '預設 '.config('kancil.upload_quota_mb').' MB')
                     ->helperText(fn (?User $record): string => '留空就用預設值，0 表示不能再上傳；管理員不受限制。'
                         .($record ? '目前'.UploadQuota::of($record)->describe().'。' : '')),
+                // 創作者資料（docs/SPEC.md T-20）只有老師自己能在設定頁修改，這裡只看
+                Section::make('創作者資料')
+                    ->description('老師在設定頁填的署名與簡介，只能在這裡檢視。')
+                    ->collapsed()
+                    ->columnSpanFull()
+                    ->schema([
+                        TextInput::make('attribution_name')->label('署名名稱')->disabled()->placeholder('同姓名'),
+                        TextInput::make('attribution_url')->label('網址')->disabled(),
+                        TextInput::make('school')->label('學校')->disabled(),
+                        TextInput::make('default_license')->label('預設授權')->disabled()->placeholder(Set::LICENSES[0]),
+                        TextInput::make('teaching_languages')
+                            ->label('教的語言')
+                            ->disabled()
+                            ->formatStateUsing(fn (?array $state): string => implode('、', $state ?? [])),
+                        Textarea::make('bio')->label('簡介')->disabled()->rows(3),
+                    ]),
             ]);
     }
 }

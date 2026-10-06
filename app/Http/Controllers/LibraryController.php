@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Corpus\SetCards;
 use App\Models\CurriculumRef;
 use App\Models\Language;
 use App\Models\Set;
@@ -45,29 +46,11 @@ class LibraryController extends Controller
                     ->orWhereHas('entries.item', fn (Builder $items) => $items
                         ->where('text', 'like', $like)
                         ->orWhere('translation_zh', 'like', $like)));
-            })
-            ->with(['owner:id,name', 'language', 'curriculumRefs', 'textbookLesson'])
-            ->withCount('entries')
-            ->latest('updated_at')
-            ->paginate(24)
-            ->withQueryString()
-            ->through(fn (Set $set) => [
-                'id' => $set->id,
-                'kind' => $set->kind,
-                'title' => $set->title,
-                'description' => $set->description,
-                'language' => $set->language->name_zh,
-                'owner' => $set->owner->name,
-                'entries_count' => $set->entries_count,
-                'curriculum' => $set->curriculumRefs->map(fn (CurriculumRef $ref) => ['volume' => $ref->volume, 'lesson' => $ref->lesson])->all(),
-                'tags' => $set->tags ?? [],
-                'forked' => $set->forked_from_id !== null,
-                'textbook' => $set->isTextbook(),
-                'updated_at' => $set->updated_at?->toIso8601String(),
-            ]);
+            });
 
         return Inertia::render('library/Index', [
-            'sets' => $sets,
+            // 卡片的形狀與創作者頁面相同（App\Corpus\SetCards）
+            'sets' => SetCards::paginate($sets),
             'filters' => (object) array_filter($filters, fn ($value) => $value !== null),
             'languages' => $languages,
             'curriculumRefs' => CurriculumRef::query()

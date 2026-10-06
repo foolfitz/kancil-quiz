@@ -116,7 +116,7 @@ class CurriculumController extends Controller
                 ]),
             'mySets' => $user === null ? [] : $user->sets()->whereHas('curriculumRefs', fn ($query) => $query->whereKey($ref->id))->latest('updated_at')->get(['id', 'title']),
             'shared' => $user === null ? [] : (clone $shared)
-                ->with('owner:id,name')
+                ->with('owner')
                 ->withCount('entries')
                 ->latest('updated_at')
                 ->limit(12)
@@ -125,7 +125,7 @@ class CurriculumController extends Controller
                     'id' => $item->id,
                     'kind' => $item->kind,
                     'title' => $item->title,
-                    'owner' => $item->owner->name,
+                    'owner' => $item->owner->attributionName(),
                     'entries_count' => $item->entries_count,
                 ]),
             'sharedCount' => $shared->count(),

@@ -46,7 +46,9 @@ class SetViewData
                 // 教材題組（3.6）：連到那一課的教材頁
                 'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
                 'authors' => array_column($set->effectiveAuthors(), 'name'),
-                'owner' => $set->owner->name,
+                // 擁有者以署名名稱顯示，有創作者頁面時連過去（T-20）
+                'owner' => $set->owner->attributionName(),
+                'owner_url' => $set->owner->profileUrl(),
                 'visibility' => $set->visibility,
                 'review_status' => $set->review_status,
                 'revision' => $set->currentRevision?->getAttribute('number'),
@@ -54,7 +56,7 @@ class SetViewData
                 'forked_from' => $source === null ? null : [
                     'id' => $source->id,
                     'title' => $source->title,
-                    'owner' => $source->owner->name,
+                    'owner' => $source->owner->attributionName(),
                     'viewable' => ! $source->trashed() && $gate->allows('view', $source),
                 ],
             ],

@@ -12,6 +12,8 @@ import type { Language, SetKind, TextbookLesson } from '@/types/kancil';
 const props = defineProps<{
     languages: Language[];
     licenses: string[];
+    // 創作者資料的預設授權（docs/SPEC.md T-20）
+    license: string;
     language: string;
     textbook: TextbookLesson[];
     preset: { volume: number | null; lesson: number | null };
@@ -31,7 +33,7 @@ const form = useForm({
     title: '',
     description: '',
     language_code: props.language,
-    license: 'CC-BY-4.0',
+    license: props.license,
     textbook_entries: [] as string[],
 });
 

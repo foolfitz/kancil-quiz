@@ -6,6 +6,7 @@ use App\Models\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $width
  * @property int|null $height
  * @property string|null $thumbnail_path
- * @property list<array{name: string}>|null $authors
+ * @property list<array{name: string, url?: string}>|null $authors
  * @property string|null $license
  * @property string|null $source
  * @property int $uploaded_by
@@ -44,6 +45,16 @@ class Media extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    /**
+     * 引用這個媒體的詞條（詞彙組）；問答組的媒體以 ID 寫在 SetEntry 的 payload 中。
+     *
+     * @return BelongsToMany<Item, $this>
+     */
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'item_media');
     }
 
     public function url(): string

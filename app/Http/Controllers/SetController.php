@@ -64,6 +64,8 @@ class SetController extends Controller
         return Inertia::render('sets/Create', [
             'languages' => $languages,
             'licenses' => Set::LICENSES,
+            // 創作者資料的預設授權（docs/SPEC.md T-20）
+            'license' => $request->user()->defaultLicense(),
             'language' => $language,
             // 換語言時以 partial reload 重新取得
             'textbook' => fn () => TextbookData::lessons($language),
@@ -143,7 +145,7 @@ class SetController extends Controller
                 'language_code' => $set->language_code,
                 'license' => $set->license,
                 'faces' => $set->faces,
-                'owner' => $set->owner->name,
+                'owner' => $set->owner->attributionName(),
                 'tags' => $set->tags ?? [],
                 'curriculum_ref_ids' => $set->curriculumRefs()->pluck('curriculum_refs.id'),
                 'revision' => $set->currentRevision?->number,

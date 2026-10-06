@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editCreator } from '@/routes/creator';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
@@ -17,6 +18,10 @@ const sidebarNavItems = computed<NavItem[]>(() => [
     {
         title: '個人資料',
         href: editProfile(),
+    },
+    {
+        title: '創作者資料',
+        href: editCreator(),
     },
     ...(page.props.auth.hasPassword
         ? [{ title: '安全性', href: editSecurity() }]

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\CreatorProfileController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Middleware\EnsureUserHasPassword;
@@ -12,6 +13,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 創作者資料（docs/SPEC.md T-20）：署名、預設授權、學校、教的語言、簡介
+    Route::get('settings/creator', [CreatorProfileController::class, 'edit'])->name('creator.edit');
+    Route::patch('settings/creator', [CreatorProfileController::class, 'update'])->name('creator.update');
 
     // 密碼、雙重驗證與 passkey：只給有密碼的帳號（管理員）
     Route::middleware(EnsureUserHasPassword::class)->group(function () {

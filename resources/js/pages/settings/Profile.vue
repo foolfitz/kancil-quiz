@@ -41,7 +41,7 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="個人資料"
-            description="姓名會顯示在你公開的題組與上傳的檔案上"
+            description="帳號的姓名。公開的題組與上傳的檔案上的署名預設也是它，可以在「創作者資料」另外設定。"
         />
 
         <Form

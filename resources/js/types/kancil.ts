@@ -224,6 +224,50 @@ export interface TextbookLesson {
     }[];
 }
 
+// 共備庫與創作者頁面上的題組卡片（app/Corpus/SetCards.php，T-13、T-20）
+export interface SetCardData {
+    id: string;
+    kind: SetKind;
+    title: string;
+    description: string | null;
+    language: string;
+    owner: string;
+    owner_url: string | null;
+    entries_count: number;
+    curriculum: { volume: number; lesson: number }[];
+    tags: string[];
+    forked: boolean;
+    textbook: boolean;
+    updated_at: string | null;
+}
+
+// 創作者頁面（app/Http/Controllers/TeacherProfileController.php，T-20）
+export interface TeacherProfile {
+    id: string;
+    name: string;
+    url: string | null;
+    school: string | null;
+    languages: Language[];
+    bio: string | null;
+}
+
+// 貢獻統計（app/Profile/TeacherStats.php）：都只算公開的題組
+export interface TeacherStats {
+    public_sets: number;
+    entries: number;
+    media: number;
+    copies: number;
+    activities: number;
+}
+
+// 貢獻日曆（app/Profile/Contributions.php）：from 是星期日，days 只列有貢獻的日子（台灣時間）
+export interface ContributionCalendar {
+    from: string;
+    to: string;
+    total: number;
+    days: Record<string, { revisions: number; published: number }>;
+}
+
 // 公開頁面的標題、描述與連結預覽（app/Support/PageMeta.php）。伺服器也把同樣的內容寫在 <head>，
 // 讓搜尋引擎與 LINE 等的連結預覽不必執行 JS 就讀得到。
 export interface PageMeta {
@@ -270,7 +314,9 @@ export interface SetView {
     tags: string[];
     curriculum: { volume: number; lesson: number; title_zh: string | null }[];
     authors: string[];
+    // 擁有者的署名名稱；有創作者頁面（T-20）時 owner_url 是它的網址
     owner: string;
+    owner_url: string | null;
     visibility: 'private' | 'unlisted' | 'public';
     review_status: 'none' | 'pending' | 'approved' | 'rejected';
     revision: number | null;

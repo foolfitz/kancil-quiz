@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $translation_zh
  * @property list<string>|null $tags
  * @property int $owner_id
- * @property list<array{name: string}>|null $authors
+ * @property list<array{name: string, url?: string}>|null $authors
  * @property string|null $license
  * @property string|null $source
  * @property string|null $forked_from_id

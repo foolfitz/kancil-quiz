@@ -155,7 +155,19 @@ const dateTime = (iso: string) =>
             class="grid gap-x-6 gap-y-2 rounded-xl border p-4 text-sm sm:grid-cols-[auto_1fr]"
         >
             <dt class="text-muted-foreground">作者</dt>
-            <dd>{{ set.authors.join('、') }}</dd>
+            <dd>
+                <!-- 擁有者的名字連到創作者頁面（T-20）；複製來源的作者、教材的作者只顯示名字 -->
+                <template v-for="(author, i) in set.authors" :key="i"
+                    ><template v-if="i > 0">、</template
+                    ><Link
+                        v-if="author === set.owner && set.owner_url"
+                        :href="set.owner_url"
+                        class="underline-offset-4 hover:underline"
+                        data-test="set-owner"
+                        >{{ author }}</Link
+                    ><template v-else>{{ author }}</template></template
+                >
+            </dd>
             <dt class="text-muted-foreground">授權</dt>
             <dd>{{ set.license }}</dd>
             <template v-if="set.curriculum.length > 0">

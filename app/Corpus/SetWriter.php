@@ -115,7 +115,8 @@ class SetWriter
     }
 
     /**
-     * 老師修改複製來的詞條時，把自己加進該詞條的作者（docs/SPEC.md 第 5 節）。
+     * 老師修改複製來的詞條時，把自己加進該詞條的作者（docs/SPEC.md 第 5 節），用創作者資料的署名名稱與網址
+     * （User::author()，T-20）。寫下的是當時的署名，之後改了署名不會回頭改。
      * 審核者修正別人的題組（C-03）不算作者，由題組版本記錄是誰修改的。
      */
     private function creditEditor(Item $item, Set $set, User $by): void
@@ -125,8 +126,8 @@ class SetWriter
         }
 
         $authors = $item->authors ?? [];
-        if (! in_array($by->name, array_column($authors, 'name'), true)) {
-            $item->authors = [...$authors, ['name' => $by->name]];
+        if (! in_array($by->attributionName(), array_column($authors, 'name'), true)) {
+            $item->authors = [...$authors, $by->author()];
         }
     }
 

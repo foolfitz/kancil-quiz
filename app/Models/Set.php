@@ -31,7 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $license
  * @property string|null $current_revision_id
  * @property list<string>|null $tags
- * @property list<array{name: string}>|null $authors 複製來源的作者，不含目前的擁有者
+ * @property list<array{name: string, url?: string}>|null $authors 複製來源的作者，不含目前的擁有者
  * @property string|null $share_token
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -106,9 +106,10 @@ class Set extends Model
 
     /**
      * 交換格式的 authors：複製來源的作者在前，目前的擁有者加在最後（docs/SPEC.md 第 5 節）。
+     * 擁有者以創作者資料的署名名稱與網址列出（User::author()，T-20），改了署名下一次匯出就跟著變。
      * 教材題組只列資料檔中的作者，不列擁有它的教材帳號（3.6）。
      *
-     * @return list<array{name: string}>
+     * @return list<array{name: string, url?: string}>
      */
     public function effectiveAuthors(): array
     {
@@ -117,8 +118,8 @@ class Set extends Model
             return $authors;
         }
         // 刪除帳號的老師：刪除時已經把名字寫進 authors（App\Auth\AccountDeletion），不再加上「已刪除的使用者」
-        if (! $this->owner->isAnonymized() && ! in_array($this->owner->name, array_column($authors, 'name'), true)) {
-            $authors[] = ['name' => $this->owner->name];
+        if (! $this->owner->isAnonymized() && ! in_array($this->owner->attributionName(), array_column($authors, 'name'), true)) {
+            $authors[] = $this->owner->author();
         }
 
         return $authors;

@@ -17,6 +17,7 @@ use App\Http\Controllers\SetExportController;
 use App\Http\Controllers\SetPublicationController;
 use App\Http\Controllers\SetReviewController;
 use App\Http\Controllers\SetShareController;
+use App\Http\Controllers\TeacherProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CurriculumController::class, 'home'])->name('home');
@@ -55,6 +56,8 @@ Route::middleware('auth')->group(function () {
     Route::post('sets/{set}/publication', [SetPublicationController::class, 'store'])->name('sets.publication.store');
     Route::delete('sets/{set}/publication', [SetPublicationController::class, 'destroy'])->name('sets.publication.destroy');
     Route::get('library', LibraryController::class)->name('library');
+    // 創作者頁面（docs/SPEC.md T-20）：網址用 public_id（ULID），不暴露遞增的 id
+    Route::get('teachers/{teacher:public_id}', [TeacherProfileController::class, 'show'])->name('teachers.show');
     Route::get('reviews', [SetReviewController::class, 'index'])->name('reviews.index');
     Route::post('sets/{set}/review', [SetReviewController::class, 'store'])->name('sets.review');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');

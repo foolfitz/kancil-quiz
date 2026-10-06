@@ -31,7 +31,7 @@ class MediaProcessor
      * 統一轉成單聲道 AAC（.m4a），並做音量標準化（EBU R128 loudnorm），讓 iPad 能播放、各老師錄的音量一致。
      * 瀏覽器錄音（T-06）也走這裡：Chrome 錄的是 webm（Opus），Safari 是 mp4（AAC），由 ffmpeg 判斷格式。
      *
-     * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
+     * @param  array{authors?: list<array{name: string, url?: string}>|null, license?: string|null, source?: string|null}  $attribution
      */
     public function audio(UploadedFile $file, User $user, array $attribution = []): Media
     {
@@ -76,7 +76,7 @@ class MediaProcessor
     /**
      * 轉成長邊最多 1024 px 的 WebP，另產生縮圖。
      *
-     * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
+     * @param  array{authors?: list<array{name: string, url?: string}>|null, license?: string|null, source?: string|null}  $attribution
      */
     public function image(UploadedFile $file, User $user, array $attribution = []): Media
     {
@@ -86,7 +86,7 @@ class MediaProcessor
     /**
      * 同 image()，來源是本機檔案，例如匯入教材的插圖（App\Curriculum\CurriculumImporter）。
      *
-     * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
+     * @param  array{authors?: list<array{name: string, url?: string}>|null, license?: string|null, source?: string|null}  $attribution
      */
     public function imageFromPath(string $path, User $user, array $attribution = []): Media
     {
@@ -126,7 +126,7 @@ class MediaProcessor
     /**
      * 檔名是隨機字串，不可猜測（docs/SPEC.md 第 9 節）。
      *
-     * @param  array{authors?: list<array{name: string}>|null, license?: string|null, source?: string|null}  $attribution
+     * @param  array{authors?: list<array{name: string, url?: string}>|null, license?: string|null, source?: string|null}  $attribution
      * @param  array<string, mixed>  $attributes
      */
     private function store(string $localPath, string $extension, User $user, array $attribution, array $attributes): Media

@@ -13,8 +13,10 @@ use Illuminate\Support\Facades\DB;
  * - 名字改成「已刪除的使用者」，清掉 email、Google ID、密碼、雙重驗證、passkey 與角色，從此不能登入。
  * - 自己的活動，以及沒有公開的題組（私人、用分享連結的）先 soft delete，30 天後由 kancil:prune
  *   連同學生的作答一起刪除（App\Support\Pruner）。
- * - 已經公開到共備庫的題組留下，署名照舊：先把名字寫進題組的 authors，之後不再列出「已刪除的使用者」
- *   （Set::effectiveAuthors()）。詞條與媒體的署名本來就另外存在它們身上。
+ * - 已經公開到共備庫的題組留下，署名照舊：先把署名（創作者資料的署名名稱與網址，User::author()）寫進
+ *   題組的 authors，之後不再列出「已刪除的使用者」（Set::effectiveAuthors()）。詞條與媒體的署名本來就另外
+ *   存在它們身上。
+ * - 創作者資料（署名、預設授權、學校、教的語言、簡介，T-20）全部清掉，創作者頁面回 404。
  */
 class AccountDeletion
 {
@@ -28,8 +30,8 @@ class AccountDeletion
 
             $user->sets()->where('visibility', 'public')->get()->each(function (Set $set) use ($user) {
                 $authors = $set->authors ?? [];
-                if (! in_array($user->name, array_column($authors, 'name'), true)) {
-                    $set->forceFill(['authors' => [...$authors, ['name' => $user->name]]])->save();
+                if (! in_array($user->attributionName(), array_column($authors, 'name'), true)) {
+                    $set->forceFill(['authors' => [...$authors, $user->author()]])->save();
                 }
             });
 
@@ -50,6 +52,7 @@ class AccountDeletion
                 'two_factor_recovery_codes' => null,
                 'two_factor_confirmed_at' => null,
                 'anonymized_at' => now(),
+                ...array_fill_keys(User::PROFILE_FIELDS, null),
             ])->save();
         });
     }
