@@ -24,7 +24,13 @@ test.describe.serial('射氣球', () => {
         await page.goto('/sets');
         await page.getByRole('link', { name: /水果（越南語）/ }).click();
         await page.getByRole('link', { name: /選遊戲、建立活動/ }).click();
-        playPath = await createActivity(page, /射氣球/);
+        // 學生要射 10 箭，每一箭都要等氣球飄上來：遊戲時間設成最長的 180 秒，才不會射到一半就時間到
+        playPath = await createActivity(page, /射氣球/, async () => {
+            const seconds = page.getByLabel('遊戲時間（秒）');
+            await seconds.fill('180');
+            // 數字欄位在失焦（change）時才寫進表單
+            await seconds.press('Tab');
+        });
 
         expect(errors).toEqual([]);
     });
@@ -98,7 +104,7 @@ test.describe.serial('射氣球', () => {
         await expect(stars).toHaveText('★ 11');
 
         // 時間到
-        await page.clock.fastForward('01:00');
+        await page.clock.fastForward('03:00');
         await expect(page.locator('.kq-archer__banner')).toContainText(
             '時間到！',
         );

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # 正式環境的映像檔（docs/deploy.md）：FrankenPHP 內建 Caddy，設定網域就自動取得 HTTPS 憑證。
-# 建置前要先取得迷宮問答的 submodule：git submodule update --init
+# 建置前要先取得遊戲的 submodule：git submodule update --init
 
 ARG PHP_IMAGE=dunglas/frankenphp:1-php8.4-trixie
 

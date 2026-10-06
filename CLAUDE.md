@@ -14,7 +14,7 @@
 | `deck` | 題組轉 `Round[]`、干擾選項、相容檢查、看起來一樣的題目與選項（`duplicateFaces()`，編輯頁的提醒）、成績判定 | 7.3、7.4 |
 | `games-sdk` | 遊戲模組介面 | 7.2 |
 | `player` | 遊戲宿主，也可建置成獨立播放器 | 7.2、10.2 |
-| `games/*` | 各個遊戲，三個都是 git submodule（見下方）：`maze-quiz`（迷宮問答）、`kancil-games/*`（選擇題、配對、打地鼠、射氣球；`arcade` 不是遊戲，是打地鼠、射氣球共用的規則）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
+| `games/*` | 各個遊戲，兩個 git submodule（見下方）：`kancil-games/*`（迷宮問答、選擇題、配對、打地鼠、射氣球；`arcade` 不是遊戲，是打地鼠、射氣球共用的規則）、`kancil-materials/*`（字卡、圖卡牆、轉盤） | 7.5 |
 
 - 學生端播放頁不走 Inertia：`/p/{activity}` 由 `resources/views/player.blade.php` 載入獨立的 Vite 入口 `resources/js/player.ts`。老師的建立前預覽與訪客的教材試玩（`/curriculum/{language}/{volume}/{lesson}/play/{game}`，SPEC S-06）也用這一頁，直接帶入播放格式；試玩是 `startPlayer({ trial: true })`，不建立活動也不呼叫作答 API，只把開始與玩完送到計次的 API（`playsUrl`，`packages/player/src/plays.ts`，同一個分頁只算第一次）。試玩頁的開始與結果畫面列出同一課的其他遊戲（`otherGames`）：controller 給全部遊戲的相容條件（`#kq-trial-games`），`resources/js/player.ts` 用 `check()` 只留下能玩的。
 - 不需登入的公開頁面（首頁、`/curriculum` 與一課，SPEC S-06）：
@@ -52,17 +52,12 @@
 - 畫面大小（SPEC S-02、7.1）：遊戲的版面以自己的根元素為 container（`container-type: size`），用 `@container` 區分手機（寬小於 600px 或高小於 480px）、平板與投影，不用視窗的 media query。`@container` 裡的規則只套用在 container 的後代，改不到根元素本身：會隨尺寸改變的內距、間距要放在裡面一層（配對、選擇題、字卡、打地鼠、射氣球的 `.kq-match__layout`、`.kq-quiz__layout`、`.kq-cards__layout`、`.kq-whack__layout`、`.kq-archer__layout`）。宿主的 `.kq-player__stage` 固定為畫面的高度（`100dvh` 扣掉 safe area），不隨遊戲的內容撐高，放不下的由遊戲自己捲動；一頁的內容要盡量在畫面內，配對放不下時（高度或寬度超出，手機橫放時題目排成一排）由 `fitPairsPerPage()` 減少每頁的組數（最少 3），遊戲區的大小改變時（ResizeObserver）以 `MatchSession.refit()` 重新分頁、進度保留。手機的 E2E 只用不必登入的教材試玩頁（`tests/e2e/phone.spec.ts`，`*-phone`、`*-phone-landscape` 兩個 project），手指拖曳用 `helpers.ts` 的 `touchDragTo()`（Chromium 以 CDP 送真正的觸控事件）。
 - 遊戲把不碰 DOM 的進行狀態寫成 `src/session.ts`，用 Vitest 測試；畫面與觸控由 E2E 測試（`tests/e2e/`，共用的檢查在 `helpers.ts`）。計分的遊戲要有一個測試，確認遊戲的 `correct` 與 `@kancil-quiz/deck` 的 `judge()` 在所有 fixture 上一致（SPEC 7.6）。
 - `answered` 事件的 `presented`：`mcq` 由宿主補上；配對的右側卡片分頁出現，由遊戲提供同一頁的卡片（SPEC 7.2）。伺服器限制每筆最多 12 個。
-- 迷宮問答 `packages/games/maze-quiz` 是 git submodule，正本是獨立的 `maze-quiz` repo（MIT，SPEC 10.2），本機放在本 repo 旁邊的 `../maze-quiz`：
-  - 改迷宮時固定在 `../maze-quiz` 修改、測試（`npm test`、`npm run check`）、commit，再回到這裡執行 `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz`，跑完這裡的檢查後 commit 新的 submodule 指標。不要直接在 submodule 目錄裡改，兩個工作目錄容易搞混；忘了更新指標，平台會停在舊版的迷宮。
-  - 它單獨執行時用 `vendor/` 中 `games-sdk` 與 `text` 的副本。改了這兩個套件，要把新版複製到 `../maze-quiz/vendor/` 並 commit，再更新指標；`packages/games/maze-quiz.test.ts` 會檢查副本與正本相同。
-  - 迷宮與 `judge()` 的一致測試（SPEC 7.6）也在 `packages/games/maze-quiz.test.ts`，因為要用到 `deck` 與 fixture。它直接 import 迷宮的內部模組（`src/session.ts` 等），迷宮重構時要一起改。
-  - 這裡的 `vp check`、`vue-tsc` 與 Vitest 也會涵蓋 submodule 的檔案，所以迷宮的格式設定與這裡相同。
-- 內建的遊戲與互動教材是另外兩個 git submodule：`packages/games/kancil-games`（`quiz`、`match-up`、`whack-a-mole`、`balloon-archer`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本在 GitHub 的 `foolfitz/kancil-games`、`foolfitz/kancil-materials`（AGPL-3.0-or-later，SPEC 10.2），submodule 的 `origin` 直接指向 GitHub（`.gitmodules` 的相對網址，`git submodule sync` 會照這個 repo 的 `origin` 換算）。它們依附平台，沒有自己的建置與測試設定，所以**與迷宮相反，直接在這裡的 submodule 目錄中改**：
+- 遊戲與互動教材是兩個 git submodule：`packages/games/kancil-games`（`maze-quiz`、`quiz`、`match-up`、`whack-a-mole`、`balloon-archer`）與 `packages/games/kancil-materials`（`flash-cards`、`card-wall`、`spin-wheel`），正本在 GitHub 的 `foolfitz/kancil-games`、`foolfitz/kancil-materials`（AGPL-3.0-or-later，SPEC 10.2），submodule 的 `origin` 直接指向 GitHub（`.gitmodules` 的相對網址，`git submodule sync` 會照這個 repo 的 `origin` 換算）。它們依附平台，沒有自己的建置與測試設定，所以**直接在這裡的 submodule 目錄中改**：
   - 動手前先 `git -C packages/games/kancil-games switch main`（`submodule update` 之後是 detached HEAD，commit 會掛在沒有分支的地方）。
-  - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），再回到這裡 commit 新的 submodule 指標。推送是 `git -C packages/games/kancil-games push`，直接推上 GitHub。本機旁邊的 `../kancil-games`、`../kancil-materials` 是拆出時的舊工作目錄，已經不用。
+  - 改完在這裡跑檢查與 E2E，在 submodule 目錄中 commit（訊息的格式與這裡相同），再回到這裡 commit 新的 submodule 指標。推送是 `git -C packages/games/kancil-games push`，直接推上 GitHub。本機旁邊的 `../kancil-games`、`../kancil-materials`、`../maze-quiz` 是拆出（迷宮是併入）前的舊工作目錄，已經不用；迷宮問答原本是獨立的 `maze-quiz` repo（MIT、有示範頁），2026-10 以 `git subtree` 併入 `kancil-games`，歷史保留。
   - 一個 commit 同時改到遊戲與平台時（例如改了 `games-sdk` 與用到它的遊戲），先 commit submodule，再在這裡把平台的修改與新的指標放在同一個 commit。
   - 新增內建的遊戲：在對應的 repo 加一個目錄（計分的放 `kancil-games`，不計分的放 `kancil-materials`），workspace 與 `packages/games/manifest.test.ts` 已經涵蓋這兩層目錄。其他要接的地方見下方「新增一個遊戲」。
-- 推上 GitHub 時，先推三個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。三個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
+- 推上 GitHub 時，先推兩個遊戲 repo，再推這個 repo，否則 CI 與正式環境抓不到新的 submodule commit。兩個遊戲 repo 都要公開，CI 與正式環境的 `git clone --recurse-submodules` 不帶憑證。
 - Model 的主鍵用 `App\Models\Concerns\HasUlids`：大寫、隨機部分不遞增（活動連結本身就是存取憑證）；產生的程式在 `App\Support\Ulid::make()`，不是主鍵的公開識別碼（`users.public_id`）也用它。
 
 ## 新增一個遊戲
@@ -82,7 +77,6 @@
    - 登記：`resources/js/player.ts` 的 `games`、`packages/player/standalone/main.ts` 的 `GAMES`。
    - `npm run games:manifest`。伺服器的 `GameRegistry`、老師端選遊戲、教材試玩列出的遊戲都讀 manifest，不必另外登記。
    - 寫死遊戲數的測試跟著改：`tests/Feature/CurriculumTest.php`、`tests/Feature/TeacherFlowTest.php` 的 `has('games', N)`，`tests/e2e/standalone.spec.ts` 的 `.kq-standalone__game:enabled`。
-   - 需要改 `games-sdk`（例如新的欄位）時，迷宮的 `vendor/` 副本也要更新（見上方迷宮的說明）。
 3. **E2E**：
    - `tests/e2e/<id>.spec.ts`：iPad 直向、橫向與投影。計分的遊戲由老師建立活動、學生玩完看結果、老師看成績頁；越南文的字不被截切（`expectNothingClipped()`）。
    - `tests/e2e/phone.spec.ts`：手機直向與橫放用教材試玩頁，內容都在畫面內、沒有水平捲軸。
@@ -128,8 +122,7 @@
 | `npm run schema:types` | 從 JSON Schema 重新產生 TS 型別 |
 | `npm run schema:check` | 檢查產生的型別是否與 schema 同步 |
 | `composer test` | Pint、PHPStan、PHPUnit |
-| `git -c protocol.file.allow=always submodule update --remote packages/games/maze-quiz` | 把迷宮更新到 `../maze-quiz` 的最新 commit，之後要 commit 新的指標 |
-| `git -c protocol.file.allow=always submodule update --init` | clone 之後或切換 commit 之後，把三個 submodule 都對到這個 repo 記錄的版本 |
+| `git -c protocol.file.allow=always submodule update --init` | clone 之後或切換 commit 之後，把兩個 submodule 都對到這個 repo 記錄的版本 |
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查（GitHub Actions 的 `ci` job；E2E 在 `e2e` job 另外跑，見下方「環境」） |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password（在登入頁下方的「管理員：用 email 與密碼登入」）。本機沒有設定 `GOOGLE_CLIENT_ID` 時不顯示 Google 登入 |
@@ -146,7 +139,7 @@
 - PHP 8.4 以上，需要 `intl`、`pdo_sqlite`、`gd`（含 WebP）、`zip` 擴充，以及 `ffmpeg`；Node 22 以上。
 - 上傳的媒體放在 `public` disk，需要 `php artisan storage:link`（`composer setup` 會執行）。
 - 執行 Playwright 的 WebKit（iPad Safari）需要系統套件：`npx playwright install-deps webkit`，之後設定 `E2E_WEBKIT=1`。不要在前面加 `sudo`：`npx` 不在 sudo 的 PATH 中；Playwright 會自己用 sudo 切換成 root 執行 apt，會要求輸入密碼。
-- submodule 的網址是本機路徑時（本機的這份 repo，或從本機路徑 clone 的），git 2.38 起 submodule 的 clone 與 fetch 都要加 `-c protocol.file.allow=always`，例如上面的 `submodule update --remote`、`submodule update --init`；從 GitHub clone 的不需要。
+- submodule 的網址是本機路徑時（本機的這份 repo，或從本機路徑 clone 的），git 2.38 起 submodule 的 clone 與 fetch 都要加 `-c protocol.file.allow=always`，例如上面的 `submodule update --init`；從 GitHub clone 的不需要。
 - `docs/` 與 `CLAUDE.md` 排除在 `vp fmt` 之外，因為它會把 Markdown 表格補滿空白、撐得很寬。
 - GitHub Actions（`.github/workflows/tests.yml`）在每次 push 到 `main` 與 PR 時跑兩個 job：`ci` 執行 `composer ci:check`；`e2e` 執行 `composer setup`、`npx playwright install --with-deps chromium`、`npx playwright test --reporter=list,html`，失敗時把 `playwright-report/`（含 trace 與截圖）與 `test-results/` 上傳成 artifact，在該次 workflow 的 Summary 下載。只跑 Chromium：Linux 上的 WebKit 和 iPad 的 Safari 仍有差異，又要多一倍時間，WebKit 照舊在本機跑。action 都以 commit 的 SHA 固定並註明版本，更新時用 `git ls-remote https://github.com/<owner>/<repo> refs/tags/<tag>` 查 SHA，不要用猜的。
 - 正式環境的映像檔（`Dockerfile`）：FrankenPHP 加上 PHP 擴充與 ffmpeg，PHP 設定在 `docker/php.ini`，Caddy 在 `docker/Caddyfile`。新增 PHP 擴充或系統套件時兩邊（本機與 `Dockerfile`）都要裝。`.dockerignore` 排除整個 `storage/`（本機的資料庫備份與快取不能進映像檔），映像檔中的空目錄由 `Dockerfile` 建立。
