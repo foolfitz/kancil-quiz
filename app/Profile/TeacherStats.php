@@ -43,28 +43,15 @@ class TeacherStats
     }
 
     /**
-     * 詞彙組的媒體掛在詞條上（item_media），問答組的在 payload 中以 ID 引用（SetEntry::mediaIds()），
-     * 後者要把公開問答組的題目讀出來才知道。
+     * 詞彙組的媒體掛在詞條上（item_media），問答組的在 payload 中以 ID 引用，另外記在對照表 set_entry_media
+     * （SetEntry::media()），所以不必把題目讀出來，一句 SQL 就能算。
      */
     private static function mediaInPublicSets(User $user): int
     {
-        $uploaded = Media::where('uploaded_by', $user->id);
-        if (! (clone $uploaded)->exists()) {
-            return 0;
-        }
-
-        $quizMedia = SetEntry::query()
-            ->whereNotNull('payload')
-            ->whereHas('set', fn (Builder $set) => $set->listed()->where('kind', 'quiz'))
-            ->get(['id', 'payload'])
-            ->flatMap(fn (SetEntry $entry) => $entry->mediaIds())
-            ->unique()
-            ->values();
-
-        return $uploaded
+        return Media::where('uploaded_by', $user->id)
             ->where(fn (Builder $query) => $query
                 ->whereHas('items.entries.set', fn (Builder $set) => $set->listed())
-                ->orWhereIn('id', $quizMedia))
+                ->orWhereHas('entries.set', fn (Builder $set) => $set->listed()))
             ->count();
     }
 }

@@ -10,7 +10,6 @@ use App\Models\CurriculumRef;
 use App\Models\Item;
 use App\Models\Media;
 use App\Models\Set;
-use App\Models\SetEntry;
 use App\Models\SetReview;
 use App\Models\SetRevision;
 use App\Profile\Contributions;
@@ -31,7 +30,8 @@ use Throwable;
  * 3. 老師刪除的活動、題組與詞條：刪除超過 30 天，連同活動的作答紀錄、題組的內容、版本與貢獻紀錄。
  * 4. 題組版本：不是最新版本、沒有作答或審核紀錄引用，而且被新版本取代超過 30 天。
  *    教材題組的版本不清除：「審核者修正過」要看匯入之後的版本（CurriculumImporter::editedOnSite()）。
- * 5. 媒體：沒有詞條、問答題或題組版本引用，而且上傳超過 7 天（老師可能還沒按儲存）。
+ * 5. 媒體：沒有詞條（item_media）、問答題（set_entry_media）或題組版本（content 的 JSON）引用，
+ *    而且上傳超過 7 天（老師可能還沒按儲存）。
  * 6. 媒體目錄中沒有對應資料的檔案（例如寫入資料庫失敗時留下的），同樣超過 7 天才刪。
  *
  * 資料庫在同一個交易中刪除，提交後才刪檔案。dry run 在交易中刪除、算出筆數後還原，不刪檔案。
@@ -178,22 +178,18 @@ class Pruner
      */
     private function pruneMedia(CarbonImmutable $now): array
     {
+        // 詞條的媒體在 item_media，問答題的在 set_entry_media（由 SetEntry 依 payload 同步）
         /** @var Collection<string, Media> $unused */
         $unused = Media::query()
             ->where('created_at', '<', $this->mediaGraceCutoff($now))
             ->whereNotExists(fn (Builder $query) => $query->from('item_media')
                 ->whereColumn('item_media.media_id', 'media.id'))
+            ->whereNotExists(fn (Builder $query) => $query->from('set_entry_media')
+                ->whereColumn('set_entry_media.media_id', 'media.id'))
             ->get(['id', 'path', 'thumbnail_path'])
             ->keyBy('id');
 
-        if ($unused->isNotEmpty()) {
-            SetEntry::query()->whereNotNull('payload')->select(['id', 'payload'])->lazyById(500)
-                ->each(function (SetEntry $entry) use ($unused) {
-                    $unused->forget($entry->mediaIds());
-
-                    return $unused->isNotEmpty();
-                });
-        }
+        // 題組版本是內容的快照，引用的媒體只在 JSON 中，沒有對照表，要掃過每一版
         if ($unused->isNotEmpty()) {
             DB::table('set_revisions')->select(['id', 'content'])->lazyById(200)
                 ->each(function (object $revision) use ($unused) {

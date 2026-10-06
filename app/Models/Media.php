@@ -48,13 +48,23 @@ class Media extends Model
     }
 
     /**
-     * 引用這個媒體的詞條（詞彙組）；問答組的媒體以 ID 寫在 SetEntry 的 payload 中。
+     * 引用這個媒體的詞條（詞彙組）。
      *
      * @return BelongsToMany<Item, $this>
      */
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(Item::class, 'item_media');
+    }
+
+    /**
+     * 引用這個媒體的問答題。題目的 payload 以 ID 引用媒體，對照表 set_entry_media 由 SetEntry 同步。
+     *
+     * @return BelongsToMany<SetEntry, $this>
+     */
+    public function entries(): BelongsToMany
+    {
+        return $this->belongsToMany(SetEntry::class, 'set_entry_media');
     }
 
     public function url(): string

@@ -290,7 +290,8 @@ v2 預計加入 `group`（分類）與 `sentence`（重組句子）。
 | `set_curriculum_ref` | `set_id`、`curriculum_ref_id` | 題組對應的冊課（3.6） |
 | `set_reviews` | `id`、`set_id`、`set_revision_id`、`user_id`、`action`（`requested`／`withdrawn`／`approved`／`rejected`／`unpublished`）、`note`、`created_at` | 公開申請與審核的紀錄，只新增不修改（T-12、C-01） |
 | `language_user` | `user_id`、`language_code` | 審核者負責的語言（第 2 節） |
-| `set_entries` | `id`（ULID）、`set_id`、`position`、`item_id`（vocab 用）、`payload`（json，quiz 用） | quiz 題幹與選項的媒體以 `media` 的 ID 寫在 `payload` 中 |
+| `set_entries` | `id`（ULID）、`set_id`、`position`、`item_id`（vocab 用）、`payload`（json，quiz 用） | quiz 題幹與選項的媒體以 `media` 的 ID 寫在 `payload` 中，另外記在 `set_entry_media` |
+| `set_entry_media` | `set_entry_id`、`media_id` | 問答題引用的媒體（題幹的音檔與圖片、選項的圖片），`payload` 寫入時同步，一題引用同一個媒體兩次只記一列。和 `item_media` 一樣，讓「哪些媒體用在哪裡」不必讀出每一題的 `payload`（創作者頁面的統計、媒體的清除）；題目刪除時一起刪除 |
 | `set_revisions` | `id`（ULID）、`set_id`、`number`、`content`（json，交換格式）、`content_hash`、`created_by`、`created_at` | 不可變，見 3.3 |
 | `activities` | `id`（ULID）、`set_id`、`game_id`、`game_version`、`options`（json）、`mode`（`practice`／`assignment`）、`opens_at`、`closes_at`、`owner_id` | 播放時使用題組的 `current_revision_id`。`mode` 為 `assignment` 表示學生要先輸入名字或座號（3.4） |
 | `attempts` | `id`（ULID）、`activity_id`、`set_revision_id`、`seed`、`player_label`、`token_hash`、`started_at`、`completed_at`、`correct_count`、`round_count`、`game_score`、`duration_ms` | `correct_count`、`round_count` 由伺服器計算，不計分的遊戲 `correct_count` 為 null；`game_score` 由遊戲回報，只供顯示（見 7.4）。不存 IP |

@@ -6,10 +6,15 @@ use App\Models\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * 題組中的一題。詞彙組引用詞條（item_id）；問答組的題目存在 payload，
  * 形狀與交換格式的 question 相同，只是媒體以 media 的 ID（audio_id、image_id）表示。
+ *
+ * payload 引用的媒體另外記在對照表 set_entry_media（media()），和詞條的 item_media 一樣，
+ * 創作者頁面的統計與 kancil:prune 的媒體清除才不必把平台上每一題的 payload 讀出來。
+ * 經過 model 儲存時自動同步；繞過 model 事件寫入 payload（例如 insert()）的程式要自己呼叫 syncMedia()。
  *
  * @property string $id
  * @property string $set_id
@@ -29,12 +34,40 @@ class SetEntry extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function (SetEntry $entry) {
+            // 詞彙組的詞條沒有 payload，建立時不必動對照表
+            if ($entry->wasChanged('payload') || ($entry->wasRecentlyCreated && $entry->payload !== null)) {
+                $entry->syncMedia();
+            }
+        });
+    }
+
     /**
      * @return BelongsTo<Set, $this>
      */
     public function set(): BelongsTo
     {
         return $this->belongsTo(Set::class);
+    }
+
+    /**
+     * 問答題引用的媒體，由 payload 同步（set_entry_media）；詞彙組的媒體在詞條上（Item::media()）。
+     *
+     * @return BelongsToMany<Media, $this>
+     */
+    public function media(): BelongsToMany
+    {
+        return $this->belongsToMany(Media::class, 'set_entry_media');
+    }
+
+    /**
+     * 把 payload 引用的媒體寫進對照表。同一個媒體在一題中出現兩次只記一列；刪除題目時隨外鍵 cascade 刪除。
+     */
+    public function syncMedia(): void
+    {
+        $this->media()->sync(array_values(array_unique($this->mediaIds())));
     }
 
     /**
