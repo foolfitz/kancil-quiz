@@ -4,11 +4,21 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
-import { defineConfig, lazyPlugins } from 'vite-plus';
+import {
+    defaultAllowedOrigins,
+    defineConfig,
+    lazyPlugins,
+    loadEnv,
+} from 'vite-plus';
 
 // Vitest 只測 packages/ 中不碰 Laravel 與 Vue 的套件，不需要這些外掛。laravel-vite-plugin 在 CI 環境
 // 會拒絕啟動開發伺服器（Vitest 也算），所以測試時整組不載入。
 const testing = process.env.VITEST !== undefined;
+
+// 讓區域網路的手機、平板連到開發伺服器：.env 的 DEV_LAN_HOST 填這台電腦在區域網路的 IP。Vite 改成對外開放，
+// public/hot 寫成這個 IP（手機才不會去連自己的 localhost），CORS 也放行從這個 IP 開的頁面。
+// artisan serve 另外要設 SERVER_HOST=0.0.0.0。沒有設定時照舊只開給本機。
+const lanHost = loadEnv('development', process.cwd(), 'DEV_').DEV_LAN_HOST;
 
 export default defineConfig({
     plugins: lazyPlugins(() =>
@@ -54,6 +64,20 @@ export default defineConfig({
         },
     },
     server: {
+        ...(lanHost
+            ? {
+                  host: '0.0.0.0',
+                  hmr: { host: lanHost },
+                  cors: {
+                      origin: [
+                          defaultAllowedOrigins,
+                          new RegExp(
+                              `^https?://${lanHost.replaceAll('.', '\\.')}(:\\d+)?$`,
+                          ),
+                      ],
+                  },
+              }
+            : {}),
         watch: {
             ignored: [
                 '**/.agents/**',
