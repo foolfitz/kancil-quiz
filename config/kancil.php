@@ -15,6 +15,12 @@ return [
     'vite_hot_file' => env('VITE_HOT_FILE'),
 
     /*
+    | 放在另一個反向代理後面時（docs/deploy.md），信任它傳來的 X-Forwarded-*，網址才會是 https。
+    | 逗號分隔的 IP 或網段，或 *；沒有設定時不信任任何代理。
+    */
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
     | 隱私權政策與使用條款上的營運者與聯絡方式（docs/SPEC.md 第 11 節）。架站的人要填自己的資料。
     */
     'operator' => env('KANCIL_OPERATOR'),

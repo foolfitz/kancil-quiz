@@ -166,6 +166,10 @@ docker compose exec scheduler php artisan kancil:prune
 | 系統狀態頁說備份失敗或太久沒有備份 | 主機上的 `~/backups/backup.log`；`crontab -l` 確認那一行還在；手動執行 `docker/backup.sh ~/backups` 看錯誤 |
 | 系統狀態頁說資料的清除失敗 | `docker compose logs scheduler`，以及 `docker compose exec scheduler cat storage/logs/prune.log` |
 
+## 放在另一個反向代理後面
+
+這台主機的 80、443 已經有別的服務在用時，可以讓 `app` 不對外開 port、只用 HTTP，由前面的反向代理處理 HTTPS。這時要在 `.env.production`（或不進 git 的 `compose.override.yaml` 的 `environment`）設定 `TRUSTED_PROXIES`：逗號分隔的 IP 或網段，例如 docker 網路的 `172.16.0.0/12`，或 `*`。網站只信任這些位址傳來的 `X-Forwarded-*`，產生的網址才會是 https；沒有設定時不信任任何代理。
+
 ## 換網域
 
 先用暫用網域上線時，在 `.env.production` 設定 `KANCIL_INDEXING=false`：Caddy 會在所有回應加上 `X-Robots-Tag: noindex`，搜尋引擎不會收錄這個網域，日後換網域時不會留下重複的內容。`robots.txt` 照常開放，搜尋引擎要讀得到頁面才看得到 `noindex`。分享的連結與 LINE、Facebook 的連結預覽不受影響。

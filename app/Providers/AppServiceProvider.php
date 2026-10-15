@@ -7,6 +7,7 @@ use App\Support\SessionHandler;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,12 @@ class AppServiceProvider extends ServiceProvider
             (int) config('session.lifetime'),
             $app,
         ));
+
+        // 反向代理（config/kancil.php）
+        $proxies = config('kancil.trusted_proxies');
+        if (is_string($proxies) && $proxies !== '') {
+            TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
 
         // E2E 不受本機的 Vite 開發伺服器影響（config/kancil.php）
         $hotFile = config('kancil.vite_hot_file');
