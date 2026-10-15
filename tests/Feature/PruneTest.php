@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Corpus\SetWriter;
+use App\Curriculum\CurriculumImporter;
+use App\Curriculum\Textbook;
 use App\Models\Activity;
 use App\Models\Attempt;
 use App\Models\AttemptResponse;
@@ -55,7 +57,7 @@ class PruneTest extends TestCase
         $this->travelTo($this->now->sub($ago));
     }
 
-    private function media(string $kind = 'image'): Media
+    private function media(string $kind = 'image', ?User $by = null): Media
     {
         $path = 'media/'.Str::random(32).($kind === 'image' ? '.webp' : '.m4a');
         $thumbnail = $kind === 'image' ? 'media/'.Str::random(32).'.webp' : null;
@@ -67,14 +69,14 @@ class PruneTest extends TestCase
         return Media::create([
             'kind' => $kind, 'path' => $path, 'thumbnail_path' => $thumbnail,
             'mime' => $kind === 'image' ? 'image/webp' : 'audio/mp4', 'bytes' => 1,
-            'uploaded_by' => $this->teacher->id,
+            'uploaded_by' => ($by ?? $this->teacher)->id,
         ]);
     }
 
     /**
      * @param  list<array{0: string, 1: string, 2?: string|null}>  $words  詞、中文意思、插圖的媒體 ID
      */
-    private function writeVocab(Set $set, array $words): void
+    private function writeVocab(Set $set, array $words, ?User $by = null): void
     {
         $ids = $set->entries()->orderBy('position')->pluck('id')->all();
         app(SetWriter::class)->write($set, [
@@ -83,7 +85,7 @@ class PruneTest extends TestCase
                 'id' => $ids[$i] ?? null,
                 'item' => ['text' => $word[0], 'translation_zh' => $word[1], 'image_id' => $word[2] ?? null],
             ], $words, array_keys($words)),
-        ], $this->teacher);
+        ], $by ?? $this->teacher);
         $set->refresh();
     }
 
@@ -225,17 +227,52 @@ class PruneTest extends TestCase
             ->where('revisions.3.changes.0.kind', 'created'));
     }
 
-    public function test_textbook_set_revisions_are_kept(): void
+    public function test_textbook_revisions_after_the_import_by_others_are_kept(): void
     {
+        $textbook = Textbook::owner();
+        $curator = User::factory()->create();
         $this->at('90 days');
-        $set = $this->vocabSet();
-        CurriculumRef::create(['language_code' => 'vi', 'volume' => 1, 'lesson' => 1, 'set_id' => $set->id]);
+        $set = Set::factory()->for($textbook, 'owner')->create();
+        $this->writeVocab($set, [['quả chuối', '香蕉']], $textbook);
+        $ref = CurriculumRef::create(['language_code' => 'vi', 'volume' => 1, 'lesson' => 1, 'set_id' => $set->id, 'imported_revision' => 1]);
+        $this->at('80 days');
+        $this->writeVocab($set, [['quả chuối', '香蕉'], ['quả táo', '蘋果']], $curator);
+        // 審核者的修正寫回資料檔後強制匯入：之前的修正不再需要
+        $this->at('70 days');
+        $this->writeVocab($set, [['quả chuối', '香蕉'], ['quả táo', '蘋果'], ['quả cam', '柳橙']], $textbook);
+        $ref->update(['imported_revision' => 3]);
         $this->at('60 days');
-        $this->writeVocab($set, [['quả chuối', '香蕉']]);
+        $this->writeVocab($set, [['quả chuối', '香蕉'], ['quả táo', '蘋果'], ['quả cam', '橘子']], $curator);
+        $this->at('50 days');
+        $this->writeVocab($set, [['quả chuối', '香蕉', $this->media(by: $textbook)->id], ['quả táo', '蘋果'], ['quả cam', '橘子']], $textbook);
 
         $this->prune();
 
-        $this->assertSame(2, $set->revisions()->count());
+        $this->assertSame([4, 5], $set->revisions()->orderBy('number')->pluck('number')->all());
+        $this->assertTrue(CurriculumImporter::editedOnSite($ref->refresh(), $set, $textbook));
+    }
+
+    public function test_replaced_textbook_images_are_deleted_with_the_old_revisions(): void
+    {
+        $textbook = Textbook::owner();
+        $this->at('60 days');
+        $old = $this->media(by: $textbook);
+        $new = $this->media(by: $textbook);
+        $set = Set::factory()->for($textbook, 'owner')->create();
+        $this->writeVocab($set, [['quả chuối', '香蕉', $old->id]], $textbook);
+        CurriculumRef::create(['language_code' => 'vi', 'volume' => 1, 'lesson' => 1, 'set_id' => $set->id, 'imported_revision' => 1]);
+        // 在後台換掉插圖（App\Curriculum\CurriculumImages）
+        $this->at('40 days');
+        $this->writeVocab($set, [['quả chuối', '香蕉', $new->id]], $textbook);
+
+        $result = $this->prune();
+
+        $this->assertSame(1, $result['set_revisions']);
+        $this->assertSame(1, $result['media']);
+        $this->assertModelMissing($old);
+        Storage::disk('public')->assertMissing([$old->path, (string) $old->thumbnail_path]);
+        $this->assertModelExists($new);
+        Storage::disk('public')->assertExists($new->path);
     }
 
     public function test_deleted_activities_are_removed_after_thirty_days_with_their_attempts(): void

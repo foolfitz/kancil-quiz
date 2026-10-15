@@ -3,15 +3,16 @@
 namespace App\Support;
 
 use App\Corpus\MediaUrls;
+use App\Curriculum\Textbook;
 use App\Models\Activity;
 use App\Models\Attempt;
 use App\Models\Contribution;
-use App\Models\CurriculumRef;
 use App\Models\Item;
 use App\Models\Media;
 use App\Models\Set;
 use App\Models\SetReview;
 use App\Models\SetRevision;
+use App\Models\User;
 use App\Profile\Contributions;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -29,7 +30,8 @@ use Throwable;
  *    日曆只顯示最近 52 週加上這一週，更早的用不到。
  * 3. 老師刪除的活動、題組與詞條：刪除超過 30 天，連同活動的作答紀錄、題組的內容、版本與貢獻紀錄。
  * 4. 題組版本：不是最新版本、沒有作答或審核紀錄引用，而且被新版本取代超過 30 天。
- *    教材題組的版本不清除：「審核者修正過」要看匯入之後的版本（CurriculumImporter::editedOnSite()）。
+ *    教材題組最近一次匯入詞彙之後、教材帳號以外的版本不清除：「審核者修正過」要看它們（CurriculumImporter::editedOnSite()）。
+ *    匯入與上傳插圖的版本照常清除，換掉的插圖才會跟著清掉。
  * 5. 媒體：沒有詞條（item_media）、問答題（set_entry_media）或題組版本（content 的 JSON）引用，
  *    而且上傳超過 7 天（老師可能還沒按儲存）。
  * 6. 媒體目錄中沒有對應資料的檔案（例如寫入資料庫失敗時留下的），同樣超過 7 天才刪。
@@ -154,10 +156,17 @@ class Pruner
     private function pruneRevisions(CarbonImmutable $now): void
     {
         $cutoff = $now->subDays((int) config('kancil.retention.revision_days'));
+        // 不用 Textbook::owner()：清除時不該建立帳號
+        $textbook = User::where('email', Textbook::OWNER_EMAIL)->value('id');
 
         $ids = SetRevision::query()
             ->whereNotIn('id', Set::withTrashed()->whereNotNull('current_revision_id')->select('current_revision_id'))
-            ->whereNotIn('set_id', CurriculumRef::whereNotNull('set_id')->select('set_id'))
+            ->whereNotExists(fn (Builder $query) => $query->from('curriculum_refs')
+                ->whereColumn('curriculum_refs.set_id', 'set_revisions.set_id')
+                ->where(fn (Builder $query) => $query->whereNull('curriculum_refs.imported_revision')
+                    ->orWhereColumn('set_revisions.number', '>', 'curriculum_refs.imported_revision'))
+                ->whereNotNull('set_revisions.created_by')
+                ->when($textbook !== null, fn (Builder $query) => $query->where('set_revisions.created_by', '!=', $textbook)))
             ->whereNotExists(fn (Builder $query) => $query->from('attempts')
                 ->whereColumn('attempts.set_revision_id', 'set_revisions.id'))
             ->whereNotExists(fn (Builder $query) => $query->from('set_reviews')
