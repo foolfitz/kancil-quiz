@@ -462,11 +462,16 @@ class TeacherFlowTest extends TestCase
 
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['sliceLabel' => 'emoji']])
             ->assertSessionHasErrors('options');
+        // 0.2 版拿掉的選項
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['sliceLabel' => 'face']])
+            ->assertSessionHasErrors('options');
+        $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['autoPlayAudio' => true]])
+            ->assertSessionHasErrors('options');
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'spin-wheel', 'options' => ['sliceLabel' => 'number']])->assertRedirect();
         $this->post("/sets/{$set->id}/activities", ['game_id' => 'card-wall'])->assertRedirect();
 
         $this->assertSame(
-            ['startWith' => 'front', 'sliceLabel' => 'number', 'removeAfterSpin' => true, 'autoPlayAudio' => true],
+            ['sliceLabel' => 'number', 'removeAfterSpin' => true],
             Activity::where('game_id', 'spin-wheel')->firstOrFail()->options,
         );
         $this->assertSame(['startWith' => 'front', 'autoPlayAudio' => true], Activity::where('game_id', 'card-wall')->firstOrFail()->options);

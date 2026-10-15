@@ -1,29 +1,34 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { collectErrors, createActivity } from './helpers';
+import {
+    collectErrors,
+    createActivity,
+    expectInViewport,
+    expectNothingClipped,
+} from './helpers';
 
-// 轉盤（docs/SPEC.md 7.5）：轉到哪個詞就顯示那張卡，點卡片翻面；轉到的詞從轉盤拿掉，轉完結束。
+// 轉盤（docs/SPEC.md 7.5）：停下後，轉到的那一片亮著、其他變暗，接著跳出 modal 放大顯示那個詞
+// （不翻面、不顯示中文意思與插圖），按「再轉一次」直接繼續。轉到的詞在下一次轉的時候拿掉，轉完結束。
 // 每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
 
-// 指針尖端正下方是哪一片。暫時藏起蓋在轉盤上的卡片，並讓轉盤接收點擊
+// 指針尖端正下方是哪一片。暫時藏起蓋在轉盤上的 modal，並讓轉盤接收點擊
 // （轉盤平常不接收點擊，elementFromPoint 會略過它）
 async function sliceUnderPointer(page: Page): Promise<string | null> {
     return page.evaluate(() => {
-        const overlay =
-            document.querySelector<HTMLElement>('.kq-wheel__overlay');
+        const modal = document.querySelector<HTMLElement>('.kq-wheel__modal');
         const pointer = document.querySelector('.kq-wheel__pointer');
         const disc = document.querySelector<HTMLElement>('.kq-wheel__disc');
-        if (!overlay || !pointer || !disc) {
+        if (!modal || !pointer || !disc) {
             return null;
         }
         const box = pointer.getBoundingClientRect();
-        overlay.style.visibility = 'hidden';
+        modal.style.visibility = 'hidden';
         disc.style.pointerEvents = 'auto';
         const hit = document.elementFromPoint(
             box.left + box.width / 2,
             box.bottom + 8,
         );
-        overlay.style.visibility = '';
+        modal.style.visibility = '';
         disc.style.pointerEvents = '';
         return (
             hit?.closest('[data-entry-id]')?.getAttribute('data-entry-id') ??
@@ -32,7 +37,7 @@ async function sliceUnderPointer(page: Page): Promise<string | null> {
     });
 }
 
-test('老師用教材的一課建立轉盤，轉到的詞與指針指的一致，轉完結束', async ({
+test('老師用教材的一課建立轉盤，轉到的詞放大跳出來，與指針指的一致，轉完結束', async ({
     page,
 }, testInfo) => {
     const errors = collectErrors(page);
@@ -48,9 +53,9 @@ test('老師用教材的一課建立轉盤，轉到的詞與指針指的一致�
 
     const slices = page.locator('.kq-wheel__slice');
     await expect(slices).toHaveCount(6);
-    // 轉盤上預設顯示目標語（題目那一面是插圖與中文意思，答案那一面才是印尼語）
+    // 轉盤上是目標語（題目那一面是插圖與中文意思，答案那一面才是印尼語），整個遊戲都不顯示中文意思
     await expect(page.locator('.kq-wheel__svg')).toContainText('ayah');
-    await expect(page.locator('.kq-wheel__svg')).not.toContainText('爸爸');
+    await expect(page.locator('.kq-wheel')).not.toContainText('爸爸');
     // 整個轉盤在畫面內
     const wheel = await page.locator('.kq-wheel__wrap').boundingBox();
     const viewport = page.viewportSize();
@@ -60,35 +65,51 @@ test('老師用教材的一課建立轉盤，轉到的詞與指針指的一致�
     expect(wheel?.width ?? 0).toBeGreaterThan(300);
     await page.screenshot({ path: testInfo.outputPath('wheel.png') });
 
-    // 第一次照常轉（有動畫），停下後的卡片就是指針指的那一片
+    // 第一次照常轉（有動畫）。停下後跳出的詞就是指針指的那一片，那一片亮著、其他變暗
     await page.getByRole('button', { name: '轉！' }).click();
-    const overlay = page.locator('.kq-wheel__overlay');
-    await expect(overlay).toBeVisible({ timeout: 8000 });
-    const landed = await overlay.getAttribute('data-entry-id');
+    const modal = page.getByRole('dialog', { name: '轉到的詞' });
+    await expect(modal).toBeVisible({ timeout: 8000 });
+    const landed = await modal.getAttribute('data-entry-id');
     expect(landed).not.toBeNull();
     expect(await sliceUnderPointer(page)).toBe(landed);
+    const landedSlice = page.locator('.kq-wheel__slice.is-landed');
+    await expect(landedSlice).toHaveCount(1);
+    await expect(landedSlice).toHaveAttribute('data-entry-id', landed ?? '');
+    const word =
+        (await page.locator('.kq-wheel__word-text').textContent()) ?? '';
+    expect(word).not.toBe('');
+    // 扇形上太長的詞以「…」截斷
+    const label = (await landedSlice.textContent()) ?? '';
+    expect(word.startsWith(label.replace(/…$/, ''))).toBe(true);
+    await expect(page.locator('.kq-wheel')).not.toContainText('爸爸');
+    await expectInViewport(page, page.locator('.kq-wheel__card'));
+    await expectNothingClipped(page, '.kq-wheel__word');
+    // 示範資料沒有音檔：沒有發音就不出現「聽發音」
+    await expect(modal.getByRole('button', { name: '聽發音' })).toBeHidden();
     await page.screenshot({ path: testInfo.outputPath('wheel-result.png') });
 
-    // 點卡片翻面，看到印尼語。翻過去的那一面真的看不到（見圖卡牆的測試）
-    await expect(page.locator('.kq-wheel__side--second')).toBeHidden();
-    await page.locator('.kq-wheel__result').click();
-    await expect(page.locator('.kq-wheel__inner')).toHaveClass(/is-flipped/);
-    await expect(page.locator('.kq-wheel__side--first')).toBeHidden();
-    await expect(page.locator('.kq-wheel__side--second')).toBeVisible();
+    // 回到轉盤：轉到的那一片還亮著，詞還在轉盤上（下一次轉的時候才拿掉）
+    await modal.getByRole('button', { name: '回到轉盤' }).click();
+    await expect(modal).toBeHidden();
+    await expect(landedSlice).toHaveAttribute('data-entry-id', landed ?? '');
+    await expect(slices).toHaveCount(6);
 
-    // 之後不播動畫，加快測試；轉到的詞拿掉，每個詞只轉到一次
+    // 之後不播動畫，加快測試；按中央的「轉！」或 modal 的「再轉一次」，上一個詞拿掉，每個詞只轉到一次
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('button', { name: '轉！' }).click();
     const seen = new Set([landed]);
     for (let remaining = 5; remaining >= 1; remaining--) {
-        await page.getByRole('button', { name: /再轉一次|繼續/ }).click();
         await expect(slices).toHaveCount(remaining);
-        await expect(overlay).toBeVisible();
-        const id = await overlay.getAttribute('data-entry-id');
+        await expect(modal).toBeVisible();
+        const id = await modal.getAttribute('data-entry-id');
         expect(seen.has(id)).toBe(false);
         expect(await sliceUnderPointer(page)).toBe(id);
         seen.add(id);
+        if (remaining > 1) {
+            await modal.getByRole('button', { name: '再轉一次' }).click();
+        }
     }
-    await page.getByRole('button', { name: '繼續' }).click();
+    await modal.getByRole('button', { name: '繼續' }).click();
     await expect(page.getByText('全部轉完了！')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('wheel-empty.png') });
 

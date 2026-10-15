@@ -436,7 +436,9 @@ test('圖卡牆：一課的卡片一頁放得下，按鈕在畫面內', async ({
     expect(errors).toEqual([]);
 });
 
-test('轉盤：整個轉盤在畫面內，轉動時沒有水平捲軸', async ({ page }) => {
+test('轉盤：整個轉盤與轉到的詞都在畫面內，轉動時沒有水平捲軸', async ({
+    page,
+}, testInfo) => {
     const errors = collectErrors(page);
     await start(page, '/curriculum/id/1/3/play/spin-wheel');
 
@@ -447,15 +449,16 @@ test('轉盤：整個轉盤在畫面內，轉動時沒有水平捲軸', async ({
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.getByRole('button', { name: '轉！' }).click();
-    const overlay = page.locator('.kq-wheel__overlay');
-    await expect(overlay).toBeVisible();
+    await expect(page.getByRole('dialog', { name: '轉到的詞' })).toBeVisible();
     // 轉過的方形轉盤四角超出畫面，不可以把頁面撐出水平捲軸
     await expectNoHorizontalOverflow(page);
-    await expectInViewport(page, page.locator('.kq-wheel__result'));
+    await expectInViewport(page, page.locator('.kq-wheel__card'));
+    await expectNothingClipped(page, '.kq-wheel__word');
     await expectInViewport(
         page,
         page.getByRole('button', { name: '再轉一次' }),
     );
+    await page.screenshot({ path: testInfo.outputPath('wheel-phone.png') });
 
     expect(errors).toEqual([]);
 });
