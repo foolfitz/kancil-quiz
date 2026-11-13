@@ -10,7 +10,7 @@ use RuntimeException;
  * 可用的遊戲。資料來自 packages/games/manifest.json，由各遊戲套件的 meta.ts 自動產生
  * （npm run games:manifest），伺服器端用它判斷題目形狀、是否計分，並驗證遊戲設定。
  *
- * @phpstan-type Game array{id: string, version: string, title: array{'zh-TW': string}, scoreLabel?: array{'zh-TW': string}, requires: array{shape: string, minRounds: int, scored: bool}, optionsSchema: array<string, mixed>, defaultOptions: array<string, mixed>}
+ * @phpstan-type Game array{id: string, version: string, title: array{'zh-TW': string}, scoreLabel?: array{'zh-TW': string}, requires: array{shape: string, minRounds: int, scored: bool, units?: list<string>}, optionsSchema: array<string, mixed>, defaultOptions: array<string, mixed>}
  */
 class GameRegistry
 {

@@ -37,6 +37,62 @@ async function sliceUnderPointer(page: Page): Promise<string | null> {
     });
 }
 
+test('試玩轉盤可以在開始畫面選用課文的句子，轉盤上只有編號，轉到才放大顯示整句', async ({
+    page,
+}, testInfo) => {
+    const errors = collectErrors(page);
+    await page.context().clearCookies(); // 訪客
+    await page.goto('/curriculum/id/1/3/play/spin-wheel');
+
+    // 開始畫面：預設用詞彙，可以改成句子；題組名稱與題數跟著換
+    const words = page.getByRole('button', { name: '詞彙（6 個）' });
+    const sentences = page.getByRole('button', { name: '句子（4 句）' });
+    await expect(words).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('共 6 題')).toBeVisible();
+    await sentences.click();
+    await expect(sentences).toHaveAttribute('aria-pressed', 'true');
+    await expect(sentences).toBeFocused();
+    await expect(words).toHaveAttribute('aria-pressed', 'false');
+    await expect(
+        page.getByRole('heading', {
+            name: '第 1 冊第 3 課：Keluarga Saya 我的家人（課文句子）',
+        }),
+    ).toBeVisible();
+    await expect(page.getByText('共 4 題')).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('sentences-start.png') });
+    await page.getByRole('button', { name: '開始' }).click();
+
+    // 扇形上只有編號，整句放大跳出來；不顯示中文意思
+    const slices = page.locator('.kq-wheel__slice');
+    await expect(slices).toHaveCount(4);
+    await expect(page.locator('.kq-wheel__svg')).not.toContainText('sayang');
+    await expect(page.locator('.kq-wheel__status')).toHaveText('轉盤上有 4 句');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('button', { name: '轉！' }).click();
+    const modal = page.getByRole('dialog', { name: '轉到的句子' });
+    await expect(modal).toBeVisible();
+    expect(await sliceUnderPointer(page)).toBe(
+        await modal.getAttribute('data-entry-id'),
+    );
+    await expect(page.locator('.kq-wheel__word-text')).toContainText(
+        /^Saya sayang \w+\.$/,
+    );
+    await expect(page.locator('.kq-wheel')).not.toContainText('我愛');
+    await expectInViewport(page, page.locator('.kq-wheel__card'));
+    await expectNothingClipped(page, '.kq-wheel__word');
+    await page.screenshot({
+        path: testInfo.outputPath('sentences-result.png'),
+    });
+
+    // 結果頁之後回到開始畫面，仍是句子
+    await page.getByRole('button', { name: '完成 ✓' }).click();
+    await expect(
+        page.getByRole('heading', { name: '看過 1 / 4 張' }),
+    ).toBeVisible();
+
+    expect(errors).toEqual([]);
+});
+
 test('老師用教材的一課建立轉盤，轉到的詞放大跳出來，與指針指的一致，轉完結束', async ({
     page,
 }, testInfo) => {

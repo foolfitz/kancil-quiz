@@ -21,7 +21,7 @@ class SetContent
      */
     public static function build(Set $set): array
     {
-        $set->load(['owner', 'textbookLesson', 'curriculumRefs', 'entries.item.media']);
+        $set->load(['owner', 'textbookLesson', 'textbookSentences', 'curriculumRefs', 'entries.item.media']);
 
         $content = array_filter([
             'format' => 'kancil-set',
@@ -40,6 +40,10 @@ class SetContent
         ], fn ($value) => $value !== null);
 
         if ($set->kind === 'vocab') {
+            // 詞的題組省略 unit，交換格式與加入句子題組之前相同
+            if ($set->unit === 'sentence') {
+                $content['unit'] = 'sentence';
+            }
             $content['faces'] = $set->faces;
             $content['entries'] = $set->entries->map(self::vocabEntry(...))->all();
         } else {

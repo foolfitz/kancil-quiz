@@ -232,8 +232,9 @@ class ImportCurriculum extends Page
         $preview = $this->asFileErrors(fn () => app(CurriculumImporter::class)->preview($volume, (bool) $state['force']));
 
         $words = array_sum(array_map(fn (array $lesson) => count($lesson['vocabulary']), $volume['lessons']));
+        $sentences = array_sum(array_map(fn (array $lesson) => count($lesson['sentences']), $volume['lessons']));
         $this->wordsPreview = [
-            'summary' => "{$this->languageName($volume['language'])}第 {$volume['volume']} 冊（{$volume['textbook']}）：".count($volume['lessons'])." 課、{$words} 個詞",
+            'summary' => "{$this->languageName($volume['language'])}第 {$volume['volume']} 冊（{$volume['textbook']}）：".count($volume['lessons'])." 課、{$words} 個詞、{$sentences} 句課文",
             'lessons' => $preview,
         ];
     }
@@ -244,11 +245,12 @@ class ImportCurriculum extends Page
         $volume = $this->readWords($state);
         $results = $this->asFileErrors(fn () => app(CurriculumImporter::class)->importVolume($volume, null, (bool) $state['force']));
 
-        $counts = array_count_values(array_column($results, 'result'));
         $labels = ['created' => '新增', 'updated' => '更新', 'unchanged' => '沒有變動', 'skipped' => '略過'];
+        $describe = fn (array $counts) => implode('、', array_map(fn (string $result, int $count) => "{$labels[$result]} {$count} 課", array_keys($counts), $counts));
+        $sentences = array_count_values(array_filter(array_column($results, 'sentences_result')));
         Notification::make()
             ->title("已匯入{$this->languageName($volume['language'])}第 {$volume['volume']} 冊")
-            ->body(implode('、', array_map(fn (string $result, int $count) => "{$labels[$result]} {$count} 課", array_keys($counts), $counts)))
+            ->body('詞彙：'.$describe(array_count_values(array_column($results, 'result'))).($sentences === [] ? '' : '；課文句子：'.$describe($sentences)))
             ->success()
             ->send();
 
@@ -374,11 +376,13 @@ class ImportCurriculum extends Page
 
         return [
             Text::make($this->wordsPreview['summary'] ?? '')->weight('bold'),
-            ...array_map(fn (array $row) => Flex::make([
+            ...array_map(fn (array $row) => Flex::make(array_values(array_filter([
                 Text::make($row['title']),
                 Text::make("{$row['words']} 個詞")->color('gray')->grow(false),
                 Text::make($labels[$row['result']])->badge()->color($colors[$row['result']])->grow(false),
-            ]), $this->wordsPreview['lessons'] ?? []),
+                $row['sentences_result'] === null ? null : Text::make("{$row['sentences']} 句")->color('gray')->grow(false),
+                $row['sentences_result'] === null ? null : Text::make($labels[$row['sentences_result']])->badge()->color($colors[$row['sentences_result']])->grow(false),
+            ]))), $this->wordsPreview['lessons'] ?? []),
         ];
     }
 

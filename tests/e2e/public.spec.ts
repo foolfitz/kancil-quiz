@@ -31,6 +31,11 @@ test('訪客從首頁找到一課，直接玩選擇題', async ({ page }, testIn
     await expect(page.locator('[data-test="lesson-words"] > li')).toHaveCount(
         6,
     );
+    // 詞彙下面列出課文的句子（去掉說話的人）
+    const sentences = page.locator('[data-test="lesson-sentences"] > li');
+    await expect(sentences).toHaveCount(4);
+    await expect(sentences.first()).toContainText('Saya sayang Ibu.');
+    await expect(sentences.first()).toContainText('我愛媽媽。');
     // 老師的功能要登入，訪客看到的是登入的說明
     await expect(page.locator('[data-test="lesson-activity"]')).toHaveCount(0);
     await expect(page.locator('[data-test="lesson-teacher"]')).toBeVisible();

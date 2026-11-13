@@ -59,6 +59,23 @@
                     "page": 7,
                     "image": "images/selamat_pagi.webp"
                 }
+            ],
+            "sentences": [
+                {
+                    "text": "Selamat pagi, Ibu Guru.",
+                    "translation_zh": "老師，早安！",
+                    "page": 4
+                },
+                {
+                    "text": "Selamat pagi, Teman-teman.",
+                    "translation_zh": "朋友們，早安！",
+                    "page": 4
+                },
+                {
+                    "text": "Nama saya Siti.",
+                    "translation_zh": "我的名字是希娣。",
+                    "page": 5
+                }
             ]
         },
         {
@@ -108,6 +125,28 @@
                     "page": 15,
                     "image": "images/tidak_apa_apa.webp"
                 }
+            ],
+            "sentences": [
+                {
+                    "text": "Maaf, Siti.",
+                    "translation_zh": "希娣，對不起！",
+                    "page": 12
+                },
+                {
+                    "text": "Tidak apa-apa. Terima kasih.",
+                    "translation_zh": "沒關係，謝謝！",
+                    "page": 12
+                },
+                {
+                    "text": "Bagus, Anak-anak.",
+                    "translation_zh": "孩子們，好棒啊！",
+                    "page": 13
+                },
+                {
+                    "text": "Silakan duduk.",
+                    "translation_zh": "請坐。",
+                    "page": 13
+                }
             ]
         },
         {
@@ -151,6 +190,28 @@
                     "page": 27,
                     "image": "images/sayang.webp"
                 }
+            ],
+            "sentences": [
+                {
+                    "text": "Saya sayang Ibu.",
+                    "translation_zh": "我愛媽媽。",
+                    "page": 24
+                },
+                {
+                    "text": "Saya sayang Ayah.",
+                    "translation_zh": "我愛爸爸。",
+                    "page": 25
+                },
+                {
+                    "text": "Saya sayang Kakak.",
+                    "translation_zh": "我愛姐姐。",
+                    "page": 25
+                },
+                {
+                    "text": "Saya sayang Adik.",
+                    "translation_zh": "我愛弟弟。",
+                    "page": 24
+                }
             ]
         },
         {
@@ -181,6 +242,28 @@
                     "translation_zh": "奶奶",
                     "page": 35,
                     "image": "images/nenek.webp"
+                }
+            ],
+            "sentences": [
+                {
+                    "text": "Selamat pagi, Kakek.",
+                    "translation_zh": "爺爺，早安！",
+                    "page": 32
+                },
+                {
+                    "text": "Selamat pagi, Nenek.",
+                    "translation_zh": "奶奶，早安！",
+                    "page": 32
+                },
+                {
+                    "text": "Sampai jumpa, Ibu.",
+                    "translation_zh": "媽媽，再見！",
+                    "page": 33
+                },
+                {
+                    "text": "Sampai jumpa, Ayah.",
+                    "translation_zh": "爸爸，再見！",
+                    "page": 33
                 }
             ]
         }

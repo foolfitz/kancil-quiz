@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property string $id
  * @property string $kind
+ * @property 'word'|'sentence' $unit 詞彙組的每個詞條是詞還是句子（教材的課文句子，docs/SPEC.md 3.6）
  * @property string $title
  * @property string|null $description
  * @property string $language_code
@@ -36,9 +37,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['kind', 'title', 'description', 'language_code', 'owner_id', 'visibility', 'review_status', 'faces', 'forked_from_id', 'license', 'current_revision_id', 'tags', 'authors', 'share_token'])]
+#[Fillable(['kind', 'unit', 'title', 'description', 'language_code', 'owner_id', 'visibility', 'review_status', 'faces', 'forked_from_id', 'license', 'current_revision_id', 'tags', 'authors', 'share_token'])]
 class Set extends Model
 {
+    /**
+     * 新的題組是詞的題組，與資料表的預設相同（建立後不必重新讀取就能用 unit）。
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['unit' => 'word'];
+
     /** @use HasFactory<SetFactory> */
     use HasFactory, HasUlids, SoftDeletes;
 
@@ -101,7 +109,15 @@ class Set extends Model
      */
     public function isTextbook(): bool
     {
-        return $this->textbookLesson !== null;
+        return $this->textbookRef() !== null;
+    }
+
+    /**
+     * 教材題組對應的那一課：詞彙題組或句子題組；一般題組為 null。
+     */
+    public function textbookRef(): ?CurriculumRef
+    {
+        return $this->textbookLesson ?? $this->textbookSentences;
     }
 
     /**
@@ -193,6 +209,16 @@ class Set extends Model
     public function textbookLesson(): HasOne
     {
         return $this->hasOne(CurriculumRef::class);
+    }
+
+    /**
+     * 教材的句子題組對應的那一課（課文句子，docs/SPEC.md 3.6）。
+     *
+     * @return HasOne<CurriculumRef, $this>
+     */
+    public function textbookSentences(): HasOne
+    {
+        return $this->hasOne(CurriculumRef::class, 'sentence_set_id');
     }
 
     /**

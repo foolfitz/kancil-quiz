@@ -121,7 +121,7 @@ const volumes = computed(() => {
                 rel="noopener"
                 class="underline underline-offset-4"
                 >新住民子女教育資訊網</a
-            >的《新住民語文學習教材》。這裡只收錄課名與詞彙，不收錄課文、教材的插圖與音檔；插圖是本站自製的。
+            >的《新住民語文學習教材》。這裡收錄課名、詞彙與課文的句子，不收錄教材的插圖與音檔；插圖是本站自製的。
         </p>
     </div>
 </template>

@@ -107,7 +107,7 @@ class SetController extends Controller
             return new EloquentCollection;
         }
 
-        $entries = SetEntry::whereIn('id', $ids)->with('set.textbookLesson')->get()
+        $entries = SetEntry::whereIn('id', $ids)->with(['set.textbookLesson', 'set.textbookSentences'])->get()
             ->filter(fn (SetEntry $entry) => $entry->item_id !== null && $entry->set?->isTextbook() && $entry->set->language_code === $language)
             ->sortBy(fn (SetEntry $entry) => array_search($entry->id, $ids, true))
             ->values();
@@ -150,7 +150,7 @@ class SetController extends Controller
                 'curriculum_ref_ids' => $set->curriculumRefs()->pluck('curriculum_refs.id'),
                 'revision' => $set->currentRevision?->number,
                 // 教材題組（3.6）：審核者在這裡修正後，重新匯入時會略過這一課
-                'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
+                'textbook_url' => ($ref = $set->textbookRef()) ? Textbook::lessonUrl($ref) : null,
             ],
             'entries' => SetEditorData::entries($set, $request->user()),
             'can' => [

@@ -71,7 +71,10 @@ class CurriculumTest extends TestCase
                     'lesson' => 3,
                     'title_native' => 'Keluarga Saya',
                     'title_zh' => '我的家人',
-                    'text' => [['indonesian' => 'Siti: Saya sayang Ibu.', 'chinese' => '希娣：我愛媽媽。']],
+                    'sentences' => [
+                        ['text' => 'Saya sayang Ibu.', 'translation_zh' => '我愛媽媽。', 'page' => 24],
+                        ['text' => 'Saya sayang Ayah.', 'translation_zh' => '我愛爸爸。', 'page' => 25],
+                    ],
                     'vocabulary' => [
                         ['text' => 'ayah', 'translation_zh' => '爸爸', 'page' => 26, 'image' => 'images/ayah.png'],
                         ['text' => 'ibu', 'translation_zh' => '媽媽', 'page' => 26, 'image' => 'images/ibu.png'],
@@ -150,14 +153,101 @@ class CurriculumTest extends TestCase
         $this->assertSame('CC-BY-NC-ND-4.0', $item->license);
         $this->assertSame('AI 生成', $item->image->source);
         $this->assertSame('CC-BY-4.0', $item->image->license);
-        // 課文不匯入（D-4）
-        $this->assertStringNotContainsString('Siti', (string) json_encode($content, JSON_UNESCAPED_UNICODE));
+        // 課文句子在另一個題組，不混進詞彙
+        $this->assertStringNotContainsString('sayang', (string) json_encode($content, JSON_UNESCAPED_UNICODE));
+        $this->assertObjectNotHasProperty('unit', $content);
 
         // 兩課都有的詞共用同一個圖檔，只轉檔一次
         $this->assertSame(5, Media::count());
         $ibu = Item::where('text', 'ibu')->with('media')->get();
         $this->assertCount(2, $ibu);
         $this->assertSame($ibu[0]->media->first()?->id, $ibu[1]->media->first()?->id);
+    }
+
+    public function test_lessons_with_sentences_get_a_public_sentence_set(): void
+    {
+        $results = $this->import();
+        $this->assertSame([[2, 'created'], [0, null]], array_map(fn (array $row) => [$row['sentences'], $row['sentences_result']], $results));
+
+        $ref = CurriculumRef::where(['language_code' => 'id', 'volume' => 1, 'lesson' => 3])->firstOrFail();
+        $sentences = $ref->sentenceSet()->firstOrFail();
+        $this->assertSame('sentence', $sentences->unit);
+        $this->assertTrue($sentences->isTextbook());
+        $this->assertSame($ref->id, $sentences->textbookRef()?->id);
+        $this->assertSame('第 1 冊第 3 課：Keluarga Saya 我的家人（課文句子）', $sentences->title);
+        $this->assertSame(['public', 'approved'], [$sentences->visibility, $sentences->review_status]);
+        $this->assertSame([3], $sentences->curriculumRefs->pluck('lesson')->all());
+
+        $content = $sentences->currentRevision()->firstOrFail()->content();
+        $this->assertSame('sentence', $content->unit);
+        $this->assertSame(Textbook::SENTENCE_FACES, json_decode((string) json_encode($content->faces), true));
+        $this->assertSame(['Saya sayang Ibu.', 'Saya sayang Ayah.'], array_map(fn ($entry) => $entry->item->text, $content->entries));
+        $this->assertSame('《新住民語文學習教材 印尼語第1冊》第 3 課課文，課本第 24 頁', $content->entries[0]->item->source);
+        $this->assertSame('CC-BY-NC-ND-4.0', $content->entries[0]->item->license);
+        // 沒有課文的課沒有句子題組
+        $this->assertNull(CurriculumRef::where(['language_code' => 'id', 'volume' => 1, 'lesson' => 4])->firstOrFail()->sentence_set_id);
+
+        // 重新匯入：題目 ID 不變，沒變就不產生新版本
+        $ids = $sentences->entries()->pluck('id')->all();
+        $revision = $sentences->current_revision_id;
+        $this->assertSame(['unchanged', null], array_column($this->import(), 'sentences_result'));
+        $this->assertSame($ids, $sentences->entries()->pluck('id')->all());
+        $this->assertSame($revision, $sentences->refresh()->current_revision_id);
+
+        // 審核者在網站上修正過的句子不覆寫，詞彙照常匯入；修正後仍是句子題組
+        $curator = $this->curator('id');
+        $entries = $sentences->entries()->with('item')->get();
+        $this->actingAs($curator)->put("/sets/{$sentences->id}", [
+            'title' => $sentences->title,
+            'language_code' => 'id',
+            'license' => 'CC-BY-NC-ND-4.0',
+            'curriculum_ref_ids' => $sentences->curriculumRefs->modelKeys(),
+            'faces' => Textbook::SENTENCE_FACES,
+            'entries' => $entries->map(fn (SetEntry $entry, int $i) => ['id' => $entry->id, 'item' => [
+                'text' => $entry->item->text,
+                'translation_zh' => $i === 0 ? '我愛媽媽！' : $entry->item->translation_zh,
+            ]])->all(),
+        ])->assertRedirect();
+        $this->assertSame('sentence', $sentences->refresh()->unit);
+        $results = $this->import();
+        $this->assertSame(['unchanged', 'skipped'], [$results[0]['result'], $results[0]['sentences_result']]);
+        $this->assertSame('我愛媽媽！', $sentences->entries()->with('item')->get()[0]->item->translation_zh);
+        $this->assertSame('updated', $this->import(force: true)[0]['sentences_result']);
+
+        // 課頁列出句子，審核者可以修正；共備庫的題組不列這一課自己的兩個教材題組
+        $this->actingAs($curator)->get('/curriculum/id/1/3')->assertInertia(fn (Assert $page) => $page
+            ->has('sentences', 2)
+            ->where('sentences.0.item.text', 'Saya sayang Ibu.')
+            ->where('sentenceSet.id', $sentences->id)
+            ->where('sentenceSet.can.edit', true)
+            ->where('sharedCount', 0));
+        $this->actingAs($this->teacher)->get('/curriculum/id/1/3')->assertInertia(fn (Assert $page) => $page
+            ->where('sentenceSet.can.edit', false));
+    }
+
+    public function test_sentence_sets_only_go_to_games_that_take_sentences(): void
+    {
+        $this->import();
+        $sentences = CurriculumRef::where(['language_code' => 'id', 'volume' => 1, 'lesson' => 3])->firstOrFail()->sentenceSet()->firstOrFail();
+
+        $this->actingAs($this->teacher)->post("/sets/{$sentences->id}/activities", ['game_id' => 'quiz'])
+            ->assertSessionHasErrors(['game_id' => '選擇題放不下句子，不能用句子題組。']);
+        $this->actingAs($this->teacher)->post("/sets/{$sentences->id}/activities", ['game_id' => 'spin-wheel'])->assertRedirect();
+        $this->assertSame(['spin-wheel'], Activity::pluck('game_id')->all());
+
+        // 試玩：能用句子的遊戲一併帶入課文句子，開始畫面可以選；其他遊戲不帶
+        $sentencePlayback = function (string $game): ?array {
+            $html = (string) $this->get("/curriculum/id/1/3/play/{$game}")->assertOk()->getContent();
+
+            return preg_match('#<script type="application/json" id="kq-sentences">(.*?)</script>#s', $html, $match) === 1 ? json_decode($match[1], true) : null;
+        };
+        $playback = $sentencePlayback('spin-wheel');
+        $this->assertSame('sentence', $playback['set']['unit']);
+        $this->assertSame($sentences->current_revision_id, $playback['set_revision_id']);
+        $this->assertSame('spin-wheel', $playback['game']['id']);
+        $this->assertNull($sentencePlayback('quiz'));
+        // 沒有句子的課也不帶
+        $this->assertStringNotContainsString('kq-sentences', (string) $this->get('/curriculum/id/1/4/play/spin-wheel')->assertOk()->getContent());
     }
 
     public function test_reimporting_keeps_entry_ids_and_only_records_changes(): void
@@ -500,7 +590,8 @@ class CurriculumTest extends TestCase
         $this->assertStringContainsString('<meta data-inertia="og:title" property="og:title" content="印尼語第 1 冊第 3 課：Keluarga Saya 我的家人">', $html);
         $this->assertMatchesRegularExpression('#<meta data-inertia="og:image" property="og:image" content="http[^"]+">#', $html);
         $this->assertMatchesRegularExpression('#<div id="app"><div class="kq-skeleton">.*<span lang="id">ayah</span>：爸爸#s', $html);
-        $this->assertStringContainsString('課名與詞彙：教育部國民及學前教育署，<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license">CC BY-NC-ND 4.0</a>。', $html);
+        $this->assertMatchesRegularExpression('#<h2>句子（2 句）</h2>.*<span lang="id">Saya sayang Ibu\.</span>：我愛媽媽。#s', $html);
+        $this->assertStringContainsString('課名、詞彙與課文句子：教育部國民及學前教育署，<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license">CC BY-NC-ND 4.0</a>。', $html);
         $this->assertStringContainsString('插圖：Kancil Quiz，AI 生成（CC BY 4.0）。', $html);
 
         // Inertia 的頁面資料照常輸出，Vue 掛上後換掉骨架

@@ -13,19 +13,20 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 /**
- * 匯入一冊教材的課名與詞彙（docs/SPEC.md 3.6）。資料格式見 database/curriculum/README.md 與 VolumeFile。
+ * 匯入一冊教材的課名、詞彙與課文句子（docs/SPEC.md 3.6）。資料格式見 database/curriculum/README.md 與 VolumeFile。
  *
  * - 每一課建立或更新冊課對照，並有一個教材題組：公開的詞彙組，由教材帳號擁有（Textbook::owner()）。
+ * - 資料檔有課文的課，另有一個句子題組（unit 為 sentence），規則與詞彙題組相同。資料檔沒有課文時，既有的句子題組不動。
  * - 可以重複執行。詞條以目標語文字對應，題目的 ID 不變；內容與上一版相同時不產生新版本。
  * - 審核者在網站上修正過的教材題組不覆寫（$force 除外），以免蓋掉修正：請先把修正寫回資料檔。
  * - 插圖只在詞條還沒有圖片時匯入（媒體不可變，第 9 節）；要換圖時用 $refreshImages。插圖的署名會依資料檔更新。
  *   資料檔沒寫插圖的詞保留原本的圖：在後台上傳的資料檔不含插圖，插圖另外上傳（CurriculumImages）。
- * - 只匯入課名與詞彙，資料檔中有課文也不讀（D-4）。
  *
  * @phpstan-import-type Volume from VolumeFile
  * @phpstan-import-type Lesson from VolumeFile
  *
- * @phpstan-type Result array{lesson: int, title: string, words: int, result: 'created'|'updated'|'unchanged'|'skipped'}
+ * @phpstan-type Outcome 'created'|'updated'|'unchanged'|'skipped'
+ * @phpstan-type Result array{lesson: int, title: string, words: int, result: Outcome, sentences: int, sentences_result: Outcome|null}
  */
 class CurriculumImporter
 {
@@ -79,13 +80,15 @@ class CurriculumImporter
     }
 
     /**
-     * 審核者在網站上修正過：最近一次匯入詞彙之後，有教材帳號以外的人產生的版本。
-     * 在後台上傳插圖的版本記在教材帳號名下，不算修正。
+     * 審核者在網站上修正過：最近一次匯入之後，有教材帳號以外的人產生的版本。
+     * 在後台上傳插圖的版本記在教材帳號名下，不算修正。詞彙題組與句子題組各自判斷。
      */
     public static function editedOnSite(CurriculumRef $ref, Set $set, User $owner): bool
     {
+        $imported = $set->id === $ref->sentence_set_id ? $ref->sentence_imported_revision : $ref->imported_revision;
+
         return $set->revisions()
-            ->where('number', '>', $ref->imported_revision ?? 0)
+            ->where('number', '>', $imported ?? 0)
             ->whereNotNull('created_by')
             ->where('created_by', '!=', $owner->id)
             ->exists();
@@ -116,7 +119,13 @@ class CurriculumImporter
             $result = 'unchanged';
         }
 
-        $summary = ['lesson' => $ref->lesson, 'title' => Textbook::title($ref), 'words' => count($lesson['vocabulary'])];
+        $summary = [
+            'lesson' => $ref->lesson,
+            'title' => Textbook::title($ref),
+            'words' => count($lesson['vocabulary']),
+            'sentences' => count($lesson['sentences']),
+            'sentences_result' => $this->importSentences($volume, $lesson, $ref, $owner, $force),
+        ];
         if ($result === 'skipped') {
             return [...$summary, 'result' => $result];
         }
@@ -169,6 +178,71 @@ class CurriculumImporter
         }
 
         return [...$summary, 'result' => $result];
+    }
+
+    /**
+     * 這一課的句子題組。資料檔沒有課文時不動既有的句子題組，回傳 null。
+     *
+     * @param  Volume  $volume
+     * @param  Lesson  $lesson
+     * @return Outcome|null
+     */
+    private function importSentences(array $volume, array $lesson, CurriculumRef $ref, User $owner, bool $force): ?string
+    {
+        if ($lesson['sentences'] === []) {
+            return null;
+        }
+
+        $set = $ref->sentenceSet;
+        $result = 'created';
+        if ($set === null) {
+            $set = $owner->sets()->create(['kind' => 'vocab', 'unit' => 'sentence', 'title' => Textbook::sentenceTitle($ref), 'language_code' => $ref->language_code, 'license' => $volume['license']]);
+            $ref->update(['sentence_set_id' => $set->id]);
+        } elseif (! $force && self::editedOnSite($ref, $set, $owner)) {
+            return 'skipped';
+        } else {
+            $result = 'unchanged';
+        }
+
+        $before = $set->current_revision_id;
+        $set->update([
+            'unit' => 'sentence',
+            'title' => Textbook::sentenceTitle($ref),
+            'description' => "取自《{$volume['textbook']}》第 {$ref->lesson} 課的課文，去掉了說話者。",
+            'license' => $volume['license'],
+            'authors' => $volume['authors'],
+            'visibility' => 'public',
+            'review_status' => 'approved',
+        ]);
+        $set->curriculumRefs()->sync([$ref->id]);
+
+        $existing = $set->entries()->with('item.media')->get()->keyBy(fn (SetEntry $entry) => Textbook::wordKey($entry->item->text));
+        $entries = array_map(function (array $sentence) use ($volume, $ref, $existing) {
+            $entry = $existing->get(Textbook::wordKey($sentence['text']));
+            $media = $entry?->item->media ?? collect();
+
+            return [
+                'id' => $entry?->id,
+                'item' => [
+                    'text' => $sentence['text'],
+                    'romanization' => $entry?->item->romanization,
+                    'translation_zh' => $sentence['translation_zh'],
+                    // 句子的發音與圖片都不在資料檔中，保留在網站上加的
+                    'audio_ids' => $media->where('pivot.role', 'audio')->pluck('id')->all(),
+                    'image_id' => $media->firstWhere('pivot.role', 'image')?->id,
+                    'authors' => $volume['authors'],
+                    'license' => $volume['license'],
+                    'source' => "《{$volume['textbook']}》第 {$ref->lesson} 課課文".($sentence['page'] === null ? '' : "，課本第 {$sentence['page']} 頁"),
+                ],
+            ];
+        }, $lesson['sentences']);
+
+        $this->writer->write($set, ['faces' => Textbook::SENTENCE_FACES, 'entries' => $entries], $owner);
+
+        $set->refresh();
+        $ref->update(['sentence_imported_revision' => $set->currentRevision?->number]);
+
+        return $result === 'unchanged' && $set->current_revision_id !== $before ? 'updated' : $result;
     }
 
     /**

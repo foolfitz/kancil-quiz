@@ -92,6 +92,14 @@ class ActivityController extends Controller
             throw ValidationException::withMessages(['options' => $errors]);
         }
 
+        // 句子題組只給放得下句子的遊戲（requires.units，與 @kancil-quiz/deck 的 check() 相同）
+        $unit = $set->kind === 'vocab' ? $set->unit : 'word';
+        if (! in_array($unit, $game['requires']['units'] ?? ['word'], true)) {
+            throw ValidationException::withMessages([
+                'game_id' => "{$game['title']['zh-TW']}放不下句子，不能用句子題組。",
+            ]);
+        }
+
         $entries = count($set->currentRevision?->content()->entries ?? []);
         if ($entries < $game['requires']['minRounds']) {
             throw ValidationException::withMessages([
@@ -179,7 +187,7 @@ class ActivityController extends Controller
      */
     private function setUrl(Set $set): string
     {
-        $lesson = $set->textbookLesson;
+        $lesson = $set->textbookRef();
 
         return $lesson !== null ? Textbook::lessonUrl($lesson) : route('sets.edit', $set);
     }

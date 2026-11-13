@@ -97,6 +97,19 @@ describe('check()', () => {
         ]);
     });
 
+    it('句子題組只給宣告能用句子的遊戲（requires.units）', () => {
+        const sentences = { ...vocab(), unit: 'sentence' as const };
+        expect(codes(sentences, card)).toEqual(['unsupported-unit']);
+        expect(
+            codes(sentences, { ...card, units: ['word', 'sentence'] }),
+        ).toEqual([]);
+        // 沒寫 unit 的是詞；只能用句子的遊戲不能用
+        expect(codes(vocab(), { ...card, units: ['word'] })).toEqual([]);
+        expect(codes(vocab(), { ...card, units: ['sentence'] })).toEqual([
+            'unsupported-unit',
+        ]);
+    });
+
     it('同一面不能同時用目標語文字與中文意思', () => {
         const set = vocab();
         set.faces.prompt = ['text', 'translation_zh'];

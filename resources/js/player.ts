@@ -12,6 +12,12 @@ const playback = playbackJson
     ? (JSON.parse(playbackJson) as KancilActivity)
     : undefined;
 
+// 教材試玩：同一課的課文句子（只給能用句子的遊戲，例：轉盤），開始畫面可以選用詞彙或句子玩
+const sentencesJson = document.getElementById('kq-sentences')?.textContent;
+const sentences = sentencesJson
+    ? (JSON.parse(sentencesJson) as KancilActivity)
+    : undefined;
+
 interface TrialGame extends OtherGame {
     id: string;
     requires: GameRequirements;
@@ -44,6 +50,7 @@ if (root?.dataset.activity) {
         trial: root.dataset.trial === '1',
         playsUrl: root.dataset.playsUrl,
         otherGames: otherGames(),
+        sentences,
         games: {
             'maze-quiz': () =>
                 import('@kancil-quiz/game-maze-quiz').then((m) => m.default),

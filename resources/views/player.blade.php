@@ -29,6 +29,10 @@
         {{-- 建立前預覽與教材試玩：活動不存在，直接帶入播放格式，不向 API 取得 --}}
         <script type="application/json" id="kq-playback">{!! json_encode($playback, App\Corpus\SetContent::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
     @endisset
+    @isset($sentencePlayback)
+        {{-- 教材試玩：同一課的課文句子，開始畫面可以選用詞彙或句子玩（只給能用句子的遊戲） --}}
+        <script type="application/json" id="kq-sentences">{!! json_encode($sentencePlayback, App\Corpus\SetContent::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+    @endisset
     @isset($trialGames)
         {{-- 教材試玩：同一課的其他遊戲，播放器只列出能玩的（resources/js/player.ts） --}}
         <script type="application/json" id="kq-trial-games">{!! json_encode($trialGames, App\Corpus\SetContent::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>

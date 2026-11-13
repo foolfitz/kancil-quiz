@@ -25,6 +25,8 @@ class CurriculumRefsTable
                 TextColumn::make('title_zh')->label('課名')->searchable(),
                 TextColumn::make('title_native')->label('目標語課名')->searchable(),
                 TextColumn::make('set_id')->label('教材題組')->formatStateUsing(fn () => '已匯入')->placeholder('—'),
+                // 課文句子（docs/SPEC.md 3.6）：資料檔有課文的課才有
+                TextColumn::make('sentence_set_id')->label('句子題組')->formatStateUsing(fn () => '已匯入')->placeholder('—'),
                 // 缺插圖的詞（docs/SPEC.md 3.6）：插圖在「匯入教材」頁依檔名批次上傳
                 TextColumn::make('images')->label('插圖')
                     ->state(fn (CurriculumRef $record) => self::imageState($record))

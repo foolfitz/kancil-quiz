@@ -30,12 +30,17 @@ export type FaceSlot =
     | 'front'
     | 'back';
 
+// 詞彙組的每個詞條是詞還是句子（題組交換格式的 unit；省略時是詞）
+export type SetUnit = 'word' | 'sentence';
+
 export interface GameRequirements {
     shape: Round['shape']; // 這個遊戲需要的題目形狀
     minRounds: number;
     optionCount?: { min: number; max: number }; // 僅 mcq：每題的選項數
     renders: Partial<Record<FaceSlot, FaceField[]>>; // 各位置能呈現的欄位
     scored: boolean; // 是否計分；字卡為 false
+    // 能用哪些詞條單位的詞彙組；省略時只能用詞。句子很長，放得下的遊戲才加上 'sentence'（例：轉盤）
+    units?: SetUnit[];
 }
 
 export interface GameModule<Options = Record<string, unknown>> {
@@ -57,6 +62,7 @@ export interface GameContext<Options> {
     rounds: Round[];
     options: Options;
     language: string; // 題組語言，例：'th'
+    unit?: SetUnit; // 詞條是詞還是句子；省略時是詞（問答組一律是詞）
     uiLocale: 'zh-TW';
     rng: () => number; // 可重現的亂數，方便除錯與測試
     audio: {

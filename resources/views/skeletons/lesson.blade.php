@@ -17,10 +17,18 @@
                 <li><span lang="{{ $lesson['language']['code'] }}">{{ $word['item']['text'] }}</span>：{{ $word['item']['translation_zh'] }}</li>
             @endforeach
         </ul>
+        @if (count($props['sentences']) > 0)
+            <h2>句子（{{ count($props['sentences']) }} 句）</h2>
+            <ul>
+                @foreach ($props['sentences'] as $sentence)
+                    <li><span lang="{{ $lesson['language']['code'] }}">{{ $sentence['item']['text'] }}</span>：{{ $sentence['item']['translation_zh'] }}</li>
+                @endforeach
+            </ul>
+        @endif
         @if ($props['set'])
             <p>
                 {{ $props['set']['description'] }}
-                課名與詞彙：{{ implode('、', $props['set']['authors']) }}，@if ($props['set']['license_url'])<a href="{{ $props['set']['license_url'] }}" rel="license">{{ $props['set']['license_name'] }}</a>@else{{ $props['set']['license_name'] }}@endif。
+                課名、詞彙{{ count($props['sentences']) > 0 ? '與課文句子' : '' }}：{{ implode('、', $props['set']['authors']) }}，@if ($props['set']['license_url'])<a href="{{ $props['set']['license_url'] }}" rel="license">{{ $props['set']['license_name'] }}</a>@else{{ $props['set']['license_name'] }}@endif。
                 @if ($props['imageCredits'])插圖：{{ implode('；', $props['imageCredits']) }}。@endif
                 教材來源：國教署<a href="https://mkm.k12ea.gov.tw/textbook">新住民子女教育資訊網</a>。
             </p>

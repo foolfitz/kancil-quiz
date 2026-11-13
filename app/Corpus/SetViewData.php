@@ -21,7 +21,7 @@ class SetViewData
      */
     public static function props(Set $set, User $viewer, ?string $token = null): array
     {
-        $set->load(['owner', 'language', 'curriculumRefs', 'currentRevision', 'forkedFrom.owner', 'textbookLesson']);
+        $set->load(['owner', 'language', 'curriculumRefs', 'currentRevision', 'forkedFrom.owner', 'textbookLesson', 'textbookSentences']);
         $gate = Gate::forUser($viewer);
         $content = SetEditorData::currentContent($set);
         $manage = $gate->allows('manage', $set);
@@ -44,7 +44,7 @@ class SetViewData
                     'title_zh' => $ref->title_zh,
                 ])->all(),
                 // 教材題組（3.6）：連到那一課的教材頁
-                'textbook_url' => $set->textbookLesson ? Textbook::lessonUrl($set->textbookLesson) : null,
+                'textbook_url' => ($ref = $set->textbookRef()) ? Textbook::lessonUrl($ref) : null,
                 'authors' => array_column($set->effectiveAuthors(), 'name'),
                 // 擁有者以署名名稱顯示，有創作者頁面時連過去（T-20）
                 'owner' => $set->owner->attributionName(),

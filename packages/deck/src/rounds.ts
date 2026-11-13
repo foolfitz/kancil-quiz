@@ -21,6 +21,7 @@ export interface CompatibilityIssue {
     severity: 'error' | 'warning';
     code:
         | 'faces-conflict'
+        | 'unsupported-unit'
         | 'too-few-rounds'
         | 'empty-face'
         | 'unrenderable'
@@ -82,6 +83,17 @@ export function check(
     ) => issues.push({ severity, code, message, entryId });
 
     if (set.kind === 'vocab') {
+        // 句子題組（例如教材的課文句子）只給放得下長句的遊戲用
+        const unit = set.unit ?? 'word';
+        if (!(requires.units ?? ['word']).includes(unit)) {
+            add(
+                'error',
+                'unsupported-unit',
+                unit === 'sentence'
+                    ? '這個遊戲放不下句子，不能用句子題組'
+                    : '這個遊戲只能用句子題組',
+            );
+        }
         for (const [side, name] of [
             ['prompt', '題目'],
             ['answer', '答案'],

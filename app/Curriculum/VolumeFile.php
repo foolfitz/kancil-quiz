@@ -15,13 +15,16 @@ use Normalizer;
  * 兩種格式：
  * - volume.json：repo 中 database/curriculum/<語言>/<冊>/ 的格式，見該目錄的 README。
  * - 整理教材時的「課文與詞彙.json」：book_title、lessons[].title.{<目標語>, chinese}、
- *   lessons[].vocabulary[].{<目標語>, chinese, page}。目標語的欄位名稱不限（例如 indonesian），
- *   是 chinese、page 以外唯一的欄位。課文（text）不讀（D-4）。
+ *   lessons[].vocabulary[].{<目標語>, chinese, page}、lessons[].text[].{<目標語>, chinese, page, order}。
+ *   目標語的欄位名稱不限（例如 indonesian），是 chinese、page、order 以外唯一的欄位。
+ *   課文（text）一句一筆，去掉開頭的說話者（Textbook::withoutSpeaker()）後成為這一課的句子（D-4）。
  *
- * 在後台上傳的資料檔不含插圖：插圖另外上傳，依檔名對應到詞（CurriculumImages）。
+ * 同一課重複的句子只留第一句（轉盤上同一句出現兩次沒有意義）。
+ * 在後台上傳的資料檔不含插圖：插圖另外上傳，依檔名對應到詞（CurriculumImages）。句子沒有插圖。
  *
  * @phpstan-type Word array{text: string, translation_zh: string, page: int|null, image: string|null}
- * @phpstan-type Lesson array{lesson: int, title_zh: string, title_native: string|null, vocabulary: list<Word>}
+ * @phpstan-type Sentence array{text: string, translation_zh: string, page: int|null}
+ * @phpstan-type Lesson array{lesson: int, title_zh: string, title_native: string|null, vocabulary: list<Word>, sentences: list<Sentence>}
  * @phpstan-type Attribution array{authors: list<array{name: string}>, license: string, source: string}
  * @phpstan-type Volume array{language: string, volume: int, textbook: string, authors: list<array{name: string}>, license: string, images: Attribution|null, lessons: list<Lesson>}
  */
@@ -133,7 +136,7 @@ final class VolumeFile
     }
 
     /**
-     * 「課文與詞彙.json」轉成 volume.json 的欄位。課文不讀。
+     * 「課文與詞彙.json」轉成 volume.json 的欄位。課文去掉說話者，成為句子。
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
@@ -165,11 +168,27 @@ final class VolumeFile
                 $vocabulary[] = ['text' => $text, 'translation_zh' => $word['chinese'] ?? null, 'page' => $word['page'] ?? null];
             }
 
+            $sentences = [];
+            foreach (is_array($lesson['text'] ?? null) ? array_values($lesson['text']) : [] as $j => $line) {
+                $text = is_array($line) ? self::targetText($line) : null;
+                if ($text === null || ! is_string($line['chinese'] ?? null)) {
+                    $errors[] = "{$label}課文第 ".($j + 1).' 句：找不到目標語或中文的欄位。';
+
+                    continue;
+                }
+                $sentences[] = [
+                    'text' => Textbook::withoutSpeaker($text),
+                    'translation_zh' => Textbook::withoutSpeaker($line['chinese']),
+                    'page' => $line['page'] ?? null,
+                ];
+            }
+
             $lessons[] = [
                 'lesson' => $number,
                 'title_zh' => is_array($title) ? ($title['chinese'] ?? null) : $title,
                 'title_native' => is_array($title) ? self::targetText($title) : null,
                 'vocabulary' => $vocabulary,
+                'sentences' => $sentences,
             ];
         }
 
@@ -184,14 +203,14 @@ final class VolumeFile
     }
 
     /**
-     * chinese、page 以外唯一的文字欄位，例：{"indonesian": "merah", "chinese": "紅色", "page": 6} 的 merah。
+     * chinese、page、order 以外唯一的文字欄位，例：{"indonesian": "merah", "chinese": "紅色", "page": 6} 的 merah。
      *
      * @param  array<mixed>  $fields
      */
     private static function targetText(array $fields): ?string
     {
         $others = array_filter(
-            array_diff_key($fields, array_flip(['chinese', 'page'])),
+            array_diff_key($fields, array_flip(['chinese', 'page', 'order'])),
             fn ($value) => is_string($value),
         );
 
@@ -233,6 +252,10 @@ final class VolumeFile
             'lessons.*.vocabulary.*.translation_zh' => ['required', 'string', 'max:200'],
             'lessons.*.vocabulary.*.page' => ['nullable', 'integer', 'min:1'],
             'lessons.*.vocabulary.*.image' => ['nullable', 'string'],
+            'lessons.*.sentences' => ['nullable', 'array', 'max:200'],
+            'lessons.*.sentences.*.text' => ['required', 'string', 'max:500'],
+            'lessons.*.sentences.*.translation_zh' => ['required', 'string', 'max:500'],
+            'lessons.*.sentences.*.page' => ['nullable', 'integer', 'min:1'],
         ], attributes: [
             'lessons.*.lesson' => '課次',
             'lessons.*.title_zh' => '中文課名',
@@ -240,6 +263,9 @@ final class VolumeFile
             'lessons.*.vocabulary.*.text' => '目標語的詞',
             'lessons.*.vocabulary.*.translation_zh' => '中文意思',
             'lessons.*.vocabulary.*.page' => '頁碼',
+            'lessons.*.sentences.*.text' => '目標語的句子',
+            'lessons.*.sentences.*.translation_zh' => '句子的中文意思',
+            'lessons.*.sentences.*.page' => '頁碼',
         ]);
         $validator->after(function ($validator) use ($data, $directory) {
             foreach ($data['lessons'] ?? [] as $i => $lesson) {
@@ -265,10 +291,27 @@ final class VolumeFile
             ...$lesson,
             'title_native' => $lesson['title_native'] ?? null,
             'vocabulary' => array_map(fn (array $word) => $word + ['page' => null, 'image' => null], $lesson['vocabulary']),
+            'sentences' => self::uniqueSentences($lesson['sentences'] ?? []),
         ], $volume['lessons']);
 
         /** @var Volume $volume */
         return $volume;
+    }
+
+    /**
+     * 同一課重複的句子只留第一句，例：第 2 冊第 3 課的「Kabar baik.」出現兩次。
+     *
+     * @param  array<int, array{text: string, translation_zh: string, page?: int|null}>  $sentences
+     * @return list<array{text: string, translation_zh: string, page: int|null}>
+     */
+    private static function uniqueSentences(array $sentences): array
+    {
+        $unique = [];
+        foreach ($sentences as $sentence) {
+            $unique[Textbook::wordKey($sentence['text'])] ??= $sentence + ['page' => null];
+        }
+
+        return array_values($unique);
     }
 
     private static function normalize(mixed $value): mixed

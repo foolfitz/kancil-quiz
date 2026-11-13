@@ -106,6 +106,28 @@ class CurriculumPlayTest extends TestCase
         ], $this->counts());
     }
 
+    public function test_plays_with_the_lesson_sentences_are_counted_separately(): void
+    {
+        // 這一課還沒有句子題組：不能用句子玩，也就不能計次
+        $this->postJson($this->url, ['game' => 'spin-wheel', 'event' => 'start', 'unit' => 'sentence'])->assertNotFound();
+        $this->postJson($this->url, ['game' => 'spin-wheel', 'event' => 'start', 'unit' => 'phrase'])->assertUnprocessable();
+
+        $sentences = $this->vocabSet();
+        $sentences->update(['unit' => 'sentence']);
+        $this->ref->update(['sentence_set_id' => $sentences->id]);
+        $this->postJson($this->url, ['game' => 'spin-wheel', 'event' => 'start'])->assertNoContent();
+        $this->postJson($this->url, ['game' => 'spin-wheel', 'event' => 'start', 'unit' => 'sentence'])->assertNoContent();
+        $this->postJson($this->url, ['game' => 'spin-wheel', 'event' => 'finish', 'unit' => 'sentence'])->assertNoContent();
+        $this->attempt($this->activity($sentences, 'spin-wheel'), completed: true);
+
+        $this->assertSame([['word', 1, 0], ['sentence', 1, 1]], CurriculumPlay::orderBy('id')->get()
+            ->map(fn (CurriculumPlay $play) => [$play->unit, $play->starts, $play->finishes])->all());
+        $summary = app(PlayCounts::class)->summary();
+        $this->assertSame('轉盤', $summary["{$this->ref->id}:spin-wheel:word"]['game']);
+        $this->assertSame('轉盤（句子）', $summary["{$this->ref->id}:spin-wheel:sentence"]['game']);
+        $this->assertSame([1, 1, 1, 1], array_values(array_intersect_key($summary["{$this->ref->id}:spin-wheel:sentence"], array_flip(['trial_starts', 'trial_finishes', 'class_starts', 'class_finishes']))));
+    }
+
     public function test_counts_need_a_known_game_event_and_playable_lesson(): void
     {
         $this->postJson($this->url, ['game' => 'no-such-game', 'event' => 'start'])->assertUnprocessable();
@@ -156,12 +178,12 @@ class CurriculumPlayTest extends TestCase
         $this->travelTo(CarbonImmutable::parse('2026-10-05 12:00:00', 'UTC'));
 
         $summary = app(PlayCounts::class)->summary(30);
-        $key = "{$this->ref->id}:quiz";
+        $key = "{$this->ref->id}:quiz:word";
         $this->assertSame(['trial_starts' => 2, 'trial_finishes' => 1, 'class_starts' => 2, 'class_finishes' => 1], array_intersect_key($summary[$key], array_flip(['trial_starts', 'trial_finishes', 'class_starts', 'class_finishes'])));
         $this->assertSame('第 1 冊第 3 課：Keluarga Saya 我的家人', $summary[$key]['title']);
         $this->assertSame('印尼語', $summary[$key]['language']);
         $this->assertSame('選擇題', $summary[$key]['game']);
-        $this->assertSame([0, 0, 1, 1], array_values(array_intersect_key($summary["{$this->ref->id}:match-up"], array_flip(['trial_starts', 'trial_finishes', 'class_starts', 'class_finishes']))));
+        $this->assertSame([0, 0, 1, 1], array_values(array_intersect_key($summary["{$this->ref->id}:match-up:word"], array_flip(['trial_starts', 'trial_finishes', 'class_starts', 'class_finishes']))));
 
         $all = app(PlayCounts::class)->summary();
         $this->assertSame(3, $all[$key]['trial_starts']);

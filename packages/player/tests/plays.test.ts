@@ -55,6 +55,21 @@ describe('PlayCounter', () => {
         });
     });
 
+    it('用課文句子玩的另外算，帶 unit', () => {
+        const storage = new MemoryStorage() as unknown as Storage;
+        const { calls, fetcher } = fakeFetch();
+        const wheel = new PlayCounter(url, 'spin-wheel', storage, fetcher);
+
+        wheel.count('start');
+        wheel.count('start', 'sentence');
+        wheel.count('start', 'sentence');
+
+        expect(calls.map((call) => call.body)).toEqual([
+            { game: 'spin-wheel', event: 'start' },
+            { game: 'spin-wheel', event: 'start', unit: 'sentence' },
+        ]);
+    });
+
     it('記不住的時候照算，送不出去也不丟出錯誤', async () => {
         const broken = {
             getItem: () => {

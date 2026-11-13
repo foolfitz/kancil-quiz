@@ -146,6 +146,10 @@
                     "required": ["kind", "faces", "entries"],
                     "properties": {
                         "kind": { "const": "vocab" },
+                        "unit": {
+                            "description": "每個詞條是詞還是句子（例如教材的課文句子）；省略時是詞。遊戲依此決定能不能用這個題組（GameRequirements.units）",
+                            "enum": ["word", "sentence"]
+                        },
                         "faces": { "$ref": "#/$defs/Faces" },
                         "entries": {
                             "type": "array",

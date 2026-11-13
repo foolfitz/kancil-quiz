@@ -131,7 +131,7 @@ class CurriculumUploadTest extends TestCase
         return $admin;
     }
 
-    public function test_the_textbook_transcription_format_is_read_without_the_lesson_texts(): void
+    public function test_the_textbook_transcription_format_is_read_with_the_lesson_sentences(): void
     {
         $volume = VolumeFile::fromUpload($this->encode($this->bookTwo()), 'id', 2);
 
@@ -139,8 +139,8 @@ class CurriculumUploadTest extends TestCase
         $this->assertSame(Textbook::AUTHORS, $volume['authors']);
         $this->assertSame(['lesson' => 1, 'title_zh' => '我的校園', 'title_native' => 'Sekolah Saya'], array_intersect_key($volume['lessons'][0], array_flip(['lesson', 'title_zh', 'title_native'])));
         $this->assertSame(['text' => 'merah', 'translation_zh' => '紅色', 'page' => 6, 'image' => null], $volume['lessons'][0]['vocabulary'][0]);
-        // 課文不讀（D-4）
-        $this->assertStringNotContainsString('rumput', $this->encode($volume));
+        // 課文一句一筆成為句子，去掉說話者（D-4）
+        $this->assertSame([['text' => 'Di sekolah ada rumput hijau.', 'translation_zh' => '校園裡有綠草地。', 'page' => 5]], $volume['lessons'][0]['sentences']);
     }
 
     public function test_uploaded_files_for_another_volume_or_language_are_rejected(): void
@@ -291,7 +291,7 @@ class CurriculumUploadTest extends TestCase
             ->set('words.file', UploadedFile::fake()->createWithContent('印尼語第2冊_課文與詞彙.json', $this->encode($this->bookTwo())))
             ->call('previewWords')
             ->assertHasNoErrors()
-            ->assertSet('wordsPreview.summary', '印尼語第 2 冊（新住民語文學習教材 印尼語第2冊）：3 課、8 個詞')
+            ->assertSet('wordsPreview.summary', '印尼語第 2 冊（新住民語文學習教材 印尼語第2冊）：3 課、8 個詞、1 句課文')
             ->assertSet('wordsPreview.lessons.0.result', 'created');
         $this->assertSame(0, CurriculumRef::count());
 

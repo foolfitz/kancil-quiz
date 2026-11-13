@@ -34,6 +34,7 @@ class SetCopier
 
             $copy = $to->sets()->create([
                 'kind' => $source->kind,
+                'unit' => $source->unit,
                 'title' => $source->title,
                 'description' => $source->description,
                 'language_code' => $source->language_code,
@@ -70,7 +71,7 @@ class SetCopier
      */
     public function compose(Set $into, Collection $entries, User $to): void
     {
-        $sources = Set::with(['owner', 'textbookLesson', 'curriculumRefs'])->findMany($entries->pluck('set_id')->unique()->all());
+        $sources = Set::with(['owner', 'textbookLesson', 'textbookSentences', 'curriculumRefs'])->findMany($entries->pluck('set_id')->unique()->all());
         $first = $sources->find($entries->first()?->set_id);
         $authors = $sources->mapWithKeys(fn (Set $source) => [$source->id => $source->effectiveAuthors()]);
 

@@ -396,7 +396,7 @@
         },
         {
             "id": "spin-wheel",
-            "version": "0.2.0",
+            "version": "0.3.0",
             "title": {
                 "zh-TW": "轉盤"
             },
@@ -417,7 +417,11 @@
                         "audio"
                     ]
                 },
-                "scored": false
+                "scored": false,
+                "units": [
+                    "word",
+                    "sentence"
+                ]
             },
             "optionsSchema": {
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -431,6 +435,7 @@
                 "properties": {
                     "sliceLabel": {
                         "title": "轉盤上顯示",
+                        "description": "句子題組一律只顯示編號，轉到才放大顯示整句。",
                         "type": "string",
                         "oneOf": [
                             {

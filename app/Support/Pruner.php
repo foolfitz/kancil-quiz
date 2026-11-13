@@ -167,6 +167,13 @@ class Pruner
                     ->orWhereColumn('set_revisions.number', '>', 'curriculum_refs.imported_revision'))
                 ->whereNotNull('set_revisions.created_by')
                 ->when($textbook !== null, fn (Builder $query) => $query->where('set_revisions.created_by', '!=', $textbook)))
+            // 句子題組（課文句子）照同一個規則
+            ->whereNotExists(fn (Builder $query) => $query->from('curriculum_refs')
+                ->whereColumn('curriculum_refs.sentence_set_id', 'set_revisions.set_id')
+                ->where(fn (Builder $query) => $query->whereNull('curriculum_refs.sentence_imported_revision')
+                    ->orWhereColumn('set_revisions.number', '>', 'curriculum_refs.sentence_imported_revision'))
+                ->whereNotNull('set_revisions.created_by')
+                ->when($textbook !== null, fn (Builder $query) => $query->where('set_revisions.created_by', '!=', $textbook)))
             ->whereNotExists(fn (Builder $query) => $query->from('attempts')
                 ->whereColumn('attempts.set_revision_id', 'set_revisions.id'))
             ->whereNotExists(fn (Builder $query) => $query->from('set_reviews')

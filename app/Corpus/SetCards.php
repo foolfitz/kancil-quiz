@@ -22,7 +22,7 @@ class SetCards
     public static function paginate(Builder $query, int $perPage = 24): LengthAwarePaginator
     {
         return $query
-            ->with(['owner', 'language', 'curriculumRefs', 'textbookLesson'])
+            ->with(['owner', 'language', 'curriculumRefs', 'textbookLesson', 'textbookSentences'])
             ->withCount('entries')
             ->latest('updated_at')
             ->paginate($perPage)

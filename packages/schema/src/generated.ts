@@ -6,6 +6,10 @@
 export type KancilSet = VocabSet | QuizSet;
 export type VocabSet = SetBase & {
   kind: "vocab";
+  /**
+   * 每個詞條是詞還是句子（例如教材的課文句子）；省略時是詞。遊戲依此決定能不能用這個題組（GameRequirements.units）
+   */
+  unit?: "word" | "sentence";
   faces: Faces;
   entries: VocabEntry[];
 };

@@ -1,7 +1,9 @@
 // 教材試玩的人氣統計（docs/SPEC.md S-06、A-04）：按下「開始」與玩完時各送一次，只帶遊戲與事件，
-// 伺服器只累計每課、每個遊戲、每天的次數。
+// 伺服器只累計每課、每個遊戲、每天的次數。用課文句子玩的（轉盤）另外帶 unit，與用詞彙玩的分開算。
 // 同一個分頁、同一課的同一個遊戲只算第一次（記在 sessionStorage）：重新整理、結果頁或遊戲中的
 // 「再玩一次」都不重複算，玩完的次數也就不會多於開始的次數。
+
+import type { SetUnit } from '@kancil-quiz/games-sdk';
 
 export type PlayEvent = 'start' | 'finish';
 
@@ -24,8 +26,10 @@ export class PlayCounter {
         private readonly fetcher: Fetch = (...args) => fetch(...args),
     ) {}
 
-    count(event: PlayEvent): void {
-        const key = `kq-play:${this.url}:${this.game}:${event}`;
+    count(event: PlayEvent, unit: SetUnit = 'word'): void {
+        // 用詞彙玩的鍵與內容維持加入句子之前的樣子
+        const sentence = unit === 'sentence';
+        const key = `kq-play:${this.url}:${this.game}${sentence ? ':sentence' : ''}:${event}`;
         try {
             if (this.storage?.getItem(key)) {
                 return;
@@ -42,7 +46,11 @@ export class PlayCounter {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ game: this.game, event }),
+            body: JSON.stringify(
+                sentence
+                    ? { game: this.game, event, unit }
+                    : { game: this.game, event },
+            ),
         }).catch(() => undefined);
     }
 }

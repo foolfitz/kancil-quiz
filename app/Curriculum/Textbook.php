@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
- * 教材題組的共用設定（docs/SPEC.md 3.6）。
+ * 教材題組的共用設定（docs/SPEC.md 3.6）。每一課有一個詞彙題組，有課文的課再有一個句子題組。
  *
  * 教材題組由一個不能登入的系統帳號擁有：沒有密碼、沒有驗證 email，也沒有角色。
  */
@@ -23,8 +23,13 @@ final class Textbook
     public const FACES = ['prompt' => ['image', 'translation_zh'], 'answer' => ['text']];
 
     /**
+     * 句子題組（課文句子）：看中文意思，念目標語。句子沒有插圖。
+     */
+    public const SENTENCE_FACES = ['prompt' => ['translation_zh'], 'answer' => ['text']];
+
+    /**
      * 教材題組與詞條的作者與授權，資料檔沒寫時使用（App\Curriculum\VolumeFile）。
-     * 課名與詞彙取自國教署的教材，照原教材的版權頁標示：總編輯是國教署，採 CC BY-NC-ND 4.0（D-4）。
+     * 課名、詞彙與課文句子取自國教署的教材，照原教材的版權頁標示：總編輯是國教署，採 CC BY-NC-ND 4.0（D-4）。
      */
     public const AUTHORS = [['name' => '教育部國民及學前教育署']];
 
@@ -51,6 +56,25 @@ final class Textbook
         $name = trim(($ref->title_native ?? '').' '.($ref->title_zh ?? ''));
 
         return "第 {$ref->volume} 冊第 {$ref->lesson} 課".($name === '' ? '' : "：{$name}");
+    }
+
+    /**
+     * 例：第 1 冊第 3 課：Keluarga Saya 我的家人（課文句子）
+     */
+    public static function sentenceTitle(CurriculumRef $ref): string
+    {
+        return self::title($ref).'（課文句子）';
+    }
+
+    /**
+     * 去掉課文開頭的說話者，只留句子本身，例：「Siti: Selamat pagi.」→「Selamat pagi.」、「希娣：早安！」→「早安！」。
+     * 說話者是冒號前不含數字與標點的一小段，所以「Jam 7:30」這類時間不會被當成說話者。
+     */
+    public static function withoutSpeaker(string $text): string
+    {
+        $stripped = trim((string) preg_replace('/^[^\d:：.,!?。，！？]{1,30}[:：]\s*/u', '', $text));
+
+        return $stripped === '' ? trim($text) : $stripped;
     }
 
     /**

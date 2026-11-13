@@ -34,11 +34,12 @@ class ImportCurriculumCommand extends Command
         }
 
         $labels = ['created' => '新增', 'updated' => '更新', 'unchanged' => '沒有變動', 'skipped' => '略過：審核者在網站上修正過'];
-        $this->table(['課', '題組', '詞數', '結果'], array_map(fn (array $row) => [
+        $this->table(['課', '題組', '詞數', '結果', '句數', '句子的結果'], array_map(fn (array $row) => [
             $row['lesson'], $row['title'], $row['words'], $labels[$row['result']],
+            $row['sentences'], $row['sentences_result'] === null ? '沒有課文' : $labels[$row['sentences_result']],
         ], $results));
 
-        if (in_array('skipped', array_column($results, 'result'), true)) {
+        if (array_intersect(['skipped'], [...array_column($results, 'result'), ...array_column($results, 'sentences_result')]) !== []) {
             $this->warn('略過的課請先把網站上的修正寫回資料檔，再加上 --force 匯入。');
         }
 

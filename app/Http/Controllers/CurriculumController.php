@@ -24,7 +24,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * 教材（docs/SPEC.md T-18、S-06）：依語言、冊、課瀏覽教材的詞彙，直接試玩一課。不需登入；
+ * 教材（docs/SPEC.md T-18、S-06）：依語言、冊、課瀏覽教材的詞彙與課文句子，直接試玩一課。不需登入；
  * 老師登入後另外可以直接用教材題組建立活動，或複製、挑詞做成自己的題組。
  *
  * 首頁與教材頁除了 Inertia 的頁面資料，也在伺服器端輸出骨架（resources/views/skeletons/）與
@@ -71,13 +71,15 @@ class CurriculumController extends Controller
     {
         $ref = $this->lesson($language, $volume, $lesson);
         $set = $ref->set;
+        $sentenceSet = $ref->sentenceSet;
         $user = $request->user();
         $words = $set === null ? [] : SetEditorData::entries($set);
-        // 共備庫中對應這一課的題組：共備庫要登入（docs/SPEC.md 3.2），訪客只看得到數量
+        $sentences = $sentenceSet === null ? [] : SetEditorData::entries($sentenceSet);
+        // 共備庫中對應這一課的題組：共備庫要登入（docs/SPEC.md 3.2），訪客只看得到數量。這一課自己的兩個教材題組不算
         $shared = Set::query()
             ->listed()
             ->whereHas('curriculumRefs', fn ($query) => $query->whereKey($ref->id))
-            ->when($set, fn ($query) => $query->whereKeyNot($set->id));
+            ->whereKeyNot(array_filter([$set?->id, $sentenceSet?->id]));
 
         return Inertia::render('curriculum/Lesson', [
             'lesson' => [
@@ -103,6 +105,12 @@ class CurriculumController extends Controller
                 ],
             ],
             'words' => $words,
+            // 課文句子（3.6）：列在詞彙下面；轉盤的試玩開始畫面可以選用句子玩
+            'sentences' => $sentences,
+            'sentenceSet' => $sentenceSet === null ? null : [
+                'id' => $sentenceSet->id,
+                'can' => ['edit' => Gate::allows('edit', $sentenceSet)],
+            ],
             'content' => $set === null ? null : SetEditorData::currentContent($set),
             'games' => array_values($this->games->all()),
             'imageCredits' => $set === null ? [] : $this->imageCredits($set),
@@ -132,7 +140,7 @@ class CurriculumController extends Controller
             'libraryUrl' => route('library', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson]),
             'meta' => PageMeta::make(
                 $ref->language->name_zh.Textbook::title($ref),
-                $this->describe($ref, $words),
+                $this->describe($ref, $words, count($sentences)),
                 Textbook::lessonUrl($ref),
                 ($image = collect($words)->pluck('item.image.url')->filter()->first()) ? url($image) : null,
             ),
@@ -151,13 +159,14 @@ class CurriculumController extends Controller
         $revision = $set?->currentRevision;
         abort_if($info === null || $set === null || $revision === null, 404);
 
-        $activity = $set->activities()->make([
-            'game_id' => $info['id'],
-            'game_version' => $info['version'],
-            'options' => $this->games->withDefaults($info['id'], []),
-            'mode' => 'practice',
-        ]);
-        $activity->id = $activity->newUniqueId();
+        $activity = $this->trialActivity($set, $info);
+
+        // 能用句子的遊戲（requires.units，例：轉盤）：一併帶入這一課的課文句子，開始畫面可以選用句子玩
+        $sentenceSet = $ref->sentenceSet;
+        $sentenceRevision = in_array('sentence', $info['requires']['units'] ?? [], true) ? $sentenceSet?->currentRevision : null;
+        if ($sentenceRevision !== null && count($sentenceRevision->content()->entries ?? []) < $info['requires']['minRounds']) {
+            $sentenceRevision = null;
+        }
 
         return view('player', [
             'activity' => $activity,
@@ -167,6 +176,7 @@ class CurriculumController extends Controller
             // 人氣統計（A-04）：播放器在開始與玩完時各送一次
             'playsUrl' => route('api.curriculum.plays', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson], false),
             'playback' => ActivityPlayback::payload($activity, $revision),
+            'sentencePlayback' => $sentenceSet === null || $sentenceRevision === null ? null : ActivityPlayback::payload($this->trialActivity($sentenceSet, $info), $sentenceRevision),
             // 換遊戲：播放器依題組判斷哪些能玩（@kancil-quiz/deck 的 check()），只列出那些
             'trialGames' => array_values(array_map(fn (array $other) => [
                 'id' => $other['id'],
@@ -175,6 +185,24 @@ class CurriculumController extends Controller
                 'url' => route('curriculum.play', ['language' => $ref->language_code, 'volume' => $ref->volume, 'lesson' => $ref->lesson, 'game' => $other['id']], false),
             ], $this->games->all())),
         ]);
+    }
+
+    /**
+     * 試玩用的活動：不存進資料庫，用遊戲的預設設定。
+     *
+     * @param  array{id: string, version: string}  $game
+     */
+    private function trialActivity(Set $set, array $game): Activity
+    {
+        $activity = $set->activities()->make([
+            'game_id' => $game['id'],
+            'game_version' => $game['version'],
+            'options' => $this->games->withDefaults($game['id'], []),
+            'mode' => 'practice',
+        ]);
+        $activity->id = $activity->newUniqueId();
+
+        return $activity;
     }
 
     /**
@@ -214,7 +242,7 @@ class CurriculumController extends Controller
      *
      * @param  array<int, array<string, mixed>>  $words  SetEditorData::entries()
      */
-    private function describe(CurriculumRef $ref, array $words): string
+    private function describe(CurriculumRef $ref, array $words, int $sentences): string
     {
         $name = $ref->title_native && $ref->title_zh ? "{$ref->title_native}（{$ref->title_zh}）" : ($ref->title_native ?? $ref->title_zh ?? Textbook::title($ref));
         if ($words === []) {
@@ -222,7 +250,9 @@ class CurriculumController extends Controller
         }
         $list = collect($words)->map(fn (array $word) => $word['item']['text'].' '.$word['item']['translation_zh'])->join('、');
 
-        return "{$name}的 ".count($words)." 個詞：{$list}。不必登入就能直接玩選擇題、迷宮、配對、字卡等遊戲，老師也可以用這一課建立活動。";
+        $text = $sentences > 0 ? "，還有 {$sentences} 句課文" : '';
+
+        return "{$name}的 ".count($words)." 個詞：{$list}{$text}。不必登入就能直接玩選擇題、迷宮、配對、字卡等遊戲，老師也可以用這一課建立活動。";
     }
 
     /**

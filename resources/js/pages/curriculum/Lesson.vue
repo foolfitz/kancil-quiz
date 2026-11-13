@@ -58,6 +58,9 @@ const props = defineProps<{
         };
     } | null;
     words: VocabEntryInput[];
+    // 課文句子（docs/SPEC.md 3.6）：這一課的句子題組，列在詞彙下面；轉盤的試玩開始畫面可以選用句子玩
+    sentences: VocabEntryInput[];
+    sentenceSet: { id: string; can: { edit: boolean } } | null;
     // 教材題組最新版本的內容，用來判斷哪些遊戲能玩（docs/SPEC.md 7.3）
     content: KancilSet | null;
     games: GameInfo[];
@@ -340,10 +343,73 @@ function play(url: string): void {
                             </div>
                         </li>
                     </ul>
+                </section>
+
+                <section
+                    v-if="sentences.length > 0"
+                    class="min-w-0 space-y-3 lg:col-start-1"
+                    data-test="lesson-sentences-section"
+                >
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="font-semibold">
+                            句子（{{ sentences.length }} 句）
+                        </h2>
+                        <Button
+                            v-if="sentenceSet?.can.edit"
+                            as-child
+                            size="sm"
+                            variant="ghost"
+                        >
+                            <Link :href="SetController.edit(sentenceSet.id)"
+                                ><Pencil class="size-4" /> 修正句子</Link
+                            >
+                        </Button>
+                    </div>
+                    <ul
+                        class="grid gap-3 sm:grid-cols-2"
+                        data-test="lesson-sentences"
+                    >
+                        <li
+                            v-for="sentence in sentences"
+                            :key="sentence.id ?? sentence.item.text"
+                            class="flex items-start gap-2 rounded-xl border p-3"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="text-lg font-semibold break-words"
+                                    :lang="lesson.language.code"
+                                >
+                                    {{ sentence.item.text }}
+                                </p>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ sentence.item.translation_zh }}
+                                </p>
+                            </div>
+                            <button
+                                v-if="sentence.item.audio.length > 0"
+                                type="button"
+                                class="inline-flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+                                title="播放發音"
+                                @click="play(sentence.item.audio[0].url)"
+                            >
+                                <Volume2 class="size-4" />
+                            </button>
+                        </li>
+                    </ul>
+                    <p class="text-sm text-muted-foreground">
+                        句子取自課文，去掉了說話的人。轉盤可以在開始畫面選用句子玩。
+                    </p>
+                </section>
+
+                <section class="min-w-0 lg:col-start-1">
                     <p class="text-sm text-muted-foreground">
                         {{ set.description }}
-                        <!-- 課名與詞彙照原教材標示作者與授權（docs/SPEC.md D-4），插圖是自製的 -->
-                        課名與詞彙：{{ set.authors.join('、') }}，<a
+                        <!-- 課名、詞彙與課文句子照原教材標示作者與授權（docs/SPEC.md D-4），插圖是自製的 -->
+                        {{
+                            sentences.length > 0
+                                ? '課名、詞彙與課文句子'
+                                : '課名與詞彙'
+                        }}：{{ set.authors.join('、') }}，<a
                             v-if="set.license_url"
                             :href="set.license_url"
                             target="_blank"

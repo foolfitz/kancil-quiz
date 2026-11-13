@@ -10,6 +10,7 @@ import type {
     GameInstance,
     GameModule,
     Round,
+    SetUnit,
 } from '@kancil-quiz/games-sdk';
 import type { KancilActivity } from '@kancil-quiz/schema';
 import { ApiError, PlayerApi } from './api';
@@ -55,6 +56,9 @@ export interface PlayerConfig {
     activity?: KancilActivity;
     // 教材試玩：同一課其他能玩的遊戲，開始與結果畫面列出連結，直接換遊戲
     otherGames?: OtherGame[];
+    // 教材試玩：同一課的課文句子（句子題組的播放格式，docs/SPEC.md 3.6、S-06）。
+    // 有的話開始畫面可以選用「詞彙」或「句子」玩；只給能用句子的遊戲（requires.units，例：轉盤）
+    sentences?: KancilActivity;
 }
 
 export interface OtherGame {
@@ -155,6 +159,9 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
     }
 
     root.lang = activity.set.language;
+    // 用詞彙或課文句子玩（教材試玩，config.sentences）；activity 跟著換成那個題組的播放格式
+    const words = activity;
+    let unit: SetUnit = 'word';
     const plays =
         config.trial && config.playsUrl
             ? new PlayCounter(config.playsUrl, activity.game.id)
@@ -200,6 +207,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 el('p', 'kq-player__detail', `${formatTime(closesAt)} 截止`),
             );
         }
+        appendUnitChoice(box);
         appendHowTo(box);
 
         if (needsLabel) {
@@ -258,6 +266,42 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
         appendReportLink(box, () => startScreen());
         show(box);
     };
+
+    // 教材試玩：選用這一課的詞彙或課文句子玩。換了就重畫開始畫面（題組名稱與題數跟著換）
+    function appendUnitChoice(box: HTMLElement): void {
+        const sentences = config.sentences;
+        if (!sentences) {
+            return;
+        }
+        const group = el('div', 'kq-player__units');
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', '用什麼玩');
+        const choices: [SetUnit, string, KancilActivity][] = [
+            ['word', `詞彙（${words.set.entries.length} 個）`, words],
+            [
+                'sentence',
+                `句子（${sentences.set.entries.length} 句）`,
+                sentences,
+            ],
+        ];
+        for (const [value, label, choice] of choices) {
+            const option = button('kq-player__unit', label, () => {
+                if (unit === value) {
+                    return;
+                }
+                unit = value;
+                activity = choice;
+                document.title = `${activity.set.title}｜${game.title['zh-TW']}`;
+                startScreen();
+                root.querySelector<HTMLButtonElement>(
+                    '.kq-player__unit[aria-pressed="true"]',
+                )?.focus();
+            });
+            option.setAttribute('aria-pressed', String(unit === value));
+            group.append(option);
+        }
+        box.append(group);
+    }
 
     // 遊戲的操作說明（GameModule 的 howTo）：開始之前先看怎麼玩
     function appendHowTo(box: HTMLElement): void {
@@ -413,7 +457,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             return;
         }
 
-        plays?.count('start');
+        plays?.count('start', unit);
 
         let attempt: AttemptSession | null = null;
         if (!offline) {
@@ -509,7 +553,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 attempt?.record(record);
             } else if (event.type === 'completed' && !finished) {
                 finished = true;
-                plays?.count('finish');
+                plays?.count('finish', unit);
                 // 遊戲在自己的事件處理中呼叫 emit，等它返回後再卸載。
                 setTimeout(() => {
                     stopGame?.();
@@ -526,6 +570,10 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
             rounds,
             options: { ...game.defaultOptions, ...activity.game.options },
             language: activity.set.language,
+            unit:
+                activity.set.kind === 'vocab'
+                    ? (activity.set.unit ?? 'word')
+                    : 'word',
             uiLocale: 'zh-TW',
             rng: createRng(seed ^ 0x9e3779b9),
             audio: {

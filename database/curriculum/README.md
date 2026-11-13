@@ -1,6 +1,6 @@
 # 教材資料
 
-每一冊一個目錄：`<語言代碼>/<冊>/`，內含 `volume.json` 與插圖。匯入後每一課產生一個教材題組（`docs/SPEC.md` 3.6）：
+每一冊一個目錄：`<語言代碼>/<冊>/`，內含 `volume.json` 與插圖。匯入後每一課產生一個教材題組，有課文句子的課再產生一個句子題組（`docs/SPEC.md` 3.6）：
 
 ```
 php artisan kancil:import-curriculum database/curriculum/id/1
@@ -10,9 +10,9 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 
 ## 來源與授權
 
-- 課名與詞彙依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」，紙本採 CC BY-NC-ND 4.0。
-- 這裡只收錄課名與詞彙（詞與中文意思），**不收錄課文、教材的插圖與音檔**（D-4）。教材原始檔中有課文也不要放進來。
-- 課名與詞彙照原教材標示作者（國教署）與授權（CC BY-NC-ND 4.0），老師複製後也保留在每個詞條上。
+- 課名、詞彙與課文句子依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」，紙本採 CC BY-NC-ND 4.0。
+- 這裡收錄課名、詞彙（詞與中文意思）與課文的句子（2026-11 修訂 D-4），**不收錄教材的插圖與音檔**。課文一句一筆、照原文，只去掉開頭的說話者（「Siti: …」）。
+- 課名、詞彙與課文句子照原教材標示作者（國教署）與授權（CC BY-NC-ND 4.0），老師複製後也保留在每個詞條上。
 - 插圖一律自製，作者、出處與授權寫在各冊 `volume.json` 的 `images`（Kancil Quiz，CC BY 4.0）。
 
 ## volume.json
@@ -41,6 +41,13 @@ php artisan kancil:import-curriculum database/curriculum/id/1
                     "page": 26,
                     "image": "images/ayah.webp"
                 }
+            ],
+            "sentences": [
+                {
+                    "text": "Saya sayang Ibu.",
+                    "translation_zh": "我愛媽媽。",
+                    "page": 24
+                }
             ]
         }
     ]
@@ -53,7 +60,9 @@ php artisan kancil:import-curriculum database/curriculum/id/1
 - `images`：插圖的作者、授權與出處，記在每一張圖上。重新匯入時會更新已匯入圖片的這些資料，不必重新匯入圖檔。
 - `lessons[].title_native`：目標語的課名，選填。
 - `lessons[].vocabulary[]`：`text`（目標語）、`translation_zh`（中文意思）、`page`（課本頁碼，選填）、`image`（相對於這個目錄的路徑，選填）。同一課的詞不可重複，比對時不分大小寫、忽略多餘的空白。
+- `lessons[].sentences[]`：課文的句子，選填。`text`（目標語）、`translation_zh`（中文意思）、`page`（課本頁碼，選填），照課文的順序，已經去掉說話者。同一課重複的句子只匯入第一句。沒有這個欄位的課，既有的句子題組不動。
 - 在後台上傳 `volume.json` 時不讀 `image`，插圖另外上傳。
+- 在後台上傳整理教材時的「課文與詞彙.json」時，課文（`text`）一句一筆轉成 `sentences`，自動去掉說話者（`App\Curriculum\Textbook::withoutSpeaker()`）。
 
 ## 插圖
 

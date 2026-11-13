@@ -14,11 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $curriculum_ref_id
  * @property string $game_id
+ * @property 'word'|'sentence' $unit 用詞彙或課文句子玩（轉盤）
  * @property CarbonImmutable $date
  * @property int $starts
  * @property int $finishes
  */
-#[Fillable(['curriculum_ref_id', 'game_id', 'date', 'starts', 'finishes'])]
+#[Fillable(['curriculum_ref_id', 'game_id', 'unit', 'date', 'starts', 'finishes'])]
 class CurriculumPlay extends Model
 {
     public $timestamps = false;

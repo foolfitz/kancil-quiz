@@ -25,7 +25,7 @@
 - 獨立播放器（O-02）在 `packages/player/standalone/`，有自己的 `vite.config.ts`，建置成單一個 HTML 檔 `public/standalone.html`（不進 git）。它打開匯出的 zip（`packages/player/src/zip.ts`、`setZip.ts`），以 `startPlayer({ standalone: true })` 播放，不連伺服器。新增遊戲時也要在 `standalone/main.ts` 登記。
 - 後端的主要程式：
   - `app/Corpus/`：題組內容的寫入（`SetWriter`）、組成交換格式（`SetContent`）、產生版本（`SetRevisionRecorder`）、媒體網址改寫、活動播放格式（`ActivityPlayback`）、複製題組（`SetCopier`）、版本差異（`RevisionDiff`）、老師端畫面上的題目（`EntryFaces`）、匯出 zip 與 `LICENSE.txt`（`SetExport`）、媒體的署名（`MediaCredits`：記在媒體上，只有上傳的人能改，編輯頁以 `media_credits` 和內容一起送來；編輯頁的資料形狀在 `SetEditorData`）。
-  - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名與詞彙、每一課產生教材題組，`preview()` 在交易中匯入後還原；`VolumeFile` 讀取資料檔（repo 的 `volume.json`，或後台上傳的「課文與詞彙.json」）；`CurriculumImages` 依檔名把插圖對應到一冊的詞；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。repo 的 `database/curriculum/` 只放印尼語第 1 冊（示範資料與 E2E），格式見該目錄的 README；其他冊在後台匯入。
+  - `app/Curriculum/`：教材（SPEC 3.6）。`CurriculumImporter` 匯入一冊的課名、詞彙與課文句子、每一課產生教材題組（有課文的課再產生句子題組：`unit` 為 `sentence` 的詞彙組，`curriculum_refs.sentence_set_id`；判斷一個題組是不是教材題組、對應哪一課，用 `Set::isTextbook()`、`textbookRef()`，不要只看 `textbookLesson`），`preview()` 在交易中匯入後還原；`VolumeFile` 讀取資料檔（repo 的 `volume.json`，或後台上傳的「課文與詞彙.json」）；`CurriculumImages` 依檔名把插圖對應到一冊的詞；`Textbook` 是教材帳號與教材題組的共用設定；`TextbookData` 是老師端頁面的教材資料。repo 的 `database/curriculum/` 只放印尼語第 1 冊（示範資料與 E2E），格式見該目錄的 README；其他冊在後台匯入。
   - 人氣統計（SPEC A-04）：`App\Curriculum\PlayCounts` 把試玩的計次累加到 `curriculum_plays`（一課、一個遊戲、台灣時間的一天一列，只有次數），並和課堂的作答數（直接用教材題組建立的活動）一起彙總；後台頁面是 `app/Filament/Pages/PlayStats.php`，管理員與審核者都能看。
   - `app/Filament/Pages/ImportCurriculum.php`：後台的「匯入教材」頁，只有管理員能用：上傳詞彙的 JSON、批次上傳插圖，都先預覽再寫入。審核者修正過的課以 `CurriculumImporter::editedOnSite()` 判斷（最近一次匯入詞彙之後有沒有教材帳號以外的版本，`curriculum_refs.imported_revision`）；寫入教材題組的程式要以教材帳號產生版本，否則會被當成修正。
   - 帳號（SPEC T-01、T-03、第 5 節、A-05）：老師用 Google 登入（Socialite，`App\Http\Controllers\Auth\GoogleLoginController`），帳號的對應與建立在 `App\Auth\GoogleAccounts`：同一個 Google 帳號 → 同一個 email 且還沒連結 Google 的帳號 → 建立新的老師。Fortify 只留密碼登入、雙重驗證與 passkey，給有密碼的帳號（管理員、示範帳號），沒有註冊、重設密碼與驗證信；Filament 沒有自己的登入頁，沒登入時導到 `/login`。設定頁的「安全性」只給有密碼的帳號（`EnsureUserHasPassword`）。刪除帳號是匿名化（`App\Auth\AccountDeletion`），不真的刪除使用者；管理員停用的帳號（`users.disabled_at`）由 `EnsureAccountIsActive` 登出，他的活動、分享連結與開放資料都回 404，公開題組不列在共備庫（`Set::listed()`、`Set::isListed()`、`Set::sharedBy()`）。新增列出公開題組或播放活動的地方時，要一併排除停用的擁有者。
@@ -47,6 +47,7 @@
   - `app/Support/SystemStatus.php`：系統狀態（SPEC A-02）。備份（主機上的 `docker/backup.sh` 用 `docker compose exec` 寫進 volume）、`kancil:prune`（`PruneCommand`，dry run 不記）與排程的心跳（`routes/console.php`，每 15 分鐘）各把最近一次的結果寫成 local disk 上的 `status/*.json`，這裡讀出來判斷正常、過期或失敗（`StatusCheck`、`Health`）；後台頁面是 `app/Filament/Pages/SystemStatus.php`，只有管理員能看。新增排程的工作時，把結果也記在這裡。
 - 每個遊戲套件有 `src/meta.ts`（只有設定資訊，不含執行程式）與 `src/index.ts`（`{ ...meta, mount }`）。新增遊戲要接的地方見下方「新增一個遊戲」。
 - 遊戲自己的得分（`completed` 的 `gameScore`，存成 `attempts.game_score`）不是成績，只有 meta 給了名稱（`scoreLabel`，例如打地鼠「星星」）的遊戲才顯示：學生的結果頁在 `packages/player` 的 `showResults()`，老師的成績頁與 CSV 經由 `GameRegistry::scoreLabel()`（`Results.vue` 的 `activity.score_label`、`ActivityResults` 的 `best_game_score`）。選擇題、配對、迷宮的得分就是答對題數，不設定（SPEC 7.4）。
+- 詞彙組可以是句子題組（交換格式的 `unit` 為 `sentence`，例如教材的課文句子）。遊戲在 `requires.units` 宣告能不能用，省略時只能用詞；`@kancil-quiz/deck` 的 `check()` 與 `ActivityController` 都照這個擋。目前只有轉盤能用句子，教材試玩頁把這一課的句子題組一併帶給播放器（`sentencePlayback`），開始畫面可以選用詞彙或句子。
 - 遊戲分成計分的「遊戲」與不計分的「互動教材」（字卡、圖卡牆、轉盤），由 `requires.scored` 決定；老師端與獨立播放器用 `@kancil-quiz/deck` 的 `groupGames()` 分組（SPEC 7.5）。
 - 會翻面的卡片不要只靠 `backface-visibility`：Playwright 的 WebKit（Linux）不支援，背面會鏡像蓋在正面上。字卡與圖卡牆都在翻到一半時用 `visibility` 藏起背面，E2E 以 `toBeHidden()` 檢查；翻面的那一層也不要加 `container-type` 或 `overflow`，縮放用的 container 放在裡面一層。
 - 畫面大小（SPEC S-02、7.1）：遊戲的版面以自己的根元素為 container（`container-type: size`），用 `@container` 區分手機（寬小於 600px 或高小於 480px）、平板與投影，不用視窗的 media query。`@container` 裡的規則只套用在 container 的後代，改不到根元素本身：會隨尺寸改變的內距、間距要放在裡面一層（配對、選擇題、字卡、打地鼠、射氣球的 `.kq-match__layout`、`.kq-quiz__layout`、`.kq-cards__layout`、`.kq-whack__layout`、`.kq-archer__layout`）。宿主的 `.kq-player__stage` 固定為畫面的高度（`100dvh` 扣掉 safe area），不隨遊戲的內容撐高，放不下的由遊戲自己捲動；一頁的內容要盡量在畫面內，配對放不下時（高度或寬度超出，手機橫放時題目排成一排）由 `fitPairsPerPage()` 減少每頁的組數（最少 3），遊戲區的大小改變時（ResizeObserver）以 `MatchSession.refit()` 重新分頁、進度保留。手機的 E2E 只用不必登入的教材試玩頁（`tests/e2e/phone.spec.ts`，`*-phone`、`*-phone-landscape` 兩個 project），手指拖曳用 `helpers.ts` 的 `touchDragTo()`（Chromium 以 CDP 送真正的觸控事件）。
@@ -96,7 +97,7 @@
 6. **不可變的資料**：題組版本與媒體檔一經產生就不再修改，作答紀錄指向版本（3.3、第 9 節）。
 7. **公開識別碼一律用 ULID**，網址與匯出檔不暴露遞增 ID。
 8. **學生是未成年人**：不存 IP、不放第三方追蹤碼，只存暱稱或座號。
-9. **教材只引用課名與詞彙**：冊課對照依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」（紙本採 CC BY-NC-ND 4.0）。可以放入各課的課名與詞彙（詞與中文意思）；不得放入課文、教材插圖與音檔，插圖與發音一律自製（D-4）。課名與詞彙照原教材標示作者（國教署）與授權（CC BY-NC-ND 4.0，`Textbook::AUTHORS`、`LICENSE`），複製後也保留在每個詞條上；老師能為題組選的授權是 `Set::LICENSES`，不含它。
+9. **教材只引用課名、詞彙與課文句子**：冊課對照依據國教署[新住民子女教育資訊網](https://mkm.k12ea.gov.tw/textbook)的「新住民語文學習教材」（紙本採 CC BY-NC-ND 4.0）。可以放入各課的課名、詞彙（詞與中文意思）與課文的句子（照原文，只去掉開頭的說話者，2026-11 修訂）；不得放入教材插圖與音檔，插圖與發音一律自製（D-4）。課名、詞彙與課文句子照原教材標示作者（國教署）與授權（CC BY-NC-ND 4.0，`Textbook::AUTHORS`、`LICENSE`），複製後也保留在每個詞條上；老師能為題組選的授權是 `Set::LICENSES`，不含它。
 
 ## Fixture
 
@@ -126,7 +127,7 @@
 | `npm run games:manifest` | 遊戲的 `meta.ts` 改變後，重新產生 `packages/games/manifest.json` |
 | `composer ci:check` | CI 的完整檢查（GitHub Actions 的 `ci` job；E2E 在 `e2e` job 另外跑，見下方「環境」） |
 | `php artisan db:seed --class=DemoSeeder` | 本機示範資料：匯入印尼語第 1 冊的教材題組；teacher@example.com（示範老師）、colleague@example.com（示範同事，共備庫的公開題組）、curator@example.com（審核者）、admin@example.com，密碼都是 password（在登入頁下方的「管理員：用 email 與密碼登入」）。本機沒有設定 `GOOGLE_CLIENT_ID` 時不顯示 Google 登入 |
-| `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名與詞彙；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
+| `php artisan kancil:import-curriculum database/curriculum/id/1` | 從 repo 匯入一冊教材的課名、詞彙與課文句子；`--force` 覆寫審核者在網站上的修正，`--refresh-images` 重新匯入插圖。其他冊在後台 `/admin/import-curriculum` 匯入 |
 | `php artisan kancil:create-admin <email>` | 建立管理員（會要求設定密碼），或把既有的帳號設為管理員。老師不需要邀請，用 Google 登入就會建立帳號 |
 | `php artisan kancil:prune --dry-run` | 列出排程會清除的資料筆數，不刪除；拿掉 `--dry-run` 就會真的刪除 |
 | `npm run build:standalone` | 只建置獨立播放器（`npm run build` 會一併執行） |

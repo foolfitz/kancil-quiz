@@ -88,6 +88,28 @@
     font-size: 1rem;
 }
 
+/* 教材試玩的「詞彙／句子」：兩個並排的按鈕，選中的填滿顏色 */
+.kq-player__units {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.kq-player__unit {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid var(--kq-player-accent);
+    background: var(--kq-player-card);
+    color: var(--kq-player-accent);
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.kq-player__unit[aria-pressed='true'] {
+    background: var(--kq-player-accent);
+    color: #fff;
+}
+
 /* 開始畫面的操作說明（遊戲的 howTo）：白底的小卡片，一行一種操作方式，靠左對齊比較好讀 */
 .kq-player__how-to {
     width: min(100%, 34rem);

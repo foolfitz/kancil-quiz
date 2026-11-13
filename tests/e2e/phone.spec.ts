@@ -463,6 +463,38 @@ test('轉盤：整個轉盤與轉到的詞都在畫面內，轉動時沒有水�
     expect(errors).toEqual([]);
 });
 
+test('轉盤：開始畫面選用課文的句子，轉到的整句在畫面內', async ({
+    page,
+}, testInfo) => {
+    const errors = collectErrors(page);
+    await page.goto('/curriculum/id/1/3/play/spin-wheel');
+    const sentences = page.getByRole('button', { name: '句子（4 句）' });
+    await expectInViewport(page, sentences);
+    await sentences.click();
+    const button = page.getByRole('button', { name: '開始' });
+    await expectInViewport(page, button);
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+        path: testInfo.outputPath('wheel-sentences-start.png'),
+    });
+    await button.click();
+
+    await expect(page.locator('.kq-wheel__slice')).toHaveCount(4);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('button', { name: '轉！' }).click();
+    await expect(
+        page.getByRole('dialog', { name: '轉到的句子' }),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectInViewport(page, page.locator('.kq-wheel__card'));
+    await expectNothingClipped(page, '.kq-wheel__word');
+    await page.screenshot({
+        path: testInfo.outputPath('wheel-sentences-phone.png'),
+    });
+
+    expect(errors).toEqual([]);
+});
+
 test('迷宮問答：迷宮、題目與暫停鍵都在畫面內', async ({ page }, testInfo) => {
     const errors = collectErrors(page);
     await start(page, '/curriculum/id/1/3/play/maze-quiz');
