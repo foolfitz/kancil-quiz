@@ -8,7 +8,7 @@ import {
     shootBalloon,
 } from './helpers';
 
-// 射氣球（docs/SPEC.md 7.4、7.5、7.6）：弓箭手在左邊上下移動，往左拉弓、放開，箭水平射向往上飄的氣球，
+// 射氣球（docs/SPEC.md 7.4、7.5、7.6）：弓箭手在左邊上下移動，按住拉弓、放開，箭水平射向往上飄的氣球，
 // 射中帶著正解的那個。固定橫式版面，畫面是直的時候請學生轉成橫的。規則與打地鼠相同：
 // 起始 3 顆星，射中正解 +1 換下一題，射中錯的 −1 留在同一題；題目射完重新洗牌再輪一次，直到時間到。
 // 每個 project（iPad 直向、橫向、投影尺寸）各跑一次，資料來自 DemoSeeder。
@@ -45,6 +45,10 @@ test.describe.serial('射氣球', () => {
         await page.clock.install();
 
         await page.goto(playPath);
+        // 開始畫面先說明怎麼玩
+        const howTo = page.locator('.kq-player__how-to');
+        await expect(howTo).toContainText('怎麼玩');
+        await expect(howTo).toContainText('按住空白鍵拉弓');
         await page.getByRole('button', { name: '開始' }).click();
         await archerToLandscape(page);
 
@@ -52,13 +56,20 @@ test.describe.serial('射氣球', () => {
         await expect(stars).toHaveText('★ 3');
         await expect(page.locator('.kq-archer__hint')).toBeVisible();
 
-        // 鍵盤：↑ ↓ 移動弓箭手、空白鍵射出去。氣球還在地面下，射不到
+        // 鍵盤：↑ ↓ 移動弓箭手，按住空白鍵拉弓、放開才射出去；→ 與 Enter 不射。氣球還在地面下，射不到
+        const arrows = page.locator('.kq-archer__arrow');
         const now = await page.evaluate(() => Date.now());
         await page.clock.pauseAt(now + 10);
         await page.keyboard.press('ArrowUp');
         await expect(page.locator('.kq-archer__guide')).toBeVisible();
-        await page.keyboard.press('Space');
-        await expect(page.locator('.kq-archer__arrow')).toHaveCount(1);
+        await page.keyboard.press('ArrowRight');
+        await page.keyboard.press('Enter');
+        await page.keyboard.down('Space');
+        await expect(arrows).toHaveCount(0);
+        await page.clock.runFor(400);
+        await expect(arrows).toHaveCount(0);
+        await page.keyboard.up('Space');
+        await expect(arrows).toHaveCount(1);
         await expect(page.locator('.kq-archer__hint')).toBeHidden();
         await page.clock.runFor(1200);
         await expect(page.locator('.kq-archer__arrow')).toHaveCount(0);

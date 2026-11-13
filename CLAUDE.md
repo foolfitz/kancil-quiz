@@ -66,7 +66,7 @@
 
 1. **遊戲本身**，在 submodule 中：計分的放 `packages/games/kancil-games/<目錄>/`，不計分的放 `packages/games/kancil-materials/<目錄>/`，照現有的遊戲放這幾個檔：
    - `package.json`：名稱 `@kancil-quiz/game-<id>`、`AGPL-3.0-or-later`、`repository.directory`，依賴 `@kancil-quiz/games-sdk`。
-   - `src/meta.ts`：`id`、`title`、`requires`（形狀、`minRounds`、`optionCount`、`renders`、`scored`）、`optionsSchema`（老師端的設定表單由它產生，列舉值用 `oneOf` + `const` + `title`）、`defaultOptions`。遊戲得分不等於答對題數時加上 `scoreLabel`，結果頁與成績頁才會顯示。`mount()` 裡要再檢查一次設定值（例如打地鼠的 `normalizeOptions()`），舊的或不合法的值退回預設。
+   - `src/meta.ts`：`id`、`title`、`requires`（形狀、`minRounds`、`optionCount`、`renders`、`scored`）、`optionsSchema`（老師端的設定表單由它產生，列舉值用 `oneOf` + `const` + `title`）、`defaultOptions`。遊戲得分不等於答對題數時加上 `scoreLabel`，結果頁與成績頁才會顯示。操作方式需要說明時加上 `howTo`（一行一種操作方式，例如射氣球的滑鼠與觸控、鍵盤），宿主列在開始畫面的「怎麼玩」；它只給播放器用，不寫進 manifest。`mount()` 裡要再檢查一次設定值（例如打地鼠的 `normalizeOptions()`），舊的或不合法的值退回預設。
    - `src/session.ts`：不碰 DOM 的進行狀態。用到時間的，時間由呼叫的人傳入，測試才能控制。目標帶著選項、星星計分、題目打完重新輪的遊戲（打地鼠、射氣球），共用 `kancil-games/arcade`（`@kancil-quiz/arcade`）的規則，不要另寫一份。
    - `src/index.ts`：`mount()`，default export 是 `{ ...meta, mount }`。`destroy()` 要清掉所有計時器與事件監聽；`pause()`、`resume()` 給宿主在分頁被藏起來時用。
    - `src/style.css`：樣式都限定在自己的根元素之下。根元素是 container，內距放在 `__layout` 那一層（見上方「畫面大小」）。

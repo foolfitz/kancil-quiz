@@ -200,6 +200,7 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
                 el('p', 'kq-player__detail', `${formatTime(closesAt)} 截止`),
             );
         }
+        appendHowTo(box);
 
         if (needsLabel) {
             const form = el('form', 'kq-player__label');
@@ -257,6 +258,23 @@ export async function startPlayer(config: PlayerConfig): Promise<PlayerHandle> {
         appendReportLink(box, () => startScreen());
         show(box);
     };
+
+    // 遊戲的操作說明（GameModule 的 howTo）：開始之前先看怎麼玩
+    function appendHowTo(box: HTMLElement): void {
+        const lines = game.howTo?.['zh-TW'];
+        if (!lines?.length) {
+            return;
+        }
+        const section = el('section', 'kq-player__how-to');
+        // 頁面的語言是題組的語言，說明是中文
+        section.lang = 'zh-TW';
+        const list = el('ul', 'kq-player__how-to-list');
+        for (const line of lines) {
+            list.append(el('li', 'kq-player__how-to-item', line));
+        }
+        section.append(el('h2', 'kq-player__how-to-title', '怎麼玩'), list);
+        box.append(section);
+    }
 
     function appendOtherGames(box: HTMLElement): void {
         if (!config.otherGames?.length) {

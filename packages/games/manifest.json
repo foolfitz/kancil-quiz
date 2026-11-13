@@ -2,7 +2,7 @@
     "games": [
         {
             "id": "balloon-archer",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "title": {
                 "zh-TW": "射氣球"
             },

@@ -196,10 +196,11 @@ export async function whackAnswer(page: Page, entryId: string): Promise<void> {
 }
 
 // 射氣球：射向帶著這個選項的氣球。需要先 page.clock.install()。
-// 弓箭手在左邊，按住的高度就是弓箭手的高度，往左拉再放開，箭水平往右飛。
+// 弓箭手在左邊，按住的高度就是弓箭手的高度，按住拉弓、放開就射，箭水平往右飛。
 // 等氣球飄到地面上，把時間停住，量好位置、算出要瞄在氣球上面多少（箭飛過去時氣球往上飄了一段）。
-// 箭會射中路上的第一個氣球，弓箭手也只能站在柱子的範圍內，所以路上有別的氣球擋住、或站不到那個高度時，
-// 讓時間走一點再瞄。放開後快轉讓箭飛過去。touch 時 Chromium 用手指拉
+// 箭會射中路上的第一個氣球，弓箭手也只能站在柱子的範圍內（遊戲的 data-bow-min、data-bow-max），
+// 所以路上有別的氣球擋住、或站不到那個高度時，讓時間走一點再瞄。放開就會射，所以先算好站不站得到才按。
+// 放開後快轉讓箭飛過去。touch 時 Chromium 用手指按
 export async function shootBalloon(
     page: Page,
     target: string | { not: string },
@@ -227,20 +228,17 @@ export async function shootBalloon(
     // 留一點時間差：WebKit 比較慢，太近的話停住的時間點已經過去了
     const now = await page.evaluate(() => Date.now());
     await page.clock.pauseAt(now + 300);
-    const speed = Number(
-        await page.locator('.kq-archer').getAttribute('data-arrow-speed'),
-    );
+    const archer = page.locator('.kq-archer');
+    const speed = Number(await archer.getAttribute('data-arrow-speed'));
     const field = await page.locator('.kq-archer__field').boundingBox();
     if (!field) {
         throw new Error('找不到遊戲區');
     }
-    const bowCenter = async () => {
-        const box = await page.locator('.kq-archer__bow').boundingBox();
-        return box
-            ? { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-            : { x: 0, y: 0 };
-    };
-    const bowX = (await bowCenter()).x;
+    // 弓箭手能站的高度，換算成頁面的座標
+    const minY = field.y + Number(await archer.getAttribute('data-bow-min'));
+    const maxY = field.y + Number(await archer.getAttribute('data-bow-max'));
+    const bow = await page.locator('.kq-archer__bow').boundingBox();
+    const bowX = bow ? bow.x + bow.width / 2 : 0;
     const startX = field.x + field.width * 0.6;
 
     for (let attempt = 0; attempt < 80; attempt++) {
@@ -262,40 +260,41 @@ export async function shootBalloon(
         for (const aim of balloons.filter((b) => wanted(b.id))) {
             // 箭頭飛到氣球的時候，氣球往上飄了 vy × t
             const t = (aim.cx - bowX) / speed;
-            const y = aim.cy - aim.vy * t;
+            const center = aim.cy - aim.vy * t;
             // 路上（比目標近）的氣球在箭經過時擋不擋到，留一點餘裕
-            const blocked = balloons.some((b) => {
-                if (b === aim || b.cx > aim.cx) {
-                    return false;
-                }
-                const cy = b.cy - b.vy * ((b.cx - bowX) / speed);
-                return Math.abs(cy - y) < b.ry + 12;
-            });
-            if (!blocked) {
-                await page.mouse.move(startX, y);
-                await page.mouse.down();
-                // 弓箭手站得到這個高度嗎（柱子的範圍）
-                const reached = Math.abs((await bowCenter()).y - y) < 2;
-                if (reached) {
-                    const end = { x: startX - 60, y };
-                    if (
-                        touch &&
-                        page.context().browser()?.browserType().name() ===
-                            'chromium'
-                    ) {
-                        // 手指從頭再拉一次：先放開滑鼠（沒有往左拉，不會射）
-                        await page.mouse.up();
-                        await touchDrag(page, { x: startX, y }, end);
-                    } else {
-                        await page.mouse.move(end.x, end.y, { steps: 5 });
-                        await page.mouse.up();
+            const blocked = (level: number) =>
+                balloons.some((b) => {
+                    if (b === aim || b.cx > aim.cx) {
+                        return false;
                     }
-                    await page.clock.runFor(1000);
-                    await page.clock.resume();
-                    return;
+                    const cy = b.cy - b.vy * ((b.cx - bowX) / speed);
+                    return Math.abs(cy - level) < b.ry + 12;
+                });
+            // 先瞄氣球的中間；被擋住或站不到時改瞄上半或下半。前後兩顆氣球飄得一樣快時，
+            // 上下的距離一直不變，只瞄中間的話可能整趟都被擋住
+            const y = [0, -0.5, 0.5]
+                .map((k) => center + k * aim.ry)
+                // 弓箭手站得到這個高度嗎（柱子的範圍）
+                .find(
+                    (level) =>
+                        level >= minY && level <= maxY && !blocked(level),
+                );
+            if (y !== undefined) {
+                if (
+                    touch &&
+                    page.context().browser()?.browserType().name() ===
+                        'chromium'
+                ) {
+                    // 手指在原地按住再放開
+                    await touchDrag(page, { x: startX, y }, { x: startX, y });
+                } else {
+                    await page.mouse.move(startX, y);
+                    await page.mouse.down();
+                    await page.mouse.up();
                 }
-                // 站不到：沒有往左拉就放開，不會射
-                await page.mouse.up();
+                await page.clock.runFor(1000);
+                await page.clock.resume();
+                return;
             }
         }
         await page.clock.runFor(150);

@@ -48,6 +48,8 @@ export interface GameModule<Options = Record<string, unknown>> {
     // 遊戲得分（completed 的 gameScore）的名稱，例：打地鼠「星星」。
     // 有設定的遊戲，學生的結果頁與老師的成績頁才顯示遊戲得分；選擇題、配對、迷宮的得分就是答對題數，不設定
     scoreLabel?: { 'zh-TW': string };
+    // 操作說明，宿主列在開始畫面的「怎麼玩」，一行一種操作方式，例：射氣球「鍵盤：……」。沒有設定的遊戲不顯示
+    howTo?: { 'zh-TW': string[] };
     mount(el: HTMLElement, ctx: GameContext<Options>): GameInstance;
 }
 
